@@ -1,0 +1,268 @@
+Build a full-stack MCA Placement Management System using the following database schema and requirements.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 TECH STACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Frontend:
+- Flutter (Dart)
+- State management: Riverpod or Provider
+
+Backend:
+- Node.js (Express)
+
+Database:
+- PostgreSQL
+
+File Storage:
+- Cloudinary or AWS S3 (for resume uploads)
+
+Authentication:
+- Google Sign-In (students)
+- SPC login (username + password)
+- JWT-based authentication
+
+Push Notifications:
+- Firebase Cloud Messaging (FCM)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 DATABASE (STRICTLY FOLLOW THIS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Tables:
+- users
+- spc_accounts
+- companies
+- applications
+- forms
+- form_questions
+- form_question_map
+- form_responses
+
+DO NOT MODIFY schema structure.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 AUTHENTICATION SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. STUDENT LOGIN:
+- Use Google Sign-In in Flutter
+- Send ID token to backend
+- Backend verifies token
+- Create user if not exists
+- Return JWT
+
+2. SPC LOGIN:
+- Username + password
+- Validate using spc_accounts table
+- Fetch linked user_id
+- Return JWT with SPC privileges
+
+IMPORTANT:
+- Both logins must map to SAME user
+- SPC is an extension of student, not separate entity
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 USER FEATURES (STUDENT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Login via Google
+- Fill profile (one-time):
+  - Name
+  - USN
+  - College email
+  - Personal email
+  - CGPA
+  - 10th marks
+  - 12th marks
+  - First sem SGPA
+
+- Upload resume:
+  - Store in Cloudinary/S3
+  - Replace old resume on update
+
+- After verification:
+  - Profile becomes read-only
+
+- View companies:
+  - Name
+  - Package
+  - Stipend
+  - Test date
+  - Interview date
+
+- Submit:
+  - Consent (Yes/No)
+  - Tracker (Mail received or not)
+
+- Fill dynamic forms assigned to them
+
+- Receive push notifications
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 SPC FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+(SPC can also act as student)
+
+- Login using SPC credentials
+
+- Create company:
+  - Name
+  - Minimum CGPA
+  - Package
+  - Stipend
+  - Test date
+  - Interview date
+
+- Manage forms:
+  - Create new form
+  - Assign type: consent / tracker / custom
+  - Link form to a company OR keep global
+
+- Manage questions:
+  - Create reusable questions
+  - Define type:
+    - text
+    - number
+    - boolean
+    - dropdown
+
+- Map questions to forms:
+  - Select multiple questions
+  - Set required fields
+
+- Send forms to students
+
+- View responses:
+  - Per company
+  - Per form
+
+- Verify students:
+  - Lock profile editing
+
+- Filter eligible students:
+  - consent = YES
+  - cgpa >= min_cgpa
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 DYNAMIC FORM SYSTEM (CORE FEATURE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Forms are defined in `forms`
+- Questions stored in `form_questions`
+- Mapping done via `form_question_map`
+- Responses stored in `form_responses`
+
+Behavior:
+- SPC selects questions when creating form
+- Same question can be reused across forms
+- Forms can be:
+  - Company-specific
+  - Global
+
+Flutter:
+- Fetch form + mapped questions
+- Render UI dynamically based on field_type
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 APPLICATION FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. SPC creates company
+2. SPC creates form(s)
+3. SPC maps questions to form
+4. Students receive notification
+5. Students:
+   - Give consent
+   - Fill tracker
+   - Fill custom forms
+6. Data stored in applications + form_responses
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 EXCEL GENERATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Generate Excel (.xlsx) per company
+
+Include:
+- Name
+- Email
+- CGPA
+- Resume URL
+
+Add dynamic columns:
+- Based on form_questions linked to company forms
+
+Use:
+- exceljs (Node.js)
+
+Endpoint:
+GET /companies/:id/export
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 BACKEND REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- REST APIs for:
+  - Auth (Google + SPC)
+  - Users
+  - Companies
+  - Applications
+  - Forms
+  - Questions
+  - Responses
+  - Excel export
+
+- Middleware:
+  - JWT verification
+  - SPC authorization
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 FLUTTER UI REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Home Screen:
+- Continue with Google
+- SPC Login
+
+Dashboard:
+- Student view:
+  - Profile
+  - Companies
+  - Forms
+
+- SPC view (if logged in as SPC):
+  - Create company
+  - Manage forms
+  - View responses
+  - Verify students
+  - Export Excel
+
+Dynamic Form UI:
+- Render fields based on field_type
+- Validate required fields
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 IMPORTANT RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Do NOT duplicate users
+- Always verify Google token on backend
+- Hash SPC passwords (bcrypt)
+- Backend controls access (not frontend)
+- Use normalized schema strictly
+- Support reusable questions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 DELIVERABLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Flutter app (clean UI)
+- Node.js backend (modular)
+- PostgreSQL integration
+- Google login working
+- SPC login working
+- Dynamic forms working
+- Excel export working
+- Resume upload working
+- Notifications working
