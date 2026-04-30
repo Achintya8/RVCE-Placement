@@ -3,9 +3,11 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:universal_html/html.dart' as html;
 
 import '../../core/config/app_config.dart';
 import '../../core/network/api_client.dart';
@@ -253,17 +255,34 @@ class PlacementRepository {
         .toList();
   }
 
-  Future<Uint8List> exportCompany(int companyId) async {
-    return _apiClient.getBytes('/companies/$companyId/export');
+  Future<Uint8List> exportCompany(int companyId, {List<String>? fields}) async {
+    final queryParams = fields != null && fields.isNotEmpty
+        ? '?fields=${fields.join(',')}'
+        : '';
+    return _apiClient.getBytes('/companies/$companyId/export$queryParams');
   }
 
   Future<String> persistExportFile({
     required int companyId,
     required Uint8List bytes,
   }) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/company_$companyId.xlsx');
-    await file.writeAsBytes(bytes);
-    return file.path;
+    if (kIsWeb) {
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.document.createElement('a') as html.AnchorElement
+        ..href = url
+        ..style.display = 'none'
+        ..download = 'company_$companyId.xlsx';
+      html.document.body?.children.add(anchor);
+      anchor.click();
+      html.document.body?.children.remove(anchor);
+      html.Url.revokeObjectUrl(url);
+      return 'Downloads folder';
+    } else {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/company_$companyId.xlsx');
+      await file.writeAsBytes(bytes);
+      return file.path;
+    }
   }
 }

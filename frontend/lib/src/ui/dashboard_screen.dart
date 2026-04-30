@@ -1045,10 +1045,79 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
   }
 
   Future<void> _exportCompany(int companyId) async {
+    final availableFields = [
+      {'key': 'usn', 'label': 'USN'},
+      {'key': 'personal_email_id', 'label': 'Personal Email'},
+      {'key': 'phone_number', 'label': 'Phone Number'},
+      {'key': 'aadhar', 'label': 'Aadhar'},
+      {'key': 'linkedIn', 'label': 'LinkedIn'},
+      {'key': 'gitHub', 'label': 'GitHub'},
+      {'key': 'tenth_marks', 'label': '10th Marks'},
+      {'key': 'twelfth_marks', 'label': '12th Marks'},
+      {'key': 'first_sem_sgpa', 'label': '1st Sem SGPA'},
+    ];
+
+    final selectedFields = await showDialog<List<String>>(
+      context: context,
+      builder: (context) {
+        final selection = <String>{...availableFields.map((f) => f['key']!)};
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Columns to Export'),
+              content: SizedBox(
+                width: 400,
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8.0),
+                      child: Text(
+                        'Name, College Email, CGPA, Resume URL, and Form Questions are always included.',
+                      ),
+                    ),
+                    ...availableFields.map((field) {
+                      final key = field['key']!;
+                      return CheckboxListTile(
+                        value: selection.contains(key),
+                        title: Text(field['label']!),
+                        dense: true,
+                        onChanged: (val) {
+                          setState(() {
+                            if (val == true) {
+                              selection.add(key);
+                            } else {
+                              selection.remove(key);
+                            }
+                          });
+                        },
+                      );
+                    }),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, null),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, selection.toList()),
+                  child: const Text('Export'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selectedFields == null) return;
+
     await _runTask(() async {
       final Uint8List bytes = await ref
           .read(placementRepositoryProvider)
-          .exportCompany(companyId);
+          .exportCompany(companyId, fields: selectedFields);
       final path = await ref
           .read(placementRepositoryProvider)
           .persistExportFile(companyId: companyId, bytes: bytes);
@@ -1296,7 +1365,7 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                         _FieldBox(
                           width: 180,
                           child: DropdownButtonFormField<String>(
-                            initialValue: _formType,
+                            value: _formType,
                             items: const ['consent', 'tracker', 'custom']
                                 .map(
                                   (type) => DropdownMenuItem(
@@ -1318,7 +1387,7 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                         _FieldBox(
                           width: 240,
                           child: DropdownButtonFormField<int?>(
-                            initialValue: _selectedCompanyId,
+                            value: _selectedCompanyId,
                             items: [
                               const DropdownMenuItem<int?>(
                                 value: null,
@@ -1358,16 +1427,20 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                       children: [
                         _FieldBox(
                           width: 260,
-                          child: DropdownButtonFormField<int>(
-                            initialValue: _mappingFormId,
-                            items: data.forms
-                                .map(
-                                  (form) => DropdownMenuItem<int>(
-                                    value: form.id,
-                                    child: Text(form.title),
-                                  ),
-                                )
-                                .toList(),
+                          child: DropdownButtonFormField<int?>(
+                            value: _mappingFormId,
+                            items: [
+                              const DropdownMenuItem<int?>(
+                                value: null,
+                                child: Text('Select a form'),
+                              ),
+                              ...data.forms.map(
+                                (form) => DropdownMenuItem<int?>(
+                                  value: form.id,
+                                  child: Text(form.title),
+                                ),
+                              ),
+                            ],
                             onChanged: _busy
                                 ? null
                                 : (value) =>

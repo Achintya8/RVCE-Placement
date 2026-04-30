@@ -72,7 +72,8 @@ export const getMyApplications = async (req, res, next) => {
 export const exportCompany = async (req, res, next) => {
   try {
     const companyId = Number(req.params.id);
-    const workbook = await generateCompanyWorkbook(companyId);
+    const fields = req.query.fields ? req.query.fields.split(',') : [];
+    const workbook = await generateCompanyWorkbook(companyId, fields);
 
     if (!workbook) {
       throw new ApiError(404, 'Company not found.');

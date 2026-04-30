@@ -3,7 +3,7 @@ import ExcelJS from 'exceljs';
 import { query } from '../config/db.js';
 import { decodeQuestionText } from '../utils/questionParser.js';
 
-export const generateCompanyWorkbook = async (companyId) => {
+export const generateCompanyWorkbook = async (companyId, fields = []) => {
   const { rows: companyRows } = await query(
     'SELECT * FROM "companies" WHERE "id" = $1 LIMIT 1',
     [companyId],
@@ -28,7 +28,16 @@ export const generateCompanyWorkbook = async (companyId) => {
   const { rows: studentRows } = await query(
     `SELECT u."id",
         u."name",
+        u."usn",
         u."college_email_id",
+        u."personal_email_id",
+        u."phone_number",
+        u."aadhar",
+        u."linkedIn",
+        u."gitHub",
+        u."tenth_marks",
+        u."twelfth_marks",
+        u."first_sem_sgpa",
         u."ug_cgpa",
         u."resume_url"
       FROM "applications" a
@@ -58,11 +67,24 @@ export const generateCompanyWorkbook = async (companyId) => {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet(company.name || `Company_${companyId}`);
 
+  const optionalColumns = [
+    { key: 'usn', header: 'USN', width: 16 },
+    { key: 'personal_email_id', header: 'Personal Email', width: 32 },
+    { key: 'phone_number', header: 'Phone Number', width: 16 },
+    { key: 'aadhar', header: 'Aadhar', width: 16 },
+    { key: 'linkedIn', header: 'LinkedIn', width: 40 },
+    { key: 'gitHub', header: 'GitHub', width: 40 },
+    { key: 'tenth_marks', header: '10th Marks', width: 12 },
+    { key: 'twelfth_marks', header: '12th Marks', width: 12 },
+    { key: 'first_sem_sgpa', header: '1st Sem SGPA', width: 15 },
+  ];
+
   worksheet.columns = [
     { header: 'Name', key: 'name', width: 28 },
-    { header: 'Email', key: 'email', width: 32 },
-    { header: 'CGPA', key: 'cgpa', width: 12 },
-    { header: 'Resume URL', key: 'resumeUrl', width: 50 },
+    { header: 'College Email', key: 'college_email_id', width: 32 },
+    { header: 'UG CGPA', key: 'ug_cgpa', width: 12 },
+    { header: 'Resume URL', key: 'resume_url', width: 50 },
+    ...optionalColumns.filter(col => fields.includes(col.key)),
     ...questionRows.map((question) => ({
       header: decodeQuestionText(question.question_text, question.field_type).label,
       key: `question_${question.id}`,
@@ -73,9 +95,18 @@ export const generateCompanyWorkbook = async (companyId) => {
   studentRows.forEach((student) => {
     const row = {
       name: student.name,
-      email: student.college_email_id,
-      cgpa: student.ug_cgpa,
-      resumeUrl: student.resume_url,
+      usn: student.usn,
+      college_email_id: student.college_email_id,
+      personal_email_id: student.personal_email_id,
+      phone_number: student.phone_number,
+      aadhar: student.aadhar,
+      linkedIn: student.linkedIn,
+      gitHub: student.gitHub,
+      tenth_marks: student.tenth_marks,
+      twelfth_marks: student.twelfth_marks,
+      first_sem_sgpa: student.first_sem_sgpa,
+      ug_cgpa: student.ug_cgpa,
+      resume_url: student.resume_url,
     };
 
     questionRows.forEach((question) => {
