@@ -44,6 +44,7 @@ export const listResponsesForForm = async (formId) => {
         fr."question_id",
         fr."answer",
         u."name" AS student_name,
+        u."usn",
         u."college_email_id",
         fq."question_text",
         fq."field_type"
@@ -63,6 +64,7 @@ export const listResponsesForForm = async (formId) => {
       accumulator[key] = {
         studentId: row.student_id,
         studentName: row.student_name,
+        usn: row.usn,
         collegeEmailId: row.college_email_id,
         companyId: row.company_id,
         answers: [],

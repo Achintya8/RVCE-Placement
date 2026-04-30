@@ -145,7 +145,7 @@ export const generateFormResponsesWorkbook = async (formId) => {
   );
 
   const { rows: responseRows } = await query(
-    `SELECT fr."student_id", u."name", u."college_email_id", fr."question_id", fr."answer"
+    `SELECT fr."student_id", u."name", u."usn", u."college_email_id", fr."question_id", fr."answer"
       FROM "form_responses" fr
       INNER JOIN "users" u ON u."id" = fr."student_id"
       WHERE fr."form_id" = $1
@@ -158,6 +158,7 @@ export const generateFormResponsesWorkbook = async (formId) => {
     if (!studentsMap.has(row.student_id)) {
       studentsMap.set(row.student_id, {
         name: row.name,
+        usn: row.usn,
         email: row.college_email_id,
         answers: new Map(),
       });
@@ -170,6 +171,7 @@ export const generateFormResponsesWorkbook = async (formId) => {
 
   worksheet.columns = [
     { header: 'Name', key: 'name', width: 28 },
+    { header: 'USN', key: 'usn', width: 16 },
     { header: 'College Email', key: 'college_email_id', width: 32 },
     ...questionRows.map((question) => ({
       header: decodeQuestionText(question.question_text, question.field_type).label,
@@ -181,6 +183,7 @@ export const generateFormResponsesWorkbook = async (formId) => {
   studentsMap.forEach((student) => {
     const row = {
       name: student.name,
+      usn: student.usn,
       college_email_id: student.email,
     };
 

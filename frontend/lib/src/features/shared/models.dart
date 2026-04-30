@@ -224,17 +224,20 @@ class StudentSummary {
 class FormResponseRecord {
   const FormResponseRecord({
     required this.studentName,
+    required this.usn,
     required this.collegeEmailId,
     required this.answers,
   });
 
   final String studentName;
+  final String usn;
   final String collegeEmailId;
   final List<FormQuestion> answers;
 
   factory FormResponseRecord.fromJson(Map<String, dynamic> json) {
     return FormResponseRecord(
       studentName: json['studentName'] as String? ?? '',
+      usn: json['usn'] as String? ?? '',
       collegeEmailId: json['collegeEmailId'] as String? ?? '',
       answers: (json['answers'] as List<dynamic>? ?? const [])
           .map((item) => FormQuestion.fromJson(item as Map<String, dynamic>))

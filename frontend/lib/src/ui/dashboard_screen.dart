@@ -1169,6 +1169,7 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                       child: DataTable(
                         columns: [
                           const DataColumn(label: Text('Name')),
+                          const DataColumn(label: Text('USN')),
                           const DataColumn(label: Text('Email')),
                           ...responses.first.answers.map(
                             (answer) => DataColumn(
@@ -1180,6 +1181,7 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                           return DataRow(
                             cells: [
                               DataCell(Text(response.studentName)),
+                              DataCell(Text(response.usn)),
                               DataCell(Text(response.collegeEmailId)),
                               ...response.answers.map(
                                 (answer) => DataCell(Text(answer.answer ?? '-')),
