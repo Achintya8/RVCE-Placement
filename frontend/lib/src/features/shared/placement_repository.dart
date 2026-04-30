@@ -255,6 +255,10 @@ class PlacementRepository {
         .toList();
   }
 
+  Future<Uint8List> exportFormResponses(int formId) async {
+    return _apiClient.getBytes('/responses/forms/$formId/export');
+  }
+
   Future<Uint8List> exportCompany(int companyId, {List<String>? fields}) async {
     final queryParams = fields != null && fields.isNotEmpty
         ? '?fields=${fields.join(',')}'

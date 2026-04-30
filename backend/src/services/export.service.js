@@ -122,3 +122,77 @@ export const generateCompanyWorkbook = async (companyId, fields = []) => {
 
   return workbook;
 };
+
+export const generateFormResponsesWorkbook = async (formId) => {
+  const { rows: formRows } = await query(
+    'SELECT "title" FROM "forms" WHERE "id" = $1 LIMIT 1',
+    [formId],
+  );
+
+  const form = formRows[0];
+
+  if (!form) {
+    return null;
+  }
+
+  const { rows: questionRows } = await query(
+    `SELECT fq."id", fq."question_text", fq."field_type"
+      FROM "form_question_map" fqm
+      INNER JOIN "form_questions" fq ON fq."id" = fqm."question_id"
+      WHERE fqm."form_id" = $1
+      ORDER BY fq."id" ASC`,
+    [formId],
+  );
+
+  const { rows: responseRows } = await query(
+    `SELECT fr."student_id", u."name", u."college_email_id", fr."question_id", fr."answer"
+      FROM "form_responses" fr
+      INNER JOIN "users" u ON u."id" = fr."student_id"
+      WHERE fr."form_id" = $1
+      ORDER BY u."name" ASC NULLS LAST`,
+    [formId],
+  );
+
+  const studentsMap = new Map();
+  responseRows.forEach((row) => {
+    if (!studentsMap.has(row.student_id)) {
+      studentsMap.set(row.student_id, {
+        name: row.name,
+        email: row.college_email_id,
+        answers: new Map(),
+      });
+    }
+    studentsMap.get(row.student_id).answers.set(row.question_id, row.answer);
+  });
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(form.title.substring(0, 31) || `Form_${formId}`);
+
+  worksheet.columns = [
+    { header: 'Name', key: 'name', width: 28 },
+    { header: 'College Email', key: 'college_email_id', width: 32 },
+    ...questionRows.map((question) => ({
+      header: decodeQuestionText(question.question_text, question.field_type).label,
+      key: `question_${question.id}`,
+      width: 28,
+    })),
+  ];
+
+  studentsMap.forEach((student) => {
+    const row = {
+      name: student.name,
+      college_email_id: student.email,
+    };
+
+    questionRows.forEach((question) => {
+      row[`question_${question.id}`] = student.answers.get(question.id) ?? '';
+    });
+
+    worksheet.addRow(row);
+  });
+
+  worksheet.getRow(1).font = { bold: true };
+  worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+  return workbook;
+};

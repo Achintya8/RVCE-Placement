@@ -70,3 +70,28 @@ export const getFormResponses = async (req, res, next) => {
   }
 };
 
+export const exportFormResponses = async (req, res, next) => {
+  try {
+    const formId = Number(req.params.formId);
+    
+    // Import dynamically to avoid circular dependencies if any, or just import at top.
+    // Wait, let's just add the import at the top of the file!
+    const { generateFormResponsesWorkbook } = await import('../services/export.service.js');
+    const workbook = await generateFormResponsesWorkbook(formId);
+
+    if (!workbook) {
+      throw new ApiError(404, 'Form not found.');
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader('Content-Disposition', `attachment; filename=form-${formId}-responses.xlsx`);
+    res.send(Buffer.from(buffer));
+  } catch (error) {
+    next(error);
+  }
+};
+
