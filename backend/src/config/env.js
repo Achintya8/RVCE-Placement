@@ -18,19 +18,16 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET ?? 'change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
-  aws: {
-    region: process.env.AWS_REGION ?? '',
-    bucket: process.env.AWS_S3_BUCKET ?? '',
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
-    folder: process.env.AWS_S3_FOLDER ?? 'mca-placement/resumes',
-    endpoint: process.env.AWS_S3_ENDPOINT ?? '',
-    forcePathStyle: readBoolean(process.env.AWS_S3_FORCE_PATH_STYLE),
-    publicBaseUrl: process.env.AWS_S3_PUBLIC_BASE_URL ?? '',
-  },
+  googleDriveFolderId: (() => {
+    const raw = process.env.GOOGLE_DRIVE_FOLDER_ID ?? '';
+    // Accept either a bare folder ID or a full Drive URL
+    const match = raw.match(/\/folders\/([^?/]+)/);
+    return match ? match[1] : raw;
+  })(),
   firebase: {
     projectId: process.env.FIREBASE_PROJECT_ID ?? '',
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? '',
     privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n') ?? '',
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET ?? `${process.env.FIREBASE_PROJECT_ID}.appspot.com`,
   },
 };

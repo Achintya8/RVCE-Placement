@@ -15,6 +15,7 @@ if (isFirebaseConfigured && admin.apps.length === 0) {
       clientEmail: env.firebase.clientEmail,
       privateKey: env.firebase.privateKey,
     }),
+    storageBucket: env.firebase.storageBucket,
   });
 } else if (admin.apps.length > 0) {
   firebaseApp = admin.app();

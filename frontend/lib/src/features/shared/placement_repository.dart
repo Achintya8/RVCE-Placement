@@ -7,6 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/network/api_client.dart';
 import 'models.dart';
 
@@ -16,10 +17,16 @@ class AuthRepository {
   AuthRepository(this._apiClient);
 
   final ApiClient _apiClient;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: const ['email']);
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: const ['email'],
+    clientId: AppConfig.googleClientId,
+  );
 
   Future<Session> loginWithGoogle() async {
-    final account = await _googleSignIn.signIn();
+    // On web, try to reuse an existing silent session first
+    GoogleSignInAccount? account = await _googleSignIn.signInSilently();
+    account ??= await _googleSignIn.signIn();
+
     if (account == null) {
       throw Exception('Google sign-in was cancelled.');
     }
@@ -27,7 +34,10 @@ class AuthRepository {
     final authentication = await account.authentication;
     final idToken = authentication.idToken;
     if (idToken == null) {
-      throw Exception('Google did not return an ID token.');
+      throw Exception(
+        'Google did not return an ID token.\n'
+        'Please ensure third-party cookies are enabled in Chrome and try again.',
+      );
     }
 
     final json = await _apiClient.postJson('/auth/google', {

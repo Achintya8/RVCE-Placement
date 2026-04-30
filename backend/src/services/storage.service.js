@@ -1,16 +1,9 @@
+import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
-
 import { env } from '../config/env.js';
-import {
-  buildS3ObjectUrl,
-  extractS3ObjectKeyFromUrl,
-  isS3Configured,
-  normalizeS3Folder,
-  s3Client,
-} from '../config/s3.js';
-import { ApiError } from '../utils/apiError.js';
+
+const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 
 const inferFileExtension = (fileName) => {
   const extension = path.extname(fileName ?? '').toLowerCase();
@@ -22,12 +15,9 @@ const inferFileExtension = (fileName) => {
   return extension;
 };
 
-const buildResumeObjectKey = ({ userId, fileName }) => {
-  const folder = normalizeS3Folder(env.aws.folder);
+const buildResumeFileName = ({ userId, fileName }) => {
   const extension = inferFileExtension(fileName);
-  const key = `user_${userId}_resume${extension}`;
-
-  return folder ? `${folder}/${key}` : key;
+  return `user_${userId}_resume${extension}`;
 };
 
 export const uploadResume = async ({
@@ -37,35 +27,34 @@ export const uploadResume = async ({
   existingUrl,
   userId,
 }) => {
-  if (!isS3Configured) {
-    throw new ApiError(500, 'AWS S3 is not configured.');
+  // Ensure the uploads directory exists
+  try {
+    await fs.mkdir(UPLOADS_DIR, { recursive: true });
+  } catch (error) {
+    console.error('Failed to create uploads directory:', error);
   }
 
-  const objectKey = buildResumeObjectKey({ userId, fileName });
-  const previousObjectKey = extractS3ObjectKeyFromUrl(existingUrl);
-
-  if (previousObjectKey && previousObjectKey !== objectKey) {
+  const resumeName = buildResumeFileName({ userId, fileName });
+  const filePath = path.join(UPLOADS_DIR, resumeName);
+  
+  // If there's an existing URL, it will just get overwritten because we use a deterministic filename based on userId.
+  // So we don't strictly need to delete the old file unless the extension changes, but for safety:
+  if (existingUrl && existingUrl.includes('/uploads/')) {
     try {
-      await s3Client.send(
-        new DeleteObjectCommand({
-          Bucket: env.aws.bucket,
-          Key: previousObjectKey,
-        }),
-      );
+      const oldFileName = existingUrl.split('/').pop();
+      if (oldFileName && oldFileName !== resumeName) {
+        const oldFilePath = path.join(UPLOADS_DIR, oldFileName);
+        await fs.unlink(oldFilePath);
+      }
     } catch (error) {
-      console.warn('Failed to remove old resume from S3:', error.message);
+      // Ignore if file doesn't exist
     }
   }
 
-  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: env.aws.bucket,
-      Key: objectKey,
-      Body: buffer,
-      ContentType: mimeType || 'application/octet-stream',
-      CacheControl: 'private, max-age=0, no-cache',
-    }),
-  );
+  // Write the file locally
+  await fs.writeFile(filePath, buffer);
 
-  return buildS3ObjectUrl(objectKey);
+  // Return the public URL to access the file
+  // Using localhost:4000 dynamically based on env port
+  return `http://localhost:${env.port}/uploads/${resumeName}`;
 };

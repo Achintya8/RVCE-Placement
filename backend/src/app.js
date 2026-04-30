@@ -14,6 +14,9 @@ app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
+// Serve local file uploads
+app.use('/uploads', express.static('uploads'));
+
 app.get('/health', (_req, res) => {
   res.json({
     ok: true,
