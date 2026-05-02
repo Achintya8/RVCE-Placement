@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../core/network/api_client.dart';
+import '../core/theme/app_theme.dart';
 import '../features/auth/auth_controller.dart';
 import '../features/shared/models.dart';
 
@@ -50,7 +51,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final activePanel = panels[_selectedIndex.clamp(0, panels.length - 1)];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF9EF),
+      backgroundColor: AppColors.white,
       bottomNavigationBar: isWide
           ? null
           : NavigationBar(
@@ -68,7 +69,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       body: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFFFF3D6), Color(0xFFF7E6DE)],
+            colors: [AppColors.white, AppColors.lightBlue],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -1490,7 +1491,7 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                             width: 320,
                             child: DecoratedBox(
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFFFBF3),
+                                color: AppColors.lightBlue,
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               child: Padding(
@@ -1758,7 +1759,7 @@ class _DynamicFormSheetState extends ConsumerState<_DynamicFormSheet> {
         builder: (context, controller) {
           return DecoratedBox(
             decoration: const BoxDecoration(
-              color: Color(0xFFFFFBF3),
+              color: AppColors.lightBlue,
               borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
             ),
             child: SingleChildScrollView(
@@ -1946,7 +1947,7 @@ class _InfoPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF3),
+        color: AppColors.lightBlue,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Padding(
