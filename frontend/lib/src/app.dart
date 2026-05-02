@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/theme/app_theme.dart';
+import 'core/theme/app_theme.dart' show AppColors, buildAppTheme;
 import 'features/auth/auth_controller.dart';
 import 'ui/dashboard_screen.dart';
 import 'ui/home_screen.dart';
@@ -33,15 +33,27 @@ class _SplashView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFFFF3D6), Color(0xFFE2F3EF), Color(0xFFF7E6DE)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      backgroundColor: AppColors.white,
+      body: Stack(
+        children: [
+          Positioned(
+            top: -80,
+            right: -60,
+            child: IgnorePointer(
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: const BoxDecoration(
+                  color: AppColors.lightBlue,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
           ),
-        ),
-        child: const Center(child: CircularProgressIndicator()),
+          const Center(
+            child: CircularProgressIndicator(color: AppColors.primaryBlue),
+          ),
+        ],
       ),
     );
   }
