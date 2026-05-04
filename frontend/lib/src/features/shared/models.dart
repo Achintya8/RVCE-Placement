@@ -245,3 +245,70 @@ class FormResponseRecord {
     );
   }
 }
+
+class ChatUser {
+  const ChatUser({
+    required this.id,
+    required this.name,
+    this.email,
+  });
+
+  final int id;
+  final String name;
+  final String? email;
+
+  factory ChatUser.fromJson(Map<String, dynamic> json) {
+    return ChatUser(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: json['name'] as String? ?? '',
+      email: json['email'] as String?,
+    );
+  }
+}
+
+class ChatMessage {
+  const ChatMessage({
+    required this.id,
+    required this.sender,
+    required this.messageText,
+    required this.createdAt,
+    this.mentionedUsers = const [],
+  });
+
+  final int id;
+  final ChatUser sender;
+  final String messageText;
+  final String createdAt;
+  final List<ChatUser> mentionedUsers;
+
+  factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    return ChatMessage(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      sender: ChatUser.fromJson(json['sender'] as Map<String, dynamic>? ?? const {}),
+      messageText: json['messageText'] as String? ?? '',
+      createdAt: json['createdAt'] as String? ?? '',
+      mentionedUsers: (json['mentionedUsers'] as List<dynamic>? ?? const [])
+          .map((item) => ChatUser.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class ChatMessagesResponse {
+  const ChatMessagesResponse({
+    required this.messages,
+    required this.total,
+  });
+
+  final List<ChatMessage> messages;
+  final int total;
+
+  factory ChatMessagesResponse.fromJson(Map<String, dynamic> json) {
+    return ChatMessagesResponse(
+      messages: (json['messages'] as List<dynamic>? ?? const [])
+          .map((item) => ChatMessage.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      total: (json['total'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
