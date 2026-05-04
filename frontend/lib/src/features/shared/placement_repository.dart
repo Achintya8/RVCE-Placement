@@ -289,4 +289,24 @@ class PlacementRepository {
       return file.path;
     }
   }
+
+  Future<ChatMessage> sendMessage(String messageText) async {
+    final json = await _apiClient.postJson('/messages', {
+      'messageText': messageText,
+    });
+    return ChatMessage.fromJson(json);
+  }
+
+  Future<ChatMessagesResponse> getMessages({int limit = 50, int offset = 0}) async {
+    final json = await _apiClient.getJson(
+      '/messages?limit=$limit&offset=$offset',
+    );
+    return ChatMessagesResponse.fromJson(json);
+  }
+
+  Future<List<ChatUser>> getAllUsersForMention() async {
+    final json = await _apiClient.getJson('/messages/users/all');
+    final users = (json['users'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+    return users.map((item) => ChatUser.fromJson(item)).toList();
+  }
 }

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../core/network/api_client.dart';
 import '../core/theme/app_theme.dart';
 import '../features/auth/auth_controller.dart';
+import '../features/chat/chat_screen.dart';
 import '../features/shared/models.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -38,6 +39,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         label: 'Forms',
         icon: Icons.dynamic_form_outlined,
         child: const _FormsPanel(),
+      ),
+      (
+        label: 'Chat',
+        icon: Icons.chat_outlined,
+        child: const ChatScreen(),
       ),
       if (session.isSpc)
         (
