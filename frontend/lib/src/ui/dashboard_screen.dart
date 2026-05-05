@@ -40,11 +40,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         icon: Icons.dynamic_form_outlined,
         child: const _FormsPanel(),
       ),
-      (
-        label: 'Chat',
-        icon: Icons.chat_outlined,
-        child: const ChatScreen(),
-      ),
+      (label: 'Chat', icon: Icons.chat_outlined, child: const ChatScreen()),
       if (session.isSpc)
         (
           label: 'SPC Admin',
@@ -60,29 +56,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       backgroundColor: AppColors.white,
       bottomNavigationBar: isWide
           ? null
-          : NavigationBar(
+          : _MockupBottomNav(
               selectedIndex: _selectedIndex,
-              destinations: [
-                for (final panel in panels)
-                  NavigationDestination(
-                    icon: Icon(panel.icon),
-                    label: panel.label,
-                  ),
-              ],
-              onDestinationSelected: (index) =>
-                  setState(() => _selectedIndex = index),
+              panels: panels,
+              onSelected: (index) => setState(() => _selectedIndex = index),
             ),
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.white, AppColors.lightBlue],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      body: _PlacementScaffoldBackground(
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, isWide ? 20 : 6),
             child: isWide
                 ? Row(
                     children: [
@@ -111,10 +93,127 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 : Column(
                     children: [
                       _HeaderBar(session: session),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       Expanded(child: activePanel.child),
                     ],
                   ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlacementScaffoldBackground extends StatelessWidget {
+  const _PlacementScaffoldBackground({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned(
+          top: -245,
+          left: -190,
+          right: -190,
+          child: Container(
+            height: 520,
+            decoration: const BoxDecoration(
+              color: AppColors.lightBlue,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        Positioned(
+          top: -175,
+          left: -100,
+          right: -100,
+          child: Container(
+            height: 410,
+            decoration: const BoxDecoration(
+              color: AppColors.white,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        child,
+      ],
+    );
+  }
+}
+
+class _MockupBottomNav extends StatelessWidget {
+  const _MockupBottomNav({
+    required this.selectedIndex,
+    required this.panels,
+    required this.onSelected,
+  });
+
+  final int selectedIndex;
+  final List<({String label, IconData icon, Widget child})> panels;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(40, 8, 40, 18),
+        child: Container(
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 28,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              for (var i = 0; i < panels.length; i++)
+                Flexible(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () => onSelected(i),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            panels[i].icon,
+                            color: i == selectedIndex
+                                ? AppColors.textDark
+                                : AppColors.mutedText,
+                            size: 25,
+                          ),
+                          if (i == selectedIndex) ...[
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                panels[i].label,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppColors.textDark,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -139,8 +238,15 @@ class _SideRail extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
-        borderRadius: BorderRadius.circular(28),
+        color: AppColors.panelBlack,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -149,15 +255,16 @@ class _SideRail extends ConsumerWidget {
           children: [
             Text(
               'Placement Desk',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               session.isSpc ? 'Student + SPC access' : 'Student access',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.black.withValues(alpha: 0.58),
+                color: Colors.white.withValues(alpha: 0.58),
               ),
             ),
             const SizedBox(height: 24),
@@ -198,43 +305,78 @@ class _HeaderBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(28),
-      ),
+      decoration: const BoxDecoration(color: Colors.transparent),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-        child: Row(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome, ${session.user.name.isEmpty ? 'Student' : session.user.name}',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    session.isSpc
-                        ? 'You can manage placement operations and still act as a student.'
-                        : 'Keep your verified profile sharp and respond quickly to drives.',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.black.withValues(alpha: 0.65),
-                    ),
-                  ),
-                ],
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Image(
+                  image: AssetImage('assets/images/rvce-logo.png'),
+                  width: 178,
+                  fit: BoxFit.contain,
+                ),
+              ],
             ),
-            if (MediaQuery.of(context).size.width > 980)
-              OutlinedButton.icon(
-                onPressed: () =>
-                    ref.read(authControllerProvider.notifier).logout(),
-                icon: const Icon(Icons.logout),
-                label: const Text('Logout'),
-              ),
+            const SizedBox(height: 10),
+            Text(
+              'Placement',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w400),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hello,',
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
+                              color: AppColors.textDark,
+                              fontWeight: FontWeight.w900,
+                              height: 0.95,
+                            ),
+                      ),
+                      Text(
+                        session.user.name.isEmpty
+                            ? '<Student Name>'
+                            : session.user.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
+                              color: AppColors.textDark,
+                              fontWeight: FontWeight.w900,
+                              height: 1.05,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        session.isSpc
+                            ? 'HERE IS YOUR PLACEMENT OVERVIEW!'
+                            : 'HERE IS YOUR PLACEMENT OVERVIEW!',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: AppColors.mutedText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (MediaQuery.of(context).size.width > 980)
+                  IconButton.filledTonal(
+                    onPressed: () =>
+                        ref.read(authControllerProvider.notifier).logout(),
+                    icon: const Icon(Icons.logout),
+                  ),
+              ],
+            ),
           ],
         ),
       ),
@@ -1143,7 +1285,10 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
           .exportFormResponses(formId);
       final path = await ref
           .read(placementRepositoryProvider)
-          .persistExportFile(companyId: formId, bytes: bytes); // We reuse persistExportFile, the name doesn't matter much or we can rename it. Actually, wait! The generated file name will be company_$formId.xlsx. Let me just use persistExportFile for now.
+          .persistExportFile(
+            companyId: formId,
+            bytes: bytes,
+          ); // We reuse persistExportFile, the name doesn't matter much or we can rename it. Actually, wait! The generated file name will be company_$formId.xlsx. Let me just use persistExportFile for now.
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -1179,9 +1324,8 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                           const DataColumn(label: Text('USN')),
                           const DataColumn(label: Text('Email')),
                           ...responses.first.answers.map(
-                            (answer) => DataColumn(
-                              label: Text(answer.questionText),
-                            ),
+                            (answer) =>
+                                DataColumn(label: Text(answer.questionText)),
                           ),
                         ],
                         rows: responses.map((response) {
@@ -1191,7 +1335,8 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                               DataCell(Text(response.usn)),
                               DataCell(Text(response.collegeEmailId)),
                               ...response.answers.map(
-                                (answer) => DataCell(Text(answer.answer ?? '-')),
+                                (answer) =>
+                                    DataCell(Text(answer.answer ?? '-')),
                               ),
                             ],
                           );
@@ -1400,7 +1545,7 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                         _FieldBox(
                           width: 180,
                           child: DropdownButtonFormField<String>(
-                            value: _formType,
+                            initialValue: _formType,
                             items: const ['consent', 'tracker', 'custom']
                                 .map(
                                   (type) => DropdownMenuItem(
@@ -1422,7 +1567,7 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                         _FieldBox(
                           width: 240,
                           child: DropdownButtonFormField<int?>(
-                            value: _selectedCompanyId,
+                            initialValue: _selectedCompanyId,
                             items: [
                               const DropdownMenuItem<int?>(
                                 value: null,
@@ -1463,7 +1608,7 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                         _FieldBox(
                           width: 260,
                           child: DropdownButtonFormField<int?>(
-                            value: _mappingFormId,
+                            initialValue: _mappingFormId,
                             items: [
                               const DropdownMenuItem<int?>(
                                 value: null,
@@ -1497,8 +1642,11 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                             width: 320,
                             child: DecoratedBox(
                               decoration: BoxDecoration(
-                                color: AppColors.lightBlue,
-                                borderRadius: BorderRadius.circular(18),
+                                color: Colors.black.withValues(alpha: 0.34),
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                ),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.all(14),
@@ -1582,10 +1730,10 @@ class _AdminPanelState extends ConsumerState<_AdminPanel> {
                         width: 320,
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
+                            color: Colors.black.withValues(alpha: 0.34),
+                            borderRadius: BorderRadius.circular(22),
                             border: Border.all(
-                              color: Colors.black.withValues(alpha: 0.06),
+                              color: Colors.white.withValues(alpha: 0.12),
                             ),
                           ),
                           child: Padding(
@@ -1765,7 +1913,11 @@ class _DynamicFormSheetState extends ConsumerState<_DynamicFormSheet> {
         builder: (context, controller) {
           return DecoratedBox(
             decoration: const BoxDecoration(
-              color: AppColors.lightBlue,
+              gradient: LinearGradient(
+                colors: [AppColors.panelTop, AppColors.panelBlack],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
               borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
             ),
             child: SingleChildScrollView(
@@ -1890,41 +2042,105 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(22),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
+    final darkInputTheme = Theme.of(context).copyWith(
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.black.withValues(alpha: 0.36),
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.64)),
+        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.70)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: const BorderSide(color: AppColors.emerald, width: 1.8),
+        ),
+      ),
+      textTheme: Theme.of(
+        context,
+      ).textTheme.apply(bodyColor: Colors.white, displayColor: Colors.white),
+      dropdownMenuTheme: const DropdownMenuThemeData(
+        textStyle: TextStyle(color: Colors.white),
+      ),
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.panelTop, AppColors.panelBlack],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(34),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 28,
+            offset: const Offset(0, 16),
+          ),
+          BoxShadow(
+            color: AppColors.lightBlue.withValues(alpha: 0.72),
+            blurRadius: 42,
+            spreadRadius: 7,
+          ),
+        ],
+      ),
+      child: Theme(
+        data: darkInputTheme,
+        child: DefaultTextStyle.merge(
+          style: const TextStyle(color: Colors.white),
+          child: IconTheme.merge(
+            data: const IconThemeData(color: Colors.white),
+            child: Padding(
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        subtitle,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.black.withValues(alpha: 0.65),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              subtitle,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.62),
+                                  ),
+                            ),
+                          ],
                         ),
                       ),
+                      ...[action].whereType<Widget>(),
                     ],
                   ),
-                ),
-                ...[action].whereType<Widget>(),
-              ],
+                  const SizedBox(height: 18),
+                  child,
+                  if (footer != null) ...[const SizedBox(height: 18), footer!],
+                ],
+              ),
             ),
-            const SizedBox(height: 18),
-            child,
-            if (footer != null) ...[const SizedBox(height: 18), footer!],
-          ],
+          ),
         ),
       ),
     );
@@ -1953,16 +2169,34 @@ class _InfoPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.lightBlue,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            Colors.black.withValues(alpha: 0.78),
+            Colors.black.withValues(alpha: 0.36),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: Theme.of(context).textTheme.labelMedium),
-            Text(value, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Colors.white.withValues(alpha: 0.64),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ],
         ),
       ),
@@ -1985,9 +2219,9 @@ class _ToggleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        color: Colors.black.withValues(alpha: 0.36),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
