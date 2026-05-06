@@ -13,6 +13,7 @@ abstract final class AppColors {
   static const Color cobalt = Color(0xFF1432C7);
   static const Color primaryBlue = Color(0xFF0070CC);
   static const Color textDark = Color(0xFF000000);
+  static const Color textLight = Color(0xFFEDEDED);
   static const Color mutedText = Color(0xFF7A7F87);
 }
 

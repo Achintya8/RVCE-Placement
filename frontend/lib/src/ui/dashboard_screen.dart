@@ -53,18 +53,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final activePanel = panels[_selectedIndex.clamp(0, panels.length - 1)];
 
     return Scaffold(
-      backgroundColor: AppColors.white,
-      bottomNavigationBar: isWide
-          ? null
-          : _MockupBottomNav(
-              selectedIndex: _selectedIndex,
-              panels: panels,
-              onSelected: (index) => setState(() => _selectedIndex = index),
-            ),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: _PlacementScaffoldBackground(
         child: SafeArea(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(20, 16, 20, isWide ? 20 : 6),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, isWide ? 20 : 18),
             child: isWide
                 ? Row(
                     children: [
@@ -95,6 +88,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       _HeaderBar(session: session),
                       const SizedBox(height: 20),
                       Expanded(child: activePanel.child),
+                      const SizedBox(height: 16),
+                      Text(
+                        _mobileMenuTitle(activePanel.label),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.50),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _MockupBottomNav(
+                        selectedIndex: _selectedIndex,
+                        panels: panels,
+                        onSelected: (index) =>
+                            setState(() => _selectedIndex = index),
+                      ),
                     ],
                   ),
           ),
@@ -103,6 +114,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 }
+
+String _mobileMenuTitle(String label) => switch (label) {
+  'Companies' => 'Companies List',
+  _ => label,
+};
 
 class _PlacementScaffoldBackground extends StatelessWidget {
   const _PlacementScaffoldBackground({required this.child});
@@ -163,7 +179,7 @@ class _MockupBottomNav extends StatelessWidget {
         child: Container(
           height: 56,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.94),
+            color: AppColors.white.withValues(alpha: 0.94),
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
@@ -256,16 +272,16 @@ class _SideRail extends ConsumerWidget {
             Text(
               'Placement Desk',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
+                color: AppColors.textLight,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               session.isSpc ? 'Student + SPC access' : 'Student access',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withValues(alpha: 0.58),
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
             ),
             const SizedBox(height: 24),
             Expanded(
@@ -275,6 +291,21 @@ class _SideRail extends ConsumerWidget {
                 selectedIndex: selectedIndex,
                 groupAlignment: -1,
                 onDestinationSelected: onSelected,
+                indicatorColor: AppColors.lightBlue,
+                selectedIconTheme: const IconThemeData(
+                  color: AppColors.panelBlack,
+                ),
+                unselectedIconTheme: const IconThemeData(
+                  color: AppColors.textLight,
+                ),
+                selectedLabelTextStyle: const TextStyle(
+                  color: AppColors.textLight,
+                  fontWeight: FontWeight.w700,
+                ),
+                unselectedLabelTextStyle: const TextStyle(
+                  color: AppColors.textLight,
+                  fontWeight: FontWeight.w600,
+                ),
                 destinations: [
                   for (final panel in panels)
                     NavigationRailDestination(
@@ -324,9 +355,10 @@ class _HeaderBar extends ConsumerWidget {
             const SizedBox(height: 10),
             Text(
               'Placement',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w400),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppColors.textDark,
+                fontWeight: FontWeight.w400,
+              ),
             ),
             const SizedBox(height: 24),
             Row(
@@ -369,12 +401,13 @@ class _HeaderBar extends ConsumerWidget {
                     ],
                   ),
                 ),
-                if (MediaQuery.of(context).size.width > 980)
+                if (MediaQuery.of(context).size.width > 980) ...[
                   IconButton.filledTonal(
                     onPressed: () =>
                         ref.read(authControllerProvider.notifier).logout(),
                     icon: const Icon(Icons.logout),
                   ),
+                ],
               ],
             ),
           ],
@@ -601,7 +634,9 @@ class _ProfilePanelState extends ConsumerState<_ProfilePanel> {
                     if (user.resumeUrl != null)
                       Text(
                         'Resume: ${user.resumeUrl}',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textLight,
+                        ),
                       ),
                   ],
                 ),
@@ -2042,12 +2077,18 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const darkText = AppColors.textLight;
     final darkInputTheme = Theme.of(context).copyWith(
+      colorScheme: Theme.of(
+        context,
+      ).colorScheme.copyWith(onSurface: darkText, onSurfaceVariant: darkText),
+      disabledColor: darkText.withValues(alpha: 0.72),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.black.withValues(alpha: 0.36),
-        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.64)),
-        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.70)),
+        hintStyle: TextStyle(color: darkText.withValues(alpha: 0.64)),
+        labelStyle: TextStyle(color: darkText.withValues(alpha: 0.70)),
+        floatingLabelStyle: const TextStyle(color: darkText),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 16,
@@ -2067,9 +2108,9 @@ class _SectionCard extends StatelessWidget {
       ),
       textTheme: Theme.of(
         context,
-      ).textTheme.apply(bodyColor: Colors.white, displayColor: Colors.white),
+      ).textTheme.apply(bodyColor: darkText, displayColor: darkText),
       dropdownMenuTheme: const DropdownMenuThemeData(
-        textStyle: TextStyle(color: Colors.white),
+        textStyle: TextStyle(color: darkText),
       ),
     );
 
@@ -2097,9 +2138,9 @@ class _SectionCard extends StatelessWidget {
       child: Theme(
         data: darkInputTheme,
         child: DefaultTextStyle.merge(
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: darkText),
           child: IconTheme.merge(
-            data: const IconThemeData(color: Colors.white),
+            data: const IconThemeData(color: darkText),
             child: Padding(
               padding: const EdgeInsets.all(22),
               child: Column(
@@ -2116,7 +2157,7 @@ class _SectionCard extends StatelessWidget {
                               title,
                               style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(
-                                    color: Colors.white,
+                                    color: darkText,
                                     fontWeight: FontWeight.w900,
                                   ),
                             ),
@@ -2125,7 +2166,7 @@ class _SectionCard extends StatelessWidget {
                               subtitle,
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.62),
+                                    color: darkText.withValues(alpha: 0.70),
                                   ),
                             ),
                           ],
@@ -2186,14 +2227,14 @@ class _InfoPill extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Colors.white.withValues(alpha: 0.64),
+                color: AppColors.textLight.withValues(alpha: 0.70),
                 fontWeight: FontWeight.w700,
               ),
             ),
             Text(
               value,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.white,
+                color: AppColors.textLight,
                 fontWeight: FontWeight.w900,
               ),
             ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/theme/app_theme.dart' show AppColors, buildAppTheme;
+import 'core/theme/app_theme.dart';
 import 'features/auth/auth_controller.dart';
 import 'ui/dashboard_screen.dart';
 import 'ui/home_screen.dart';
@@ -78,7 +78,6 @@ class _SplashView extends StatelessWidget {
                   'P\nL\nA\nC\nE\nM\nE\nN\nT\nS',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.textDark,
                     fontWeight: FontWeight.w800,
                     height: 1.18,
                     letterSpacing: 0,

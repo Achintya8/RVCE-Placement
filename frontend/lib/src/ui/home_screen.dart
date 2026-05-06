@@ -126,10 +126,9 @@ class _PlacementHeader extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           'Placement',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: AppColors.textDark,
-            fontWeight: FontWeight.w400,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w400),
         ),
       ],
     );
@@ -222,7 +221,7 @@ class _LoginCard extends StatelessWidget {
                 'Sign in with your RVCE Google account.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.62),
+                  color: AppColors.textLight.withValues(alpha: 0.70),
                   height: 1.35,
                 ),
               ),
