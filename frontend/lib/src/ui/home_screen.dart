@@ -42,31 +42,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: Stack(
         clipBehavior: Clip.none,
         children: [
-          Positioned(
-            top: -100,
-            right: -70,
-            child: _DecorCircle(size: 260),
-          ),
-          Positioned(
-            bottom: -90,
-            left: -50,
-            child: _DecorCircle(size: 240),
-          ),
+          Positioned(top: -165, right: -175, child: _DecorCircle(size: 480)),
+          Positioned(bottom: -175, left: -205, child: _DecorCircle(size: 520)),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
                   child: Column(
                     children: [
                       const _PlacementHeader(),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 86),
                       _LoginCard(
                         isSpc: _isSpc,
                         isBusy: isBusy,
-                        onToggleStudent: () =>
-                            setState(() => _isSpc = false),
+                        onToggleStudent: () => setState(() => _isSpc = false),
                         onToggleSpc: () => setState(() => _isSpc = true),
                         usernameController: _usernameController,
                         passwordController: _passwordController,
@@ -104,7 +98,7 @@ class _DecorCircle extends StatelessWidget {
         width: size,
         height: size,
         decoration: const BoxDecoration(
-          color: AppColors.lightBlue,
+          color: AppColors.softBlue,
           shape: BoxShape.circle,
         ),
       ),
@@ -119,42 +113,22 @@ class _PlacementHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: AppColors.lightBlue,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.school_rounded,
-                color: AppColors.primaryBlue,
-                size: 36,
-              ),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  'RV College of Engineering',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textDark,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-              ),
-            ],
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Image(
+              image: AssetImage('assets/images/rvce-logo.png'),
+              width: 178,
+              fit: BoxFit.contain,
+            ),
+          ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         Text(
           'Placement',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppColors.textDark,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w400),
         ),
       ],
     );
@@ -211,17 +185,26 @@ class _LoginCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.cardGrey,
-        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          colors: [AppColors.cardGrey, AppColors.panelBlack],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(34),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
+            color: Colors.black.withValues(alpha: 0.30),
+            blurRadius: 34,
+            offset: const Offset(0, 18),
+          ),
+          BoxShadow(
+            color: AppColors.lightBlue.withValues(alpha: 0.85),
+            blurRadius: 46,
+            spreadRadius: 10,
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
       child: Theme(
         data: fieldTheme,
         child: Column(
@@ -232,17 +215,17 @@ class _LoginCard extends StatelessWidget {
               onStudent: onToggleStudent,
               onSpc: onToggleSpc,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             if (!isSpc) ...[
               Text(
                 'Sign in with your RVCE Google account.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.92),
-                      height: 1.35,
-                    ),
+                  color: AppColors.textLight.withValues(alpha: 0.70),
+                  height: 1.35,
+                ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 10),
               _GoogleSignInButton(onPressed: isBusy ? null : onGoogle),
             ] else ...[
               TextField(
@@ -250,11 +233,9 @@ class _LoginCard extends StatelessWidget {
                 enabled: !isBusy,
                 textInputAction: TextInputAction.next,
                 style: const TextStyle(color: AppColors.textDark),
-                decoration: const InputDecoration(
-                  hintText: 'Username',
-                ),
+                decoration: const InputDecoration(hintText: 'Username'),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               TextField(
                 controller: passwordController,
                 enabled: !isBusy,
@@ -264,11 +245,9 @@ class _LoginCard extends StatelessWidget {
                   if (!isBusy) onSpcSignIn();
                 },
                 style: const TextStyle(color: AppColors.textDark),
-                decoration: const InputDecoration(
-                  hintText: 'Password',
-                ),
+                decoration: const InputDecoration(hintText: 'Password'),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
@@ -300,8 +279,8 @@ class _RoleToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.lightBlue,
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.softBlue,
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         children: [
@@ -313,11 +292,7 @@ class _RoleToggle extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: _ToggleSegment(
-              label: 'SPC',
-              selected: isSpc,
-              onTap: onSpc,
-            ),
+            child: _ToggleSegment(label: 'SPC', selected: isSpc, onTap: onSpc),
           ),
         ],
       ),
@@ -342,22 +317,22 @@ class _ToggleSegment extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(16),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 13),
           decoration: BoxDecoration(
             color: selected ? AppColors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(11),
+            borderRadius: BorderRadius.circular(16),
           ),
           alignment: Alignment.center,
           child: Text(
             label,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
-                ),
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
           ),
         ),
       ),
@@ -378,6 +353,10 @@ class _GoogleSignInButton extends StatelessWidget {
         onPressed: onPressed,
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
+          backgroundColor: AppColors.primaryBlue,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/theme/app_theme.dart' show AppColors, buildAppTheme;
+import 'core/theme/app_theme.dart';
 import 'features/auth/auth_controller.dart';
 import 'ui/dashboard_screen.dart';
 import 'ui/home_screen.dart';
@@ -37,12 +37,12 @@ class _SplashView extends StatelessWidget {
       body: Stack(
         children: [
           Positioned(
-            top: -80,
-            right: -60,
+            top: -220,
+            left: -170,
+            right: -170,
             child: IgnorePointer(
               child: Container(
-                width: 200,
-                height: 200,
+                height: 520,
                 decoration: const BoxDecoration(
                   color: AppColors.lightBlue,
                   shape: BoxShape.circle,
@@ -50,8 +50,50 @@ class _SplashView extends StatelessWidget {
               ),
             ),
           ),
-          const Center(
-            child: CircularProgressIndicator(color: AppColors.primaryBlue),
+          Positioned(
+            bottom: -210,
+            left: -180,
+            right: -180,
+            child: IgnorePointer(
+              child: Container(
+                height: 500,
+                decoration: const BoxDecoration(
+                  color: AppColors.lightBlue,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Image(
+                  image: AssetImage('assets/images/rvce-logo.png'),
+                  width: 220,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 28),
+                Text(
+                  'P\nL\nA\nC\nE\nM\nE\nN\nT\nS',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    height: 1.18,
+                    letterSpacing: 0,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: AppColors.primaryBlue,
+                    strokeWidth: 2.8,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
