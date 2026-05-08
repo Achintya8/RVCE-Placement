@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RVCE Placement">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22d3ee"/>
+      <stop offset="100%" style="stop-color:#6366f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#0c1222"/>
+  <rect x="64" y="64" width="384" height="384" rx="80" fill="url(#g)" opacity="0.92"/>
+  <path fill="#0c1222" d="M156 176h200v48H156zm0 88h140v48H156zm0 88h200v48H156z" opacity="0.35"/>
+  <path fill="#f8fafc" d="M176 152h160c22 0 40 18 40 40v128c0 22-18 40-40 40H176c-22 0-40-18-40-40V192c0-22 18-40 40-40zm8 32v144h144V184H184zm32 32h80v16h-80zm0 40h56v16h-56z"/>
+</svg>

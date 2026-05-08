@@ -1,0 +1,690 @@
+/* RV placement portal — mirrors Flutter AppColors */
+:root {
+  --plc-white: #ffffff;
+  --plc-light-blue: #e1f0ff;
+  --plc-card-grey: #4a4a4a;
+  --plc-primary: #0070cc;
+  --plc-text: #000000;
+  --plc-error: #b00020;
+  --plc-radius: 16px;
+  --plc-radius-lg: 18px;
+  --plc-radius-xl: 28px;
+}
+
+.plc-login-page {
+  min-height: 100dvh;
+  background: var(--plc-white);
+  position: relative;
+  overflow: hidden;
+}
+
+.plc-decor-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--plc-light-blue);
+  pointer-events: none;
+}
+
+.plc-login-inner {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 24px;
+}
+
+.plc-login-stack {
+  width: 100%;
+  max-width: 420px;
+}
+
+.plc-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--plc-light-blue);
+  border-radius: var(--plc-radius);
+  margin: 0 auto;
+}
+
+.plc-header-badge svg {
+  color: var(--plc-primary);
+  flex-shrink: 0;
+}
+
+.plc-header-badge span {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--plc-text);
+  text-align: center;
+}
+
+.plc-login-title {
+  text-align: center;
+  margin: 14px 0 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--plc-text);
+}
+
+.plc-login-card {
+  margin-top: 28px;
+  background: var(--plc-card-grey);
+  border-radius: var(--plc-radius-lg);
+  padding: 20px;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
+}
+
+.plc-role-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--plc-light-blue);
+  border-radius: 14px;
+}
+
+.plc-role-toggle button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 12px;
+  border-radius: 11px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--plc-text);
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.plc-role-toggle button.is-active {
+  background: var(--plc-white);
+}
+
+.plc-login-hint {
+  text-align: center;
+  margin: 20px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.plc-input {
+  width: 100%;
+  margin-top: 14px;
+  padding: 16px;
+  border: none;
+  border-radius: var(--plc-radius);
+  background: var(--plc-light-blue);
+  font-size: 1rem;
+  color: var(--plc-text);
+  box-sizing: border-box;
+}
+
+.plc-input:focus {
+  outline: 2px solid var(--plc-primary);
+  outline-offset: 0;
+}
+
+.plc-input:first-of-type {
+  margin-top: 20px;
+}
+
+.plc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: var(--plc-radius);
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.plc-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.plc-btn-primary {
+  background: var(--plc-primary);
+  color: var(--plc-white);
+  width: 100%;
+  margin-top: 20px;
+}
+
+.plc-btn-google-icon {
+  width: 22px;
+  height: 22px;
+  background: var(--plc-white);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+  color: #4285f4;
+}
+
+.plc-google-wrap {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.plc-google-wrap > div {
+  width: 100% !important;
+}
+
+.plc-splash {
+  min-height: 100dvh;
+  background: var(--plc-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plc-splash-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--plc-light-blue);
+  border-top-color: var(--plc-primary);
+  border-radius: 50%;
+  animation: plc-spin 0.8s linear infinite;
+}
+
+@keyframes plc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dashboard */
+.plc-dash {
+  min-height: 100dvh;
+  background: linear-gradient(
+    135deg,
+    var(--plc-white) 0%,
+    var(--plc-light-blue) 100%
+  );
+}
+
+.plc-dash-inner {
+  padding: 20px;
+  min-height: 100dvh;
+  box-sizing: border-box;
+}
+
+.plc-dash-wide {
+  display: flex;
+  gap: 18px;
+  align-items: stretch;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.plc-side-rail {
+  width: 280px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: var(--plc-radius-xl);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.plc-side-rail h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.plc-side-rail .muted {
+  margin: 8px 0 0;
+  color: rgba(0, 0, 0, 0.58);
+  font-size: 0.95rem;
+}
+
+.plc-rail-nav {
+  margin-top: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.plc-rail-nav button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  text-align: left;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: var(--plc-text);
+}
+
+.plc-rail-nav button.is-active {
+  background: var(--plc-light-blue);
+  font-weight: 700;
+}
+
+.plc-dash-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.plc-header-bar {
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: var(--plc-radius-xl);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.plc-header-bar h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.plc-header-bar p {
+  margin: 6px 0 0;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.plc-btn-outline {
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: var(--plc-text);
+  padding: 10px 16px;
+  border-radius: var(--plc-radius);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.plc-panel-scroll {
+  margin-top: 16px;
+  flex: 1;
+  overflow: auto;
+  min-height: 200px;
+}
+
+.plc-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+  z-index: 20;
+}
+
+.plc-bottom-nav button {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 8px 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.plc-bottom-nav button.is-active {
+  color: var(--plc-primary);
+  font-weight: 700;
+}
+
+.plc-dash-narrow .plc-panel-scroll {
+  padding-bottom: 72px;
+}
+
+/* Cards & form fields inside dashboard */
+.plc-card {
+  background: var(--plc-white);
+  border-radius: var(--plc-radius-lg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 22px;
+  margin-bottom: 18px;
+}
+
+.plc-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.plc-card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.plc-card-sub {
+  margin: 6px 0 0;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 0.95rem;
+}
+
+.plc-card-body {
+  margin-top: 18px;
+}
+
+.plc-card-footer {
+  margin-top: 18px;
+}
+
+.plc-field-box {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.plc-label-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plc-label-input label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.plc-label-input input,
+.plc-label-input select,
+.plc-label-input textarea {
+  padding: 12px 14px;
+  border: none;
+  border-radius: var(--plc-radius);
+  background: var(--plc-light-blue);
+  font-size: 0.95rem;
+}
+
+.plc-label-input input:disabled,
+.plc-label-input select:disabled {
+  opacity: 0.65;
+}
+
+.plc-form-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.plc-pill {
+  background: var(--plc-light-blue);
+  border-radius: var(--plc-radius);
+  padding: 10px 14px;
+  min-width: 100px;
+}
+
+.plc-pill-label {
+  display: block;
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.plc-pill-value {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.plc-toggle-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--plc-white);
+  border-radius: var(--plc-radius-lg);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+}
+
+.plc-toggle-row.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.plc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--plc-light-blue);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.plc-empty {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.plc-empty-title {
+  margin: 0 0 8px;
+}
+
+.plc-empty-sub {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.plc-error-text {
+  color: var(--plc-error);
+  margin-bottom: 16px;
+}
+
+.plc-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Chat */
+.plc-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 360px;
+  background: var(--plc-white);
+  border-radius: var(--plc-radius-lg);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.plc-chat-title {
+  padding: 14px 18px;
+  margin: 0;
+  font-size: 1.1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.plc-chat-list {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plc-chat-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 0.95rem;
+}
+
+.plc-chat-bubble.is-me {
+  align-self: flex-end;
+  background: var(--plc-primary);
+  color: var(--plc-white);
+}
+
+.plc-chat-bubble.is-other {
+  align-self: flex-start;
+  background: var(--plc-light-blue);
+  color: var(--plc-text);
+}
+
+.plc-chat-meta {
+  font-size: 0.72rem;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+
+.plc-chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.plc-chat-input-row input {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: var(--plc-radius);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  font-size: 0.95rem;
+}
+
+/* Modal */
+.plc-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.plc-modal-sheet {
+  width: 100%;
+  max-width: 720px;
+  max-height: 90dvh;
+  overflow: auto;
+  background: var(--plc-light-blue);
+  border-radius: 32px 32px 0 0;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.plc-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Admin question cards */
+.plc-admin-q {
+  width: 320px;
+  max-width: 100%;
+  background: var(--plc-light-blue);
+  border-radius: var(--plc-radius-lg);
+  padding: 14px;
+  box-sizing: border-box;
+}
+
+.plc-student-card {
+  width: 320px;
+  max-width: 100%;
+  background: var(--plc-white);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: var(--plc-radius-lg);
+  padding: 14px;
+  box-sizing: border-box;
+}
+
+.plc-btn-tonal {
+  background: rgba(0, 112, 204, 0.12);
+  color: var(--plc-primary);
+  border: none;
+  padding: 10px 16px;
+  border-radius: var(--plc-radius);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.plc-btn-tonal:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Toast */
+.toast-snackbar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  background: #323232;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  max-width: min(420px, calc(100% - 32px));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Table */
+.plc-table-wrap {
+  overflow: auto;
+  max-width: 100%;
+  max-height: 50vh;
+}
+
+.plc-table-wrap table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.plc-table-wrap th,
+.plc-table-wrap td {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.plc-dialog {
+  background: var(--plc-white);
+  border-radius: var(--plc-radius-lg);
+  padding: 20px;
+  max-width: 480px;
+  width: calc(100% - 32px);
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.plc-dialog-list {
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plc-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}

@@ -2,7 +2,7 @@
 
 Full-stack MCA Placement Management System scaffolded as a monorepo with:
 
-- `frontend/`: Flutter app using Riverpod, Google Sign-In, Dio, and Firebase Messaging hooks
+- `frontend/`: React + Vite + TypeScript frontend using modern UI/UX principles.
 - `backend/`: Node.js + Express + PostgreSQL REST API with JWT auth, Excel export, AWS S3 upload, and FCM integration points
 
 ## What is implemented
@@ -32,7 +32,7 @@ Full-stack MCA Placement Management System scaffolded as a monorepo with:
 
 The SQL was copied exactly from your provided file into:
 
-- [backend/database/schema.sql](/C:/Users/achin/RVCE-Placement/backend/database/schema.sql)
+- [backend/database/schema.sql](file:///c:/Users/achin/RVCE-Placement/backend/database/schema.sql)
 
 No table structure was changed.
 
@@ -117,34 +117,25 @@ node scripts/hash-spc-password.mjs your-password
 
 Then insert the hashed password into `spc_accounts.password`.
 
-## Flutter setup
+## Frontend setup (React + Vite)
 
-1. Install Flutter dependencies:
+1. Install frontend dependencies:
 
 ```bash
 cd frontend
-flutter pub get
+npm install
 ```
 
 2. Update API base URL if needed:
 
-- [frontend/lib/src/core/config/app_config.dart](/C:/Users/achin/RVCE-Placement/frontend/lib/src/core/config/app_config.dart)
+- [frontend/src/config.ts](file:///c:/Users/achin/RVCE-Placement/frontend/src/config.ts)
 
-Default:
+Default: `http://localhost:4000/api`
 
-- Android emulator: `http://10.0.2.2:4000/api`
-
-3. Add Google Sign-In platform config for Android/iOS/web.
-
-4. Add Firebase platform config files for FCM:
-
-- `google-services.json`
-- `GoogleService-Info.plist`
-
-5. Run the app:
+3. Start the dev server:
 
 ```bash
-flutter run
+npm run dev
 ```
 
 ## API summary
@@ -176,7 +167,6 @@ flutter run
 
 ## Files to start with
 
-- [backend/src/server.js](/C:/Users/achin/RVCE-Placement/backend/src/server.js)
-- [backend/src/routes/index.js](/C:/Users/achin/RVCE-Placement/backend/src/routes/index.js)
-- [frontend/lib/src/ui/home_screen.dart](/C:/Users/achin/RVCE-Placement/frontend/lib/src/ui/home_screen.dart)
-- [frontend/lib/src/ui/dashboard_screen.dart](/C:/Users/achin/RVCE-Placement/frontend/lib/src/ui/dashboard_screen.dart)
+- [backend/src/server.js](file:///c:/Users/achin/RVCE-Placement/backend/src/server.js)
+- [frontend/src/main.tsx](file:///c:/Users/achin/RVCE-Placement/frontend/src/main.tsx)
+- [frontend/src/App.tsx](file:///c:/Users/achin/RVCE-Placement/frontend/src/App.tsx)
