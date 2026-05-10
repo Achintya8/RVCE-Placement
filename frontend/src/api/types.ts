@@ -90,6 +90,8 @@ export type ChatMessage = {
   id: number
   sender: ChatUser
   messageText: string
+  attachmentUrl?: string | null
+  attachmentName?: string | null
   createdAt: string
   mentionedUsers: ChatUser[]
 }
@@ -224,6 +226,8 @@ export function parseChatMessage(json: Record<string, unknown>): ChatMessage {
     id: num(json.id),
     sender: parseChatUser((json.sender as Record<string, unknown>) ?? {}),
     messageText: String(json.messageText ?? ''),
+    attachmentUrl: json.attachmentUrl as string | null | undefined,
+    attachmentName: json.attachmentName as string | null | undefined,
     createdAt: String(json.createdAt ?? ''),
     mentionedUsers: (mentionedRaw ?? []).map((item) =>
       parseChatUser(item as Record<string, unknown>),

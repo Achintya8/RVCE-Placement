@@ -4,6 +4,8 @@ import {
   getMessages,
   getMessageCount,
   getAllUsers,
+  getMessageById,
+  deleteMessageById,
 } from '../repositories/messages.repository.js';
 import {
   parseMentions,
@@ -12,29 +14,53 @@ import {
 } from '../services/message.service.js';
 import { sendToUsers } from '../services/notification.service.js';
 import { findUserById } from '../repositories/user.repository.js';
+import { deleteAttachment } from '../services/storage.service.js';
 import { ApiError } from '../utils/apiError.js';
 
 const messageSchema = z.object({
-  messageText: z.string().min(1).max(2000),
+  messageText: z.string().max(2000).optional(),
 });
 
 // ── POST /api/messages ────────────────────────────────────────────────────────
 export const createMessageHandler = async (req, res, next) => {
   try {
     const payload = messageSchema.parse(req.body);
+    const text = payload.messageText || '';
 
-    const validation = validateMessageText(payload.messageText);
-    if (!validation.valid) throw new ApiError(400, validation.error);
+    // Allow empty text only if there is an attachment
+    if (!text.trim() && !req.file) {
+      throw new ApiError(400, 'Message cannot be empty');
+    }
+
+    if (text.length > 2000) {
+      throw new ApiError(400, 'Message cannot exceed 2000 characters');
+    }
 
     // 1. Resolve @mentions → user IDs
-    const mentionTokens  = parseMentions(payload.messageText);
+    const mentionTokens  = parseMentions(text);
     const mentionedUserIds = await getMentionedUserIds(mentionTokens);
 
-    // 2. Persist message + mentions atomically
+    // 2. Upload attachment if present
+    let attachmentUrl = null;
+    let attachmentName = null;
+    if (req.file) {
+      const { uploadAttachment } = await import('../services/storage.service.js');
+      attachmentUrl = await uploadAttachment({
+        buffer: req.file.buffer,
+        fileName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        userId: req.auth.userId,
+      });
+      attachmentName = req.file.originalname;
+    }
+
+    // 3. Persist message + mentions atomically
     const message = await createMessageWithMentions(
       req.auth.userId,
-      payload.messageText,
+      text,
       mentionedUserIds,
+      attachmentUrl,
+      attachmentName
     );
 
     // 3. Fetch sender info for response + notifications
@@ -52,7 +78,7 @@ export const createMessageHandler = async (req, res, next) => {
       await sendToUsers({
         userIds: mentionedUserIds,
         title: `${sender.name} mentioned you`,
-        body: payload.messageText.substring(0, 100),
+        body: text.substring(0, 100) || 'Sent an attachment',
         data: {
           type:      'message_mention',
           messageId: String(message.id),
@@ -69,6 +95,8 @@ export const createMessageHandler = async (req, res, next) => {
         email: sender.collegeEmailId,
       },
       messageText:    message.message_text,
+      attachmentUrl:  message.attachment_url,
+      attachmentName: message.attachment_name,
       mentionedUsers,
       createdAt:      message.created_at,
     });
@@ -97,6 +125,8 @@ export const getMessagesHandler = async (req, res, next) => {
           email: msg.sender_email,
         },
         messageText:    msg.message_text,
+        attachmentUrl:  msg.attachment_url,
+        attachmentName: msg.attachment_name,
         // mentioned_users comes from JSON_AGG — already a parsed JS array
         mentionedUsers: msg.mentioned_users || [],
         createdAt:      msg.created_at,
@@ -115,6 +145,38 @@ export const getAllUsersHandler = async (req, res, next) => {
   try {
     const users = await getAllUsers();
     res.json({ users });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ── DELETE /api/messages/:id ──────────────────────────────────────────────────
+export const deleteMessageHandler = async (req, res, next) => {
+  try {
+    const messageId = parseInt(req.params.id, 10);
+    if (isNaN(messageId)) {
+      throw new ApiError(400, 'Invalid message ID');
+    }
+
+    const message = await getMessageById(messageId);
+    if (!message) {
+      throw new ApiError(404, 'Message not found');
+    }
+
+    // Check authorization: must be sender or an admin (SPC)
+    if (message.sender_id !== req.auth.userId && !req.auth.isSpc) {
+      throw new ApiError(403, 'You do not have permission to delete this message');
+    }
+
+    // Delete attachment if present
+    if (message.attachment_url) {
+      await deleteAttachment(message.attachment_url);
+    }
+
+    // Delete message
+    await deleteMessageById(messageId);
+
+    res.json({ message: 'Message deleted successfully' });
   } catch (error) {
     next(error);
   }

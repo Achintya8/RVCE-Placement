@@ -6,14 +6,14 @@ import { query, withTransaction } from '../config/db.js';
  * Insert a message and its mentions atomically inside one transaction.
  * Returns the raw DB row for the new message.
  */
-export const createMessageWithMentions = async (senderId, messageText, mentionedUserIds = []) => {
+export const createMessageWithMentions = async (senderId, messageText, mentionedUserIds = [], attachmentUrl = null, attachmentName = null) => {
   return withTransaction(async (client) => {
     // 1. Insert the message
     const { rows: msgRows } = await client.query(
-      `INSERT INTO "messages" ("sender_id", "message_text", "created_at", "updated_at")
-       VALUES ($1, $2, NOW(), NOW())
+      `INSERT INTO "messages" ("sender_id", "message_text", "attachment_url", "attachment_name", "created_at", "updated_at")
+       VALUES ($1, $2, $3, $4, NOW(), NOW())
        RETURNING *`,
-      [senderId, messageText],
+      [senderId, messageText, attachmentUrl, attachmentName],
     );
     const message = msgRows[0];
 
@@ -47,6 +47,8 @@ export const getMessages = async (limit = 50, offset = 0) => {
        m."id",
        m."sender_id",
        m."message_text",
+       m."attachment_url",
+       m."attachment_name",
        m."created_at",
        u."name"             AS sender_name,
        u."college_email_id" AS sender_email,
@@ -64,7 +66,7 @@ export const getMessages = async (limit = 50, offset = 0) => {
      INNER JOIN "users"    u  ON u."id"  = m."sender_id"
      LEFT  JOIN "mentions" mn ON mn."message_id"         = m."id"
      LEFT  JOIN "users"    mu ON mu."id" = mn."mentioned_user_id"
-     GROUP BY m."id", m."sender_id", m."message_text", m."created_at",
+     GROUP BY m."id", m."sender_id", m."message_text", m."attachment_url", m."attachment_name", m."created_at",
               u."name", u."college_email_id"
      ORDER BY m."created_at" DESC
      LIMIT $1 OFFSET $2`,
@@ -78,6 +80,15 @@ export const getMessageCount = async () => {
   return parseInt(rows[0].count, 10);
 };
 
+export const getMessageById = async (messageId) => {
+  const { rows } = await query('SELECT * FROM "messages" WHERE "id" = $1', [messageId]);
+  return rows[0];
+};
+
+export const deleteMessageById = async (messageId) => {
+  await query('DELETE FROM "messages" WHERE "id" = $1', [messageId]);
+};
+
 // ── User helpers ──────────────────────────────────────────────────────────────
 
 /** Search users by name or either email — used for resolving @mentions. */
@@ -87,6 +98,7 @@ export const findUsersByNameOrEmail = async (searchTerm) => {
     `SELECT u."id", u."name", u."college_email_id"
        FROM "users" u
       WHERE u."name"              ILIKE $1
+         OR REPLACE(u."name", ' ', '') ILIKE $1
          OR u."college_email_id"  ILIKE $1
          OR u."personal_email_id" ILIKE $1
       ORDER BY u."name" ASC

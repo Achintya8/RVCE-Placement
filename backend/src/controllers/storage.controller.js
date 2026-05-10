@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { getBucket } from '../config/mongodb.js';
 import { ApiError } from '../utils/apiError.js';
 
@@ -16,7 +17,23 @@ export const getResume = async (req, res, next) => {
     }
 
     const file = files[0];
-    res.setHeader('Content-Type', file.contentType || 'application/pdf');
+    
+    // Determine the best content type
+    let contentType = file.contentType || file.metadata?.contentType;
+    if (!contentType) {
+      const ext = path.extname(file.filename).toLowerCase();
+      const mimeMap = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.pdf': 'application/pdf'
+      };
+      contentType = mimeMap[ext] || 'application/octet-stream';
+    }
+
+    res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `inline; filename="${file.filename}"`);
 
     const downloadStream = bucket.openDownloadStreamByName(filename);

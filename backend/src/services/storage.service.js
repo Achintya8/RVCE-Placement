@@ -7,18 +7,24 @@ import { getBucket } from '../config/mongodb.js';
 
 const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 
-const inferFileExtension = (fileName) => {
+const inferFileExtension = (fileName, mimeType) => {
   const extension = path.extname(fileName ?? '').toLowerCase();
 
   if (!extension || extension.length > 12) {
+    if (mimeType) {
+      if (mimeType.includes('image/jpeg')) return '.jpg';
+      if (mimeType.includes('image/png')) return '.png';
+      if (mimeType.includes('image/gif')) return '.gif';
+      if (mimeType.includes('image/webp')) return '.webp';
+    }
     return '.pdf';
   }
 
   return extension;
 };
 
-const buildResumeFileName = ({ userName, userId, fileName }) => {
-  const extension = inferFileExtension(fileName);
+const buildResumeFileName = ({ userName, userId, fileName, mimeType }) => {
+  const extension = inferFileExtension(fileName, mimeType);
   
   if (!userName) return `User_${userId}_Resume${extension}`;
 
@@ -39,7 +45,7 @@ export const uploadResume = async ({
   userId,
   userName,
 }) => {
-  const resumeName = buildResumeFileName({ userName, userId, fileName });
+  const resumeName = buildResumeFileName({ userName, userId, fileName, mimeType });
 
   // 1. Try MongoDB GridFS
   try {
@@ -52,9 +58,9 @@ export const uploadResume = async ({
       }
 
       // Upload new file
+      // Upload new file
       const uploadStream = bucket.openUploadStream(resumeName, {
-        contentType: mimeType,
-        metadata: { userId },
+        metadata: { userId, contentType: mimeType },
       });
 
       const readableStream = new Readable();
@@ -97,4 +103,77 @@ export const uploadResume = async ({
   await fs.writeFile(filePath, buffer);
 
   return `http://localhost:${env.port}/uploads/${resumeName}`;
+};
+
+export const uploadAttachment = async ({
+  buffer,
+  fileName,
+  mimeType,
+  userId,
+}) => {
+  const extension = inferFileExtension(fileName, mimeType);
+  const attachmentName = `Attachment_${Date.now()}_User_${userId}${extension}`;
+
+  // 1. Try MongoDB GridFS
+  try {
+    const bucket = await getBucket();
+    if (bucket) {
+      const uploadStream = bucket.openUploadStream(attachmentName, {
+        metadata: { userId, contentType: mimeType },
+      });
+
+      const readableStream = new Readable();
+      readableStream.push(buffer);
+      readableStream.push(null);
+
+      await new Promise((resolve, reject) => {
+        readableStream.pipe(uploadStream)
+          .on('error', reject)
+          .on('finish', resolve);
+      });
+
+      return `http://localhost:${env.port}/api/attachments/${attachmentName}`;
+    }
+  } catch (error) {
+    console.error('MongoDB GridFS upload failed, falling back to local:', error);
+  }
+
+  // 2. Fallback to Local Storage
+  try {
+    await fs.mkdir(UPLOADS_DIR, { recursive: true });
+  } catch (error) {
+    console.error('Failed to create uploads directory:', error);
+  }
+
+  const filePath = path.join(UPLOADS_DIR, attachmentName);
+  await fs.writeFile(filePath, buffer);
+
+  return `http://localhost:${env.port}/uploads/${attachmentName}`;
+};
+
+export const deleteAttachment = async (url) => {
+  if (!url) return;
+  const fileName = url.split('/').pop();
+  if (!fileName) return;
+
+  // Try GridFS
+  try {
+    const bucket = await getBucket();
+    if (bucket) {
+      const files = await bucket.find({ filename: fileName }).toArray();
+      for (const file of files) {
+        await bucket.delete(file._id);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to delete from GridFS:', err);
+  }
+
+  // Try local
+  try {
+    const filePath = path.join(UPLOADS_DIR, fileName);
+    await fs.unlink(filePath);
+  } catch (err) {
+    // Ignore if not found locally
+  }
 };
