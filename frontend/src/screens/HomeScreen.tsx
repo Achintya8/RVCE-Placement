@@ -5,15 +5,34 @@ import { useToast } from '../context/ToastContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card'
-import { School } from 'lucide-react'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { School, Download, Bell } from 'lucide-react'
+import { usePWAInstall } from '../hooks/usePWAInstall'
 
 export default function HomeScreen() {
   const { loginWithSpc, loginWithGoogle, errorMessage, clearError, status } =
     useAuth()
   const { showToast } = useToast()
+  const { isInstallable, promptInstall } = usePWAInstall()
   const [isSpc, setIsSpc] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showNotifDialog, setShowNotifDialog] = useState(false)
+  const [notificationPerm, setNotificationPerm] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+  )
+
+  const requestNotificationPermission = async () => {
+    if (typeof Notification !== 'undefined') {
+      const perm = await Notification.requestPermission()
+      setNotificationPerm(perm)
+      if (perm === 'granted') {
+        showToast('Notifications enabled successfully!')
+      } else {
+        showToast('Notifications permission was denied.')
+      }
+    }
+  }
 
   useEffect(() => {
     if (errorMessage) {
@@ -34,6 +53,30 @@ export default function HomeScreen() {
         className="absolute rounded-full blur-3xl opacity-30"
         style={{ width: 280, height: 280, bottom: -100, left: -60, background: 'linear-gradient(135deg, #ec4899, #f43f5e)' }}
       />
+
+      <div className="absolute top-4 right-4 z-50 flex flex-col sm:flex-row gap-2">
+        <Button 
+          onClick={() => notificationPerm === 'default' ? requestNotificationPermission() : setShowNotifDialog(true)} 
+          variant="secondary" 
+          size="sm" 
+          className="gap-2 shadow-lg"
+        >
+          <Bell className="w-4 h-4" />
+          <span className="hidden sm:inline">
+            {notificationPerm === 'default' ? 'Enable Notifications' : 'Manage Notifications'}
+          </span>
+          <span className="sm:hidden">
+            {notificationPerm === 'default' ? 'Notify' : 'Manage'}
+          </span>
+        </Button>
+        {isInstallable && (
+          <Button onClick={promptInstall} variant="secondary" size="sm" className="gap-2 shadow-lg">
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Install App</span>
+            <span className="sm:hidden">Install</span>
+          </Button>
+        )}
+      </div>
 
       <div className="relative z-10 w-full max-w-md px-4">
         <div className="text-center mb-8">
@@ -135,6 +178,34 @@ export default function HomeScreen() {
           RVCE MCA Placement Management System
         </p>
       </div>
+
+      <Dialog open={showNotifDialog} onOpenChange={setShowNotifDialog}>
+        <DialogContent className="glass-panel border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manage Notifications</DialogTitle>
+            <DialogDescription className="text-text-muted">
+              Notification permissions are managed by your browser.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4 text-sm text-white/80">
+            <p>
+              Your current notification status is: <strong className="text-white uppercase">{notificationPerm}</strong>.
+            </p>
+            <p>
+              Because web browsers restrict apps from changing this permission directly after it's set, you'll need to update it via your browser settings:
+            </p>
+            <ol className="list-decimal pl-5 space-y-2">
+              <li>Click the <strong>Lock icon</strong> or <strong>Site Settings icon</strong> next to the URL in your browser's address bar.</li>
+              <li>Find <strong>Notifications</strong> in the dropdown.</li>
+              <li>Change the setting to <strong>Ask</strong>, <strong>Allow</strong>, or <strong>Block</strong>.</li>
+              <li>Refresh the page to apply your changes.</li>
+            </ol>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowNotifDialog(false)} className="text-white hover:bg-white/5">Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -11,7 +11,7 @@ import {
   validateMessageText,
 } from '../services/message.service.js';
 import { sendToUsers } from '../services/notification.service.js';
-import { findUserById } from '../repositories/user.repository.js';
+import { findUserById, listStudentIds } from '../repositories/user.repository.js';
 import { ApiError } from '../utils/apiError.js';
 
 const messageSchema = z.object({
@@ -47,14 +47,15 @@ export const createMessageHandler = async (req, res, next) => {
       if (u) mentionedUsers.push({ id: u.id, name: u.name, email: u.collegeEmailId });
     }
 
-    // 5. Push FCM notifications to mentioned users
-    if (mentionedUserIds.length > 0) {
+    // 5. Push FCM notifications to target users
+    const targetUserIds = req.auth.isSpc ? await listStudentIds() : mentionedUserIds;
+    if (targetUserIds.length > 0) {
       await sendToUsers({
-        userIds: mentionedUserIds,
-        title: `${sender.name} mentioned you`,
+        userIds: targetUserIds,
+        title: req.auth.isSpc ? `Announcement from ${sender.name}` : `${sender.name} mentioned you`,
         body: payload.messageText.substring(0, 100),
         data: {
-          type:      'message_mention',
+          type:      req.auth.isSpc ? 'announcement' : 'message_mention',
           messageId: String(message.id),
           senderId:  String(req.auth.userId),
         },

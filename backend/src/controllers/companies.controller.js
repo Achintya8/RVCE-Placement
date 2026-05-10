@@ -10,6 +10,8 @@ import {
 } from '../repositories/company.repository.js';
 import { generateCompanyWorkbook } from '../services/export.service.js';
 import { ApiError } from '../utils/apiError.js';
+import { listStudentIds } from '../repositories/user.repository.js';
+import { sendToUsers } from '../services/notification.service.js';
 
 const companySchema = z.object({
   name: z.string().min(1),
@@ -51,6 +53,18 @@ export const createCompanyRecord = async (req, res, next) => {
     const company = await createCompany({
       ...payload,
       createdBy: req.auth.userId,
+    });
+
+    // Notify all students
+    const recipientIds = await listStudentIds();
+    await sendToUsers({
+      userIds: recipientIds,
+      title: 'New Company Added',
+      body: `${company.name} is now hiring. Check the portal for details!`,
+      data: {
+        type: 'new_company',
+        companyId: String(company.id),
+      },
     });
 
     res.status(201).json(company);

@@ -179,6 +179,7 @@ export class PlacementRepository {
     stipend: string
     testDate?: string | null
     interviewDate?: string | null
+    deadline?: string | null
   }): Promise<void> {
     await this.client.postJson('/companies', payload)
   }
