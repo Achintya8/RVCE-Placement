@@ -215,9 +215,21 @@ export class PlacementRepository {
     return this.client.getBytes(`/companies/${companyId}/export${q}`)
   }
 
-  async sendMessage(messageText: string): Promise<ChatMessage> {
-    const json = await this.client.postJson('/messages', { messageText })
+  async sendMessage(messageText: string, file?: File): Promise<ChatMessage> {
+    let json: Record<string, unknown>
+    if (file) {
+      const form = new FormData()
+      form.append('messageText', messageText)
+      form.append('attachment', file)
+      json = await this.client.postFormData('/messages', form)
+    } else {
+      json = await this.client.postJson('/messages', { messageText })
+    }
     return parseChatMessage(json)
+  }
+
+  async deleteMessage(messageId: number): Promise<void> {
+    await this.client.delete(`/messages/${messageId}`)
   }
 
   async getMessages(limit = 50, offset = 0): Promise<ChatMessagesResponse> {
