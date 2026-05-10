@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Building2, Calendar, IndianRupee, Star, Mail, CheckCircle2, AlertCircle } from 'lucide-react'
 import { formatDate } from '../lib/format'
-import { cn } from '@/lib/utils'
 
 export function CompaniesPanel() {
   const { repo } = useAuth()

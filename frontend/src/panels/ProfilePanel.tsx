@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle2, AlertCircle, Upload, Save, FileText, Clock } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 export function ProfilePanel() {
   const { repo } = useAuth()
