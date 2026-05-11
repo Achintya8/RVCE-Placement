@@ -9,7 +9,7 @@ export const connectMongo = async () => {
   if (db) return { db, bucket };
 
   try {
-    client = new MongoClient(env.mongodbUri);
+    client = new MongoClient(env.mongodbUri, { serverSelectionTimeoutMS: 5000 });
     await client.connect();
     db = client.db();
     bucket = new GridFSBucket(db, { bucketName: 'resumes' });

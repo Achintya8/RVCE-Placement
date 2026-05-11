@@ -73,14 +73,15 @@ export const createMessageHandler = async (req, res, next) => {
       if (u) mentionedUsers.push({ id: u.id, name: u.name, email: u.collegeEmailId });
     }
 
-    // 5. Push FCM notifications to mentioned users
-    if (mentionedUserIds.length > 0) {
+    // 5. Push FCM notifications to target users
+    const targetUserIds = req.auth.isSpc ? await listStudentIds() : mentionedUserIds;
+    if (targetUserIds.length > 0) {
       await sendToUsers({
         userIds: mentionedUserIds,
         title: `${sender.name} mentioned you`,
         body: text.substring(0, 100) || 'Sent an attachment',
         data: {
-          type:      'message_mention',
+          type:      req.auth.isSpc ? 'announcement' : 'message_mention',
           messageId: String(message.id),
           senderId:  String(req.auth.userId),
         },
