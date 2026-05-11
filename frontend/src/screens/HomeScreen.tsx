@@ -10,11 +10,8 @@ import { School, Download, Bell } from 'lucide-react'
 import { usePWAInstall } from '../hooks/usePWAInstall'
 
 export default function HomeScreen() {
-  const { loginWithGoogle, errorMessage, clearError, status } = useAuth()
+  const { loginWithGoogle, loginWithSpc, errorMessage, clearError, status } = useAuth()
   const isBusy = status === 'loading'
-  const { loginWithSpc, loginWithGoogle, errorMessage, clearError, status } =
-    useAuth()
-  const { showToast } = useToast()
   const { isInstallable, promptInstall } = usePWAInstall()
   const [isSpc, setIsSpc] = useState(false)
   const [username, setUsername] = useState('')
@@ -29,9 +26,9 @@ export default function HomeScreen() {
       const perm = await Notification.requestPermission()
       setNotificationPerm(perm)
       if (perm === 'granted') {
-        showToast('Notifications enabled successfully!')
+        toast.success('Notifications enabled successfully!')
       } else {
-        showToast('Notifications permission was denied.')
+        toast.error('Notifications permission was denied.')
       }
     }
   }
