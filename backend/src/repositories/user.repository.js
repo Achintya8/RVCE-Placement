@@ -1,4 +1,5 @@
 import { query } from '../config/db.js';
+import { normalizeUrl } from '../utils/url.js';
 
 const normalizeUser = (row) => {
   if (!row) {
@@ -20,7 +21,7 @@ const normalizeUser = (row) => {
     firstSemSgpa: row.first_sem_sgpa,
     tenthMarks: row.tenth_marks,
     twelfthMarks: row.twelfth_marks,
-    resumeUrl: row.resume_url,
+    resumeUrl: normalizeUrl(row.resume_url),
     verified: row.verified ?? false,
     unlockRequested: row.unlock_requested ?? false,
     createdAt: row.created_at,

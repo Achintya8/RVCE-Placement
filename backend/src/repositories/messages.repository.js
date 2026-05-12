@@ -1,4 +1,5 @@
 import { query, withTransaction } from '../config/db.js';
+import { normalizeUrl } from '../utils/url.js';
 
 // ── Write ─────────────────────────────────────────────────────────────────────
 
@@ -72,7 +73,10 @@ export const getMessages = async (limit = 50, offset = 0) => {
      LIMIT $1 OFFSET $2`,
     [limit, offset],
   );
-  return rows;
+  return rows.map(r => ({
+    ...r,
+    attachmentUrl: normalizeUrl(r.attachment_url)
+  }));
 };
 
 export const getMessageCount = async () => {
@@ -82,7 +86,11 @@ export const getMessageCount = async () => {
 
 export const getMessageById = async (messageId) => {
   const { rows } = await query('SELECT * FROM "messages" WHERE "id" = $1', [messageId]);
-  return rows[0];
+  if (!rows[0]) return null;
+  return {
+    ...rows[0],
+    attachmentUrl: normalizeUrl(rows[0].attachment_url)
+  };
 };
 
 export const deleteMessageById = async (messageId) => {
