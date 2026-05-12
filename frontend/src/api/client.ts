@@ -13,7 +13,7 @@ export class ApiClient {
   private token: string | null = null
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl
+    this.baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
   }
 
   setToken(token: string | null) {
@@ -26,8 +26,13 @@ export class ApiClient {
     return h
   }
 
+  private getFullUrl(path: string): string {
+    const p = path.startsWith('/') ? path : `/${path}`
+    return `${this.baseUrl}${p}`
+  }
+
   async getJson(path: string): Promise<Record<string, unknown>> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const res = await fetch(this.getFullUrl(path), {
       headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
     })
     if (!res.ok) throw new Error(await readErrorMessage(res))
@@ -35,7 +40,7 @@ export class ApiClient {
   }
 
   async getList(path: string): Promise<unknown[]> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const res = await fetch(this.getFullUrl(path), {
       headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
     })
     if (!res.ok) throw new Error(await readErrorMessage(res))
@@ -47,7 +52,7 @@ export class ApiClient {
     path: string,
     body: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const res = await fetch(this.getFullUrl(path), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
       body: JSON.stringify(body),
@@ -60,7 +65,7 @@ export class ApiClient {
     path: string,
     body: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const res = await fetch(this.getFullUrl(path), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
       body: JSON.stringify(body),
@@ -73,7 +78,7 @@ export class ApiClient {
     path: string,
     form: FormData,
   ): Promise<Record<string, unknown>> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const res = await fetch(this.getFullUrl(path), {
       method: 'POST',
       headers: this.authHeaders(),
       body: form,
@@ -83,7 +88,7 @@ export class ApiClient {
   }
 
   async getBytes(path: string): Promise<Uint8Array> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const res = await fetch(this.getFullUrl(path), {
       headers: this.authHeaders(),
     })
     if (!res.ok) throw new Error(await readErrorMessage(res))
@@ -92,7 +97,7 @@ export class ApiClient {
   }
 
   async delete(path: string): Promise<void> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const res = await fetch(this.getFullUrl(path), {
       method: 'DELETE',
       headers: this.authHeaders(),
     })
