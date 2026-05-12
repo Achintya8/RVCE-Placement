@@ -73,7 +73,7 @@ export const uploadResume = async ({
           .on('finish', resolve);
       });
 
-      return `http://localhost:${env.port}/api/resumes/${resumeName}`;
+      return `${env.baseUrl}/api/resumes/${resumeName}`;
     }
   } catch (error) {
     console.error('MongoDB GridFS upload failed, falling back to local:', error);
@@ -102,7 +102,7 @@ export const uploadResume = async ({
 
   await fs.writeFile(filePath, buffer);
 
-  return `http://localhost:${env.port}/uploads/${resumeName}`;
+  return `${env.baseUrl}/uploads/${resumeName}`;
 };
 
 export const uploadAttachment = async ({
@@ -132,7 +132,7 @@ export const uploadAttachment = async ({
           .on('finish', resolve);
       });
 
-      return `http://localhost:${env.port}/api/attachments/${attachmentName}`;
+      return `${env.baseUrl}/api/attachments/${attachmentName}`;
     }
   } catch (error) {
     console.error('MongoDB GridFS upload failed, falling back to local:', error);
@@ -148,7 +148,7 @@ export const uploadAttachment = async ({
   const filePath = path.join(UPLOADS_DIR, attachmentName);
   await fs.writeFile(filePath, buffer);
 
-  return `http://localhost:${env.port}/uploads/${attachmentName}`;
+  return `${env.baseUrl}/uploads/${attachmentName}`;
 };
 
 export const deleteAttachment = async (url) => {
