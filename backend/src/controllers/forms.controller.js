@@ -55,6 +55,25 @@ export const createFormRecord = async (req, res, next) => {
       createdBy: req.auth.userId,
     });
 
+    // Notify students when SPC creates a form
+    const sender = await findUserById(req.auth.userId);
+    const recipientIds = form.companyId
+      ? await listEligibleStudentIds(form.companyId)
+      : await listStudentIds();
+
+    await sendToUsers({
+      userIds: recipientIds,
+      title: 'New Form Created',
+      body: sender?.name
+        ? `${sender.name} created a new ${form.type} form: "${form.title}".`
+        : `A new ${form.type} form "${form.title}" was created.`,
+      data: {
+        type: 'new_form',
+        formId: String(form.id),
+        companyId: form.companyId ?? '',
+      },
+    });
+
     res.status(201).json(form);
   } catch (error) {
     next(error);

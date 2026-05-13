@@ -31,6 +31,10 @@ export class PlacementRepository {
     this.client = client
   }
 
+  async registerFcmToken(token: string): Promise<void> {
+    await this.client.postJson('/notifications/register', { token })
+  }
+
   async googleLogin(idToken: string): Promise<Session> {
     const json = await this.client.postJson('/auth/google', { idToken })
     return parseSession(json)

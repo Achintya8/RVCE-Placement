@@ -4,6 +4,7 @@ import { ApiClient } from '../api/client'
 import { PlacementRepository } from '../api/placementRepository'
 import type { Session } from '../api/types'
 import { API_BASE_URL, AUTH_TOKEN_KEY } from '../config'
+import { registerNotifications } from '../notifications/registerNotifications'
 
 export type AuthStatus = 'checking' | 'loading' | 'authenticated' | 'unauthenticated'
 
@@ -52,6 +53,7 @@ export const useAuthStore = create<AuthState>()(
           client.setToken(session.token)
           localStorage.setItem(AUTH_TOKEN_KEY, session.token)
           set({ status: 'authenticated', session, errorMessage: null })
+          await registerNotifications(repo)
         } catch {
           localStorage.removeItem(AUTH_TOKEN_KEY)
           client.setToken(null)
@@ -66,6 +68,7 @@ export const useAuthStore = create<AuthState>()(
           client.setToken(session.token)
           localStorage.setItem(AUTH_TOKEN_KEY, session.token)
           set({ status: 'authenticated', session, errorMessage: null })
+          await registerNotifications(repo)
         } catch (e) {
           set({ 
             status: 'unauthenticated', 

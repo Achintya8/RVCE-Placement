@@ -16,6 +16,7 @@ import { sendToUsers } from '../services/notification.service.js';
 import { findUserById } from '../repositories/user.repository.js';
 import { deleteAttachment } from '../services/storage.service.js';
 import { ApiError } from '../utils/apiError.js';
+import { listStudentIds } from '../repositories/user.repository.js';
 
 const messageSchema = z.object({
   messageText: z.string().max(2000).optional(),
@@ -77,13 +78,13 @@ export const createMessageHandler = async (req, res, next) => {
     const targetUserIds = req.auth.isSpc ? await listStudentIds() : mentionedUserIds;
     if (targetUserIds.length > 0) {
       await sendToUsers({
-        userIds: mentionedUserIds,
-        title: `${sender.name} mentioned you`,
+        userIds: targetUserIds,
+        title: req.auth.isSpc ? 'New SPC Message' : `${sender.name} mentioned you`,
         body: text.substring(0, 100) || 'Sent an attachment',
         data: {
-          type:      req.auth.isSpc ? 'announcement' : 'message_mention',
+          type: req.auth.isSpc ? 'announcement' : 'message_mention',
           messageId: String(message.id),
-          senderId:  String(req.auth.userId),
+          senderId: String(req.auth.userId),
         },
       });
     }
