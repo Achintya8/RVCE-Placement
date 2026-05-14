@@ -1,7 +1,10 @@
 import { z } from 'zod';
 
-import { upsertNotificationSubscription } from '../repositories/notification.repository.js';
-import { getPublicVapidKey } from '../services/notification.service.js';
+import {
+  getNotificationSubscriptionStats,
+  upsertNotificationSubscription,
+} from '../repositories/notification.repository.js';
+import { getPublicVapidKey, sendToUsers } from '../services/notification.service.js';
 
 const subscriptionSchema = z.object({
   endpoint: z.string().url(),
@@ -29,6 +32,35 @@ export const registerNotificationSubscription = async (req, res, next) => {
     });
 
     res.json({ subscribed: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getNotificationStatus = async (_req, res, next) => {
+  try {
+    const stats = await getNotificationSubscriptionStats();
+    res.json({
+      ...getPublicVapidKey(),
+      ...stats,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const sendTestNotification = async (req, res, next) => {
+  try {
+    const result = await sendToUsers({
+      userIds: [req.auth.userId],
+      title: 'RVCE Placement notifications are working',
+      body: 'This is a test notification from the placement portal.',
+      data: {
+        type: 'test',
+      },
+    });
+
+    res.json(result);
   } catch (error) {
     next(error);
   }

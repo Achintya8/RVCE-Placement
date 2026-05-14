@@ -14,8 +14,12 @@ import 'dotenv/config';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemaPath = join(__dirname, '..', 'database', 'schema.sql');
 const sql = readFileSync(schemaPath, 'utf8');
+const databaseSsl = process.env.DATABASE_SSL === 'true';
 
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+const client = new pg.Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: databaseSsl ? { rejectUnauthorized: false } : undefined,
+});
 
 try {
   await client.connect();

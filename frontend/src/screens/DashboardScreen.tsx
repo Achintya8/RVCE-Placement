@@ -17,9 +17,18 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Bell,
+  BellOff,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { CollegeLogo } from '@/components/modern/CollegeLogo'
+import {
+  allowNotifications,
+  blockNotifications,
+  getNotificationPreference,
+  registerNotificationsSafely,
+} from '../notifications/registerNotifications'
 
 type Panel = {
   id: string
@@ -29,9 +38,12 @@ type Panel = {
 }
 
 export default function DashboardScreen() {
-  const { session, logout } = useAuth()
+  const { session, logout, repo } = useAuth()
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [notificationPreference, setNotificationPreference] = useState(() =>
+    getNotificationPreference(),
+  )
 
   const panels: Panel[] = useMemo(
     () => {
@@ -81,7 +93,42 @@ export default function DashboardScreen() {
     setSelectedIndex((i) => Math.min(i, Math.max(0, panels.length - 1)))
   }, [panels.length])
 
+  useEffect(() => {
+    const handleFocus = () => setNotificationPreference(getNotificationPreference())
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
+
   if (!session) return null
+
+  const enableNotifications = async () => {
+    const permission = await allowNotifications()
+    setNotificationPreference(getNotificationPreference())
+
+    if (permission !== 'granted') {
+      toast.error('Notifications are blocked in your browser settings.')
+      return
+    }
+
+    const registered = await registerNotificationsSafely(repo)
+    setNotificationPreference(getNotificationPreference())
+
+    if (registered) {
+      toast.success('Notifications enabled for placement alerts.')
+    } else {
+      toast.error('Could not register this device for notifications.')
+    }
+  }
+
+  const disableNotifications = async () => {
+    await blockNotifications()
+    setNotificationPreference(getNotificationPreference())
+    toast('Notifications blocked for this portal.')
+  }
+
+  const notificationsEnabled =
+    notificationPreference.permission === 'granted' &&
+    !notificationPreference.optedOut
 
   const safeIndex = Math.min(selectedIndex, panels.length - 1)
   const active = panels[safeIndex] ?? panels[0]
@@ -126,6 +173,23 @@ export default function DashboardScreen() {
       </ScrollArea>
 
       <div className="p-4 border-t border-white/10">
+        <Button
+          variant="outline"
+          className="mb-3 w-full justify-start gap-3"
+          onClick={() =>
+            void (notificationsEnabled
+              ? disableNotifications()
+              : enableNotifications())
+          }
+          disabled={!notificationPreference.supported}
+        >
+          {notificationsEnabled ? (
+            <BellOff className="w-4 h-4" />
+          ) : (
+            <Bell className="w-4 h-4" />
+          )}
+          {notificationsEnabled ? 'Block notifications' : 'Allow notifications'}
+        </Button>
         <Button
           variant="outline"
           className="w-full justify-start gap-3"
@@ -197,10 +261,29 @@ export default function DashboardScreen() {
                   : 'Keep your verified profile sharp and respond quickly to drives.'}
               </p>
             </div>
-            <Button variant="outline" onClick={logout} className="gap-2">
-              <LogOut className="w-4 h-4" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() =>
+                  void (notificationsEnabled
+                    ? disableNotifications()
+                    : enableNotifications())
+                }
+                disabled={!notificationPreference.supported}
+                className="gap-2"
+              >
+                {notificationsEnabled ? (
+                  <BellOff className="w-4 h-4" />
+                ) : (
+                  <Bell className="w-4 h-4" />
+                )}
+                {notificationsEnabled ? 'Block notifications' : 'Allow notifications'}
+              </Button>
+              <Button variant="outline" onClick={logout} className="gap-2">
+                <LogOut className="w-4 h-4" />
+                Logout
+              </Button>
+            </div>
           </header>
 
           <div className="p-4 lg:p-8">

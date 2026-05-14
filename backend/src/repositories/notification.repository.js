@@ -45,6 +45,20 @@ export const listNotificationSubscriptionsForUsers = async (userIds) => {
   return rows.map(normalizeSubscription);
 };
 
+export const getNotificationSubscriptionStats = async () => {
+  const { rows } = await query(
+    `SELECT
+      COUNT(*)::int AS "subscriptionCount",
+      COUNT(DISTINCT "user_id")::int AS "subscribedUserCount"
+    FROM "notification_subscriptions"`,
+  );
+
+  return {
+    subscriptionCount: rows[0]?.subscriptionCount ?? 0,
+    subscribedUserCount: rows[0]?.subscribedUserCount ?? 0,
+  };
+};
+
 export const deleteNotificationSubscriptionByEndpoint = async (endpoint) => {
   await query('DELETE FROM "notification_subscriptions" WHERE "endpoint" = $1', [
     endpoint,

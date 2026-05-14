@@ -61,12 +61,22 @@ export const sendToUsers = async ({ userIds, title, body, data = {} }) => {
   );
 
   const sent = results.filter((result) => result.status === 'fulfilled').length;
+  const failed = results.length - sent;
+
+  if (failed > 0 || subscriptions.length === 0) {
+    console.warn('Web Push notification delivery summary', {
+      requestedUsers: uniqueUserIds.length,
+      subscriptions: subscriptions.length,
+      sent,
+      failed,
+    });
+  }
 
   return {
     configured: true,
     requested: uniqueUserIds.length,
     subscriptions: subscriptions.length,
     sent,
-    failed: results.length - sent,
+    failed,
   };
 };

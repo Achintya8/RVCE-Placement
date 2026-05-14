@@ -46,6 +46,10 @@ export class PlacementRepository {
     await this.client.postJson('/notifications/subscriptions', { subscription })
   }
 
+  async sendTestNotification(): Promise<void> {
+    await this.client.postJson('/notifications/test', {})
+  }
+
   async googleLogin(idToken: string): Promise<Session> {
     const json = await this.client.postJson('/auth/google', { idToken })
     return parseSession(json)

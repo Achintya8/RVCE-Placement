@@ -131,3 +131,15 @@ export async function registerNotifications(repo: PlacementRepository): Promise<
   await repo.registerPushSubscription(subscription.toJSON())
   registerForegroundMessageListener()
 }
+
+export async function registerNotificationsSafely(
+  repo: PlacementRepository,
+): Promise<boolean> {
+  try {
+    await registerNotifications(repo)
+    return true
+  } catch (error) {
+    console.warn('Notification registration failed', error)
+    return false
+  }
+}
