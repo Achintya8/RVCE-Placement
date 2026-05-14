@@ -48,8 +48,8 @@ export function CompaniesPanel() {
     return (
       <Card className="glass-panel border-destructive/20 text-center p-12 max-w-2xl mx-auto">
         <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-        <h3 className="text-xl font-bold mb-2 text-white">Failed to load companies</h3>
-        <p className="text-text-muted mb-6">{err ?? 'An unknown error occurred.'}</p>
+        <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">Failed to load companies</h3>
+        <p className="text-muted-foreground mb-6">{err ?? 'An unknown error occurred.'}</p>
         <Button onClick={fetchCompanies}>Retry</Button>
       </Card>
     )
@@ -57,10 +57,10 @@ export function CompaniesPanel() {
 
   if (companies.length === 0) {
     return (
-      <div className="text-center py-20 bg-white/5 rounded-2xl border border-dashed border-white/10">
-        <Building2 className="w-16 h-16 text-white/20 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-white">No companies yet</h3>
-        <p className="text-text-muted">Stay tuned for upcoming placement drives.</p>
+      <div className="text-center py-20 bg-slate-100 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
+        <Building2 className="w-16 h-16 text-slate-400 dark:text-white/20 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold text-slate-900 dark:text-white">No companies yet</h3>
+        <p className="text-muted-foreground">Stay tuned for upcoming placement drives.</p>
       </div>
     )
   }
@@ -70,12 +70,12 @@ export function CompaniesPanel() {
       {companies.map((c) => {
         const isBusy = busyIds.has(c.id)
         return (
-          <Card key={c.id} className="glass-panel border-white/10 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
+          <Card key={c.id} className="glass-panel hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
             <CardHeader className="pb-4">
               <div className="flex justify-between items-start gap-4">
                 <div className="space-y-1">
-                  <CardTitle className="text-xl text-white">{c.name}</CardTitle>
-                  <CardDescription className="flex items-center gap-2 text-text-muted">
+                  <CardTitle className="text-xl text-slate-900 dark:text-white">{c.name}</CardTitle>
+                  <CardDescription className="flex items-center gap-2 text-muted-foreground">
                     <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
                     Min CGPA: {c.minCgpa.toFixed(1)}
                   </CardDescription>
@@ -87,37 +87,37 @@ export function CompaniesPanel() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5 p-3 rounded-xl bg-white/5 border border-white/10">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     <IndianRupee className="w-3 h-3 text-primary" /> Package
                   </div>
-                  <p className="text-sm font-bold text-white">{c.package || 'TBD'}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">{c.package || 'TBD'}</p>
                 </div>
-                <div className="space-y-1.5 p-3 rounded-xl bg-white/5 border border-white/10">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     <IndianRupee className="w-3 h-3 text-primary" /> Stipend
                   </div>
-                  <p className="text-sm font-bold text-white">{c.stipend || 'TBD'}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">{c.stipend || 'TBD'}</p>
                 </div>
-                <div className="space-y-1.5 p-3 rounded-xl bg-white/5 border border-white/10">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     <Calendar className="w-3 h-3 text-primary" /> Test Date
                   </div>
-                  <p className="text-sm font-bold text-white">{formatDate(c.testDate ?? null)}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">{formatDate(c.testDate ?? null)}</p>
                 </div>
-                <div className="space-y-1.5 p-3 rounded-xl bg-white/5 border border-white/10">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     <Calendar className="w-3 h-3 text-primary" /> Interview
                   </div>
-                  <p className="text-sm font-bold text-white">{formatDate(c.interviewDate ?? null)}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">{formatDate(c.interviewDate ?? null)}</p>
                 </div>
               </div>
 
-              <div className="space-y-4 pt-4 border-t border-white/10">
+              <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-white/10">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor={`consent-${c.id}`} className="text-sm font-semibold text-white">Consent Provided</Label>
-                    <p className="text-xs text-text-muted">Willing to sit for this drive?</p>
+                    <Label htmlFor={`consent-${c.id}`} className="text-sm font-semibold text-slate-900 dark:text-white">Consent Provided</Label>
+                    <p className="text-xs text-muted-foreground">Willing to sit for this drive?</p>
                   </div>
                   <div className="flex items-center gap-2">
                     {c.consent && <CheckCircle2 className="w-4 h-4 text-green-500" />}
@@ -132,8 +132,8 @@ export function CompaniesPanel() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor={`tracker-${c.id}`} className="text-sm font-semibold text-white">Mail Tracker</Label>
-                    <p className="text-xs text-text-muted">Received email from company?</p>
+                    <Label htmlFor={`tracker-${c.id}`} className="text-sm font-semibold text-slate-900 dark:text-white">Mail Tracker</Label>
+                    <p className="text-xs text-muted-foreground">Received email from company?</p>
                   </div>
                   <div className="flex items-center gap-2">
                     {c.tracker && <Mail className="w-4 h-4 text-primary" />}

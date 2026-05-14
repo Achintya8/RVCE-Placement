@@ -86,15 +86,15 @@ export default function HomeScreen() {
         ) : (
           <section
             aria-label="Placement portal sign in"
-            className="w-full rounded-[2rem] border border-white/10 bg-[#444444] p-8 shadow-[0_24px_60px_rgba(15,23,42,0.28)] animate-in fade-in slide-in-from-bottom-2 duration-500"
+            className="w-full rounded-[2rem] border border-slate-200 dark:border-white/10 bg-[#444444] p-8 shadow-[0_24px_60px_rgba(15,23,42,0.28)] animate-in fade-in slide-in-from-bottom-2 duration-500"
           >
-            <p className="mb-6 text-center text-sm font-medium text-white/80">
+            <p className="mb-6 text-center text-sm font-medium text-slate-700 dark:text-white/80">
               Sign in with your RVCE Google account
             </p>
             <Button
               type="button"
               variant="secondary"
-              className="mb-4 w-full bg-white/10 text-white hover:bg-white/20"
+              className="mb-4 w-full bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white hover:bg-white/20"
               onClick={() => void toggleNotifications()}
               disabled={!notificationPreference.supported}
             >

@@ -129,12 +129,12 @@ export function ChatPanel() {
     if (isImage) {
       return (
         <a href={url} target="_blank" rel="noopener noreferrer" className="block mt-2">
-          <img src={url} alt={name} className="max-w-[200px] sm:max-w-xs rounded-lg shadow-md border border-white/10" />
+          <img src={url} alt={name} className="max-w-[200px] sm:max-w-xs rounded-lg shadow-md border border-slate-200 dark:border-white/10" />
         </a>
       )
     }
     return (
-      <a href={url} download target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 mt-2 px-3 py-2 bg-black/20 hover:bg-black/40 rounded-lg transition-colors border border-white/5 w-fit">
+      <a href={url} download target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 mt-2 px-3 py-2 bg-black/20 hover:bg-black/40 rounded-lg transition-colors border border-slate-200 dark:border-white/5 w-fit">
         <File className="w-4 h-4 text-primary" />
         <span className="text-sm truncate max-w-[200px]">{name}</span>
       </a>
@@ -143,8 +143,8 @@ export function ChatPanel() {
 
   return (
     <div className="h-[calc(100vh-8rem)] lg:h-[calc(100vh-12rem)] pb-20 lg:pb-8">
-      <Card className="h-full border-white/10 bg-white/5 backdrop-blur-xl flex flex-col overflow-hidden">
-        <CardHeader className="pb-4 border-b border-white/10">
+      <Card className="h-full border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 backdrop-blur-xl flex flex-col overflow-hidden">
+        <CardHeader className="pb-4 border-b border-slate-200 dark:border-white/10">
           <CardTitle className="text-lg flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-primary" />
             Global Discussion
@@ -156,8 +156,8 @@ export function ChatPanel() {
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-4">
               <AlertCircle className="w-12 h-12 text-destructive opacity-50" />
               <div className="space-y-1">
-                <p className="font-semibold text-white">Connection Error</p>
-                <p className="text-sm text-text-muted">{err}</p>
+                <p className="font-semibold text-slate-900 dark:text-white">Connection Error</p>
+                <p className="text-sm text-muted-foreground">{err}</p>
               </div>
               <Button variant="outline" size="sm" onClick={() => void load()}>
                 Try Again
@@ -171,12 +171,12 @@ export function ChatPanel() {
                     <div className="flex flex-col gap-4">
                       {[1, 2, 3, 4].map(i => (
                         <div key={i} className={cn("max-w-[80%] space-y-1", i % 2 === 0 ? "ml-auto" : "")}>
-                          <div className="h-10 w-48 bg-white/5 rounded-2xl animate-pulse" />
+                          <div className="h-10 w-48 bg-slate-100 dark:bg-white/5 rounded-2xl animate-pulse" />
                         </div>
                       ))}
                     </div>
                   ) : messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full py-20 text-text-muted">
+                    <div className="flex flex-col items-center justify-center h-full py-20 text-muted-foreground">
                       <Clock className="w-10 h-10 mb-2 opacity-20" />
                       <p>No messages in the thread yet.</p>
                     </div>
@@ -194,10 +194,10 @@ export function ChatPanel() {
                           )}
                         >
                           <div className="flex items-center gap-2 px-1 relative group/msg">
-                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-tight">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
                               {isMe ? 'You' : m.sender.name}
                             </span>
-                            <span className="text-[10px] text-white/30">
+                            <span className="text-[10px] text-slate-400 dark:text-white/30">
                               {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                             {canDelete && (
@@ -215,7 +215,7 @@ export function ChatPanel() {
                               "px-4 py-2.5 rounded-2xl text-sm shadow-lg",
                               isMe
                                 ? "bg-primary text-white rounded-tr-none shadow-primary/20"
-                                : "bg-white/10 text-white rounded-tl-none shadow-black/20"
+                                : "bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white rounded-tl-none shadow-black/20"
                             )}
                           >
                             {m.messageText && renderMessageText(m, isMe)}
@@ -228,28 +228,28 @@ export function ChatPanel() {
                 </div>
               </ScrollArea>
 
-              <div className="relative p-4 border-t border-white/10 bg-white/5 flex flex-col gap-2">
+              <div className="relative p-4 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 flex flex-col gap-2">
                 {mentionSearch !== null && filteredUsers.length > 0 && (
-                  <div className="absolute bottom-full left-4 mb-2 w-64 bg-slate-800 border border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
+                  <div className="absolute bottom-full left-4 mb-2 w-64 bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
                     {filteredUsers.map(u => (
                       <button
                         key={u.id}
                         type="button"
-                        className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/10 transition-colors flex flex-col"
+                        className="w-full text-left px-4 py-2 text-sm text-slate-900 dark:text-white hover:bg-slate-200 dark:bg-white/10 transition-colors flex flex-col"
                         onClick={() => selectMention(u)}
                       >
                         <span className="font-medium">{u.name}</span>
-                        {u.email && <span className="text-xs text-white/50 truncate w-full">{u.email}</span>}
+                        {u.email && <span className="text-xs text-slate-500 dark:text-white/50 truncate w-full">{u.email}</span>}
                       </button>
                     ))}
                   </div>
                 )}
 
                 {attachment && (
-                  <div className="flex items-center justify-between bg-white/10 px-3 py-2 rounded-lg border border-white/5">
+                  <div className="flex items-center justify-between bg-slate-200 dark:bg-white/10 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/5">
                     <div className="flex items-center gap-2 overflow-hidden">
                       {attachment.type.startsWith('image/') ? <ImageIcon className="w-4 h-4 text-primary shrink-0" /> : <File className="w-4 h-4 text-primary shrink-0" />}
-                      <span className="text-sm text-white truncate">{attachment.name}</span>
+                      <span className="text-sm text-slate-900 dark:text-white truncate">{attachment.name}</span>
                     </div>
                     <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white/20" onClick={() => setAttachment(null)}>
                       <X className="w-3 h-3" />
@@ -279,7 +279,7 @@ export function ChatPanel() {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="shrink-0 bg-white/5 border-white/10 hover:bg-white/10 h-10 w-10"
+                    className="shrink-0 bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:bg-white/10 h-10 w-10"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={sending || !!err}
                   >
@@ -299,7 +299,7 @@ export function ChatPanel() {
                         setMentionSearch(null)
                       }
                     }}
-                    className="bg-white/5 border-white/10 text-white focus:ring-primary/50"
+                    className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-primary/50"
                   />
                   <Button
                     type="submit"

@@ -56,7 +56,7 @@ export function ModernSPCOverview() {
         {data.stats.map((stat) => (
           <div
             key={`${stat.label}-${stat.caption}`}
-            className={`flex h-20 flex-col items-center justify-center rounded-[1.75rem] text-white shadow-xl ${stat.className}`}
+            className={`flex h-20 flex-col items-center justify-center rounded-[1.75rem] text-slate-900 dark:text-white shadow-xl ${stat.className}`}
           >
             <span className="text-sm font-bold uppercase">{stat.label}</span>
             <span className="text-3xl font-bold leading-none">{stat.value}</span>
@@ -83,7 +83,7 @@ function MiniList({
   tone: "green" | "gold";
 }) {
   return (
-    <section className="rounded-[1.5rem] bg-[#4a4a4a] p-3 text-white shadow-xl">
+    <section className="rounded-[1.5rem] bg-[#4a4a4a] p-3 text-slate-900 dark:text-white shadow-xl">
       <h2 className="mb-2 px-2 text-sm font-bold">{title}</h2>
       <div className="space-y-2">
         {rows.map((row) => (
@@ -94,7 +94,7 @@ function MiniList({
             <span className="text-sm font-bold">{row.name}</span>
             <button
               type="button"
-              className={`h-11 rounded-full px-4 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515] ${
+              className={`h-11 rounded-full px-4 text-xs font-bold text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515] ${
                 tone === "green" ? "bg-[#10805b]" : "bg-[#9a8d12]"
               }`}
             >

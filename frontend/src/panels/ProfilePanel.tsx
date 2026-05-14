@@ -19,7 +19,7 @@ const FormField = ({ label, value, onChange, id, type = 'text', disabled = false
   disabled?: boolean
 }) => (
   <div className="space-y-2">
-    <Label htmlFor={id} className="text-sm font-medium text-slate-600 dark:text-text-muted">{label}</Label>
+    <Label htmlFor={id} className="text-sm font-medium text-slate-600 dark:text-muted-foreground">{label}</Label>
     <Input
       id={id}
       type={type}
@@ -120,7 +120,7 @@ export function ProfilePanel() {
       <Card className="glass-panel border-destructive/20 text-center p-12 max-w-2xl mx-auto">
         <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
         <h3 className="text-xl font-bold mb-2 text-slate-950 dark:text-white">Failed to load profile</h3>
-        <p className="text-slate-600 dark:text-text-muted mb-6">{err ?? 'An unknown error occurred.'}</p>
+        <p className="text-slate-600 dark:text-muted-foreground mb-6">{err ?? 'An unknown error occurred.'}</p>
         <Button onClick={load}>Retry</Button>
       </Card>
     )
@@ -148,7 +148,7 @@ export function ProfilePanel() {
               <p className="truncate text-lg font-semibold text-slate-950 dark:text-white">
                 {user.name || 'Student'}
               </p>
-              <p className="truncate text-sm text-slate-600 dark:text-text-muted">
+              <p className="truncate text-sm text-slate-600 dark:text-muted-foreground">
                 {user.collegeEmailId}
               </p>
             </div>
@@ -158,7 +158,7 @@ export function ProfilePanel() {
               variant="outline"
               onClick={onUploadProfilePicture}
               disabled={saving}
-              className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:w-auto"
+              className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-slate-200 dark:bg-white/10 sm:w-auto"
             >
               <Camera className="w-4 h-4" />
               Upload Photo
@@ -166,7 +166,7 @@ export function ProfilePanel() {
             <Button
               variant="outline"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:w-auto"
+              className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-slate-200 dark:bg-white/10 sm:w-auto"
             >
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
@@ -192,7 +192,7 @@ export function ProfilePanel() {
                   </Badge>
                 )}
               </CardTitle>
-              <CardDescription className="text-slate-600 dark:text-text-muted">
+              <CardDescription className="text-slate-600 dark:text-muted-foreground">
                 {user.verified
                   ? 'Your profile is locked and verified by SPC.'
                   : 'Complete your profile and upload a resume to get verified.'}
@@ -204,7 +204,7 @@ export function ProfilePanel() {
                   variant="outline"
                   onClick={onRequestUnlock}
                   disabled={user.unlockRequested || saving}
-                  className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:w-auto"
+                  className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-slate-200 dark:bg-white/10 sm:w-auto"
                 >
                   <Unlock className="w-4 h-4" />
                   {user.unlockRequested ? 'Edit Request Pending' : 'Request Profile Edit'}
@@ -214,7 +214,7 @@ export function ProfilePanel() {
                 variant="outline"
                 onClick={onUploadResume}
                 disabled={saving}
-                className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:w-auto"
+                className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-slate-200 dark:bg-white/10 sm:w-auto"
               >
                 <Upload className="w-4 h-4" />
                 {user.resumeUrl ? 'Update Resume' : 'Upload Resume'}
@@ -229,7 +229,7 @@ export function ProfilePanel() {
                 <FileText className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider dark:text-text-muted">Current Resume</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider dark:text-muted-foreground">Current Resume</p>
                 <a
                   href={user.resumeUrl}
                   target="_blank"
@@ -248,7 +248,7 @@ export function ProfilePanel() {
       <Card className="glass-panel">
         <CardHeader>
           <CardTitle className="text-slate-950 dark:text-white">Academic & Personal Details</CardTitle>
-          <CardDescription className="text-slate-600 dark:text-text-muted">
+          <CardDescription className="text-slate-600 dark:text-muted-foreground">
             Ensure all information matches your college records exactly.
           </CardDescription>
         </CardHeader>

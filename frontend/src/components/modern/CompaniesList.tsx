@@ -58,7 +58,7 @@ export function ModernCompaniesList() {
         return (
           <article
             key={company.id}
-            className="flex items-center gap-4 rounded-[1.75rem] bg-[#121212] p-4 text-white shadow-2xl ring-1 ring-white/10 animate-in slide-in-from-bottom-4 duration-500"
+            className="flex items-center gap-4 rounded-[1.75rem] bg-[#121212] p-4 text-slate-900 dark:text-white shadow-2xl ring-1 ring-white/10 animate-in slide-in-from-bottom-4 duration-500"
             style={{ animationDelay: `${index * 100}ms` }}
           >
             <div className="size-16 shrink-0 rounded-full bg-gradient-to-br from-zinc-200 to-zinc-400 shadow-inner" />
@@ -79,7 +79,7 @@ export function ModernCompaniesList() {
                     ? "bg-gradient-to-r from-lime-600 to-lime-800 hover:scale-[1.02]"
                     : company.status === "applied"
                       ? "bg-gradient-to-r from-blue-600 to-blue-900"
-                      : "border border-white/15 bg-[#111] text-white/80"
+                      : "border border-white/15 bg-[#111] text-slate-700 dark:text-white/80"
                 }`}
               >
                 {copy.action}

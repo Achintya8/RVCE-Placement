@@ -10,7 +10,7 @@ interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const toneClasses: Record<SkeletonTone, string> = {
-  dark: "bg-white/10",
+  dark: "bg-slate-200 dark:bg-white/10",
   light: "bg-slate-200/80",
   soft: "bg-sky-100/80",
   green: "bg-emerald-500/25",
@@ -278,7 +278,7 @@ export function FormsPanelSkeleton() {
   return (
     <LoadingRegion label="Loading placement forms" className="grid grid-cols-1 gap-5">
       {range(3).map((form) => (
-        <div key={form} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div key={form} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-5">
           <div className="mb-4 flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
               <Skeleton className="h-5 w-2/3 rounded-full" />
@@ -286,7 +286,7 @@ export function FormsPanelSkeleton() {
             </div>
             <Skeleton tone="blue" className="h-10 w-28 rounded-lg" />
           </div>
-          <div className="flex gap-4 border-t border-white/10 pt-4">
+          <div className="flex gap-4 border-t border-slate-200 dark:border-white/10 pt-4">
             <Skeleton className="h-4 w-24 rounded-full" />
             <Skeleton className="h-4 w-24 rounded-full" />
           </div>
@@ -305,13 +305,13 @@ export function AdminPanelSkeleton() {
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {range(4).map((stat) => (
-          <div key={stat} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <div key={stat} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-5">
             <Skeleton className="mb-4 h-3 w-28 rounded-full" />
             <Skeleton className="h-8 w-16 rounded-full" />
           </div>
         ))}
       </div>
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+      <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-5">
         <Skeleton className="mb-5 h-6 w-40 rounded-full" />
         <div className="space-y-3">
           {range(5).map((row) => (

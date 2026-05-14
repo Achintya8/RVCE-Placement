@@ -21,7 +21,7 @@ export function ModernAuthForm() {
 
   return (
     <div className="w-full flex flex-col items-center gap-6 mt-12">
-      <div className="bg-[#444444] rounded-[2rem] p-6 shadow-2xl w-full border border-white/10 relative overflow-hidden" aria-busy={loading}>
+      <div className="bg-[#444444] rounded-[2rem] p-6 shadow-2xl w-full border border-slate-200 dark:border-white/10 relative overflow-hidden" aria-busy={loading}>
         <div className="bg-[#d2eaff] rounded-full p-1.5 flex mb-8 relative" role="tablist" aria-label="Select sign in role">
           <button 
             type="button"
@@ -63,7 +63,7 @@ export function ModernAuthForm() {
               {role === "student" ? (
                 <>
                   <p className="text-gray-300 text-xs text-center mb-2">Sign in with your RVCE Google account</p>
-                  <button type="button" className="w-full bg-[#0066cc] text-white font-semibold rounded-2xl py-4 flex items-center justify-center gap-3 hover:bg-blue-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#444444]">
+                  <button type="button" className="w-full bg-[#0066cc] text-slate-900 dark:text-white font-semibold rounded-2xl py-4 flex items-center justify-center gap-3 hover:bg-blue-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#444444]">
                     <div className="bg-white rounded-full p-1 flex items-center justify-center">
                       <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -91,7 +91,7 @@ export function ModernAuthForm() {
                     placeholder="Password" 
                     className="w-full bg-[#f0f7ff] text-gray-800 placeholder-gray-500 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-[#0066cc]"
                   />
-                  <button type="button" className="w-full bg-[#0066cc] text-white font-semibold rounded-2xl py-4 mt-2 hover:bg-blue-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#444444]">
+                  <button type="button" className="w-full bg-[#0066cc] text-slate-900 dark:text-white font-semibold rounded-2xl py-4 mt-2 hover:bg-blue-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#444444]">
                     Sign in
                   </button>
                 </>

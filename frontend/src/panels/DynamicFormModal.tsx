@@ -83,15 +83,15 @@ export function DynamicFormModal({
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="glass-panel border-white/10 text-white sm:max-w-[600px] max-h-[90vh] flex flex-col p-0 overflow-hidden shadow-2xl">
+      <DialogContent className="glass-panel text-slate-900 dark:text-white sm:max-w-[600px] max-h-[90vh] flex flex-col p-0 overflow-hidden shadow-2xl">
         <DialogHeader className="p-6 pb-2">
           <div className="flex items-center gap-3 mb-1">
-            <DialogTitle className="text-2xl text-white">{detail.summary.title}</DialogTitle>
+            <DialogTitle className="text-2xl text-slate-900 dark:text-white">{detail.summary.title}</DialogTitle>
             <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/20 text-[10px] uppercase font-bold">
               {detail.summary.type}
             </Badge>
           </div>
-          <DialogDescription className="text-text-muted">
+          <DialogDescription className="text-muted-foreground">
             {detail.summary.companyName ?? 'Global Placement Form'}
           </DialogDescription>
         </DialogHeader>
@@ -100,7 +100,7 @@ export function DynamicFormModal({
           <div className="space-y-6 pb-6">
             {detail.questions.map((q) => (
               <div key={q.id} className="space-y-3">
-                <Label className="text-sm font-semibold flex items-center gap-1 text-white">
+                <Label className="text-sm font-semibold flex items-center gap-1 text-slate-900 dark:text-white">
                   {q.questionText}
                   {q.isRequired && <span className="text-red-400">*</span>}
                 </Label>
@@ -111,17 +111,17 @@ export function DynamicFormModal({
                     value={values[q.id] ?? ''}
                     onChange={(e) => setVal(q.id, e.target.value)}
                     placeholder={`Enter ${q.questionText.toLowerCase()}...`}
-                    className="bg-white/5 border-white/10 text-white focus:ring-primary/50"
+                    className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-primary/50"
                   />
                 ) : q.fieldType === 'boolean' ? (
                   <Select
                     value={values[q.id]}
                     onValueChange={(v) => setVal(q.id, v)}
                   >
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                    <SelectTrigger className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
                       <SelectValue placeholder="Select an option" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    <SelectContent className="bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
                       <SelectItem value="true">Yes</SelectItem>
                       <SelectItem value="false">No</SelectItem>
                     </SelectContent>
@@ -131,10 +131,10 @@ export function DynamicFormModal({
                     value={values[q.id]}
                     onValueChange={(v) => setVal(q.id, v)}
                   >
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                    <SelectTrigger className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
                       <SelectValue placeholder="Choose one..." />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    <SelectContent className="bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
                       {q.options.map((o) => (
                         <SelectItem key={o} value={o}>
                           {o}
@@ -148,8 +148,8 @@ export function DynamicFormModal({
           </div>
         </ScrollArea>
 
-        <DialogFooter className="p-6 bg-white/5 border-t border-white/10">
-          <Button variant="ghost" onClick={onClose} disabled={saving} className="text-white hover:bg-white/5">
+        <DialogFooter className="p-6 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/10">
+          <Button variant="ghost" onClick={onClose} disabled={saving} className="text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-white/5">
             Cancel
           </Button>
           <Button onClick={() => void submit()} disabled={saving} className="bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20">

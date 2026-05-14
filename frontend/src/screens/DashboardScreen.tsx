@@ -158,8 +158,8 @@ export default function DashboardScreen() {
     <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-white">
       <header className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/85 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-white px-2 py-1 shadow-sm">
-            <CollegeLogo imageClassName="w-28" />
+          <div className="rounded-lg bg-white px-1.5 py-1 shadow-sm">
+            <CollegeLogo imageClassName="w-10 h-10 object-cover rounded-md" />
           </div>
           <div className="hidden min-w-0 sm:block">
             <h1 className="truncate text-base font-semibold lg:text-xl">
@@ -180,7 +180,7 @@ export default function DashboardScreen() {
                 : enableNotifications())
             }
             disabled={!notificationPreference.supported}
-            className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:w-auto sm:px-4"
+            className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-slate-200 dark:bg-white/10 sm:w-auto sm:px-4"
             title={notificationsEnabled ? 'Block notifications' : 'Allow notifications'}
           >
             {notificationsEnabled ? (
@@ -196,7 +196,7 @@ export default function DashboardScreen() {
             variant="outline"
             size="icon"
             onClick={logout}
-            className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:w-auto sm:px-4"
+            className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-slate-200 dark:bg-white/10 sm:w-auto sm:px-4"
             title="Logout"
           >
             <LogOut className="w-4 h-4" />
@@ -219,7 +219,7 @@ export default function DashboardScreen() {
             className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 text-xs font-medium transition-all sm:min-w-24 sm:flex-none sm:px-4 ${
               i === safeIndex
                 ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-muted-foreground dark:hover:bg-white/10 dark:hover:text-white'
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-muted-foreground dark:hover:bg-slate-200 dark:bg-white/10 dark:hover:text-slate-900 dark:text-white'
             }`}
           >
             {p.icon}

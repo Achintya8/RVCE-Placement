@@ -38,8 +38,8 @@ export function FormsPanel() {
     return (
       <Card className="glass-panel border-destructive/20 text-center p-12 max-w-2xl mx-auto">
         <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-        <h3 className="text-xl font-bold mb-2 text-white">Failed to load forms</h3>
-        <p className="text-text-muted mb-6">{err ?? 'An unknown error occurred.'}</p>
+        <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">Failed to load forms</h3>
+        <p className="text-muted-foreground mb-6">{err ?? 'An unknown error occurred.'}</p>
         <Button onClick={fetchForms}>Retry</Button>
       </Card>
     )
@@ -48,12 +48,12 @@ export function FormsPanel() {
   if (forms.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-center">
-        <div className="p-6 rounded-full bg-white/5">
-          <ClipboardList className="w-10 h-10 text-text-muted opacity-50" />
+        <div className="p-6 rounded-full bg-slate-100 dark:bg-white/5">
+          <ClipboardList className="w-10 h-10 text-muted-foreground opacity-50" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-white">All caught up!</h3>
-          <p className="text-sm text-text-muted mt-1 max-w-xs">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">All caught up!</h3>
+          <p className="text-sm text-muted-foreground mt-1 max-w-xs">
             No pending forms assigned to you at the moment. SPC-created forms will appear here.
           </p>
         </div>
@@ -73,11 +73,11 @@ export function FormsPanel() {
 
       <div className="grid grid-cols-1 gap-6">
         {forms.map((f) => (
-          <Card key={f.id} className="glass-panel border-white/10 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
+          <Card key={f.id} className="glass-panel hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
             <CardHeader className="pb-4">
               <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div className="space-y-1">
-                  <CardTitle className="text-xl flex items-center gap-2 text-white">
+                  <CardTitle className="text-xl flex items-center gap-2 text-slate-900 dark:text-white">
                     {f.title}
                     {(f.responseCount ?? 0) > 0 && (
                       <CheckCircle2 className="w-5 h-5 text-green-500" />
@@ -85,7 +85,7 @@ export function FormsPanel() {
                   </CardTitle>
                   <CardDescription className="flex items-center gap-2">
                     {f.companyName ? (
-                      <span className="flex items-center gap-1 text-text-muted">
+                      <span className="flex items-center gap-1 text-muted-foreground">
                         <Building className="w-3 h-3" /> {f.companyName}
                       </span>
                     ) : (
@@ -93,8 +93,8 @@ export function FormsPanel() {
                         <Globe className="w-3 h-3" /> Global Form
                       </span>
                     )}
-                    <span className="text-white/20">•</span>
-                    <span className="uppercase font-bold tracking-widest text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60">
+                    <span className="text-slate-400 dark:text-white/20">•</span>
+                    <span className="uppercase font-bold tracking-widest text-[10px] bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 rounded text-slate-500 dark:text-white/60">
                       {f.type}
                     </span>
                   </CardDescription>
@@ -105,7 +105,7 @@ export function FormsPanel() {
                   className={cn(
                     "gap-2 w-full sm:w-auto",
                     (f.responseCount ?? 0) === 0 && "bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20",
-                    (f.responseCount ?? 0) > 0 && "border-white/10 text-white hover:bg-white/5"
+                    (f.responseCount ?? 0) > 0 && "border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-white/5"
                   )}
                 >
                   {(f.responseCount ?? 0) > 0 ? (
@@ -117,16 +117,16 @@ export function FormsPanel() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-6 border-t border-white/5 pt-4 mt-2">
+              <div className="flex gap-6 border-t border-slate-200 dark:border-white/5 pt-4 mt-2">
                 <div className="flex items-center gap-2 text-sm">
-                  <FileQuestion className="w-4 h-4 text-text-muted" />
-                  <span className="font-bold text-white">{f.questionCount ?? 0}</span>
-                  <span className="text-text-muted">Questions</span>
+                  <FileQuestion className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-bold text-slate-900 dark:text-white">{f.questionCount ?? 0}</span>
+                  <span className="text-muted-foreground">Questions</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <MessageSquareText className="w-4 h-4 text-text-muted" />
-                  <span className="font-bold text-white">{f.responseCount ?? 0}</span>
-                  <span className="text-text-muted">Responses</span>
+                  <MessageSquareText className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-bold text-slate-900 dark:text-white">{f.responseCount ?? 0}</span>
+                  <span className="text-muted-foreground">Responses</span>
                 </div>
               </div>
             </CardContent>

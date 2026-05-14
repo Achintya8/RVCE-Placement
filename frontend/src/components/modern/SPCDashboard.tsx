@@ -39,10 +39,10 @@ export function ModernSPCDashboard() {
         Here is your placement overview!
       </p>
 
-      <div className="relative flex w-full flex-col overflow-hidden rounded-[2rem] border border-white/5 bg-[#1e1e1e] p-5 shadow-2xl">
+      <div className="relative flex w-full flex-col overflow-hidden rounded-[2rem] border border-slate-200 dark:border-white/5 bg-[#1e1e1e] p-5 shadow-2xl">
         <div className="mb-4 grid grid-cols-[1fr_1fr_0.8fr_0.9fr_4rem] gap-2 px-2">
           {["Name", "USN", "CGPA", "Backlogs"].map((heading) => (
-            <span key={heading} className="text-xs font-bold text-white">
+            <span key={heading} className="text-xs font-bold text-slate-900 dark:text-white">
               {heading}
             </span>
           ))}
@@ -53,21 +53,21 @@ export function ModernSPCDashboard() {
           {students.map((student, index) => (
             <div
               key={student.id}
-              className="grid min-h-[46px] grid-cols-[1fr_1fr_0.8fr_0.9fr_4rem] items-center gap-2 rounded-full border border-white/5 bg-[#111] px-4 text-xs text-white animate-in slide-in-from-right-4 duration-500"
+              className="grid min-h-[46px] grid-cols-[1fr_1fr_0.8fr_0.9fr_4rem] items-center gap-2 rounded-full border border-slate-200 dark:border-white/5 bg-[#111] px-4 text-xs text-slate-900 dark:text-white animate-in slide-in-from-right-4 duration-500"
               style={{ animationDelay: `${200 + index * 100}ms` }}
             >
               <span className="truncate font-semibold">{student.name}</span>
-              <span className="truncate text-white/70">{student.usn}</span>
-              <span className="text-center text-white/70">{student.cgpa}</span>
-              <span className="text-center text-white/70">{student.backlogs}</span>
+              <span className="truncate text-slate-600 dark:text-white/70">{student.usn}</span>
+              <span className="text-center text-slate-600 dark:text-white/70">{student.cgpa}</span>
+              <span className="text-center text-slate-600 dark:text-white/70">{student.backlogs}</span>
               {student.state === "rejected" ? (
-                <span className="rounded-full bg-[#8c1818] px-2 py-1 text-center text-[10px] font-bold leading-tight text-white">
+                <span className="rounded-full bg-[#8c1818] px-2 py-1 text-center text-[10px] font-bold leading-tight text-slate-900 dark:text-white">
                   Not<br />Verified
                 </span>
               ) : (
                 <button
                   type="button"
-                  className="rounded-full bg-[#10805b] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#111]"
+                  className="rounded-full bg-[#10805b] px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#111]"
                 >
                   Verify
                 </button>
@@ -79,16 +79,16 @@ export function ModernSPCDashboard() {
         <div className="mt-auto flex flex-col items-center gap-4">
           <label className="relative">
             <span className="sr-only">Search by USN</span>
-            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-white" />
+            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-900 dark:text-white" />
             <input
               type="text"
               placeholder="Search USN"
-              className="w-[180px] rounded-full border border-white/10 bg-[#111] py-2.5 pl-10 pr-6 text-sm font-semibold text-white placeholder-white focus:outline-none focus:ring-1 focus:ring-white/30"
+              className="w-[180px] rounded-full border border-slate-200 dark:border-white/10 bg-[#111] py-2.5 pl-10 pr-6 text-sm font-semibold text-slate-900 dark:text-white placeholder-white focus:outline-none focus:ring-1 focus:ring-white/30"
             />
           </label>
           <button
             type="button"
-            className="rounded-full bg-[#10805b] px-8 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1e1e1e]"
+            className="rounded-full bg-[#10805b] px-8 py-2.5 text-sm font-semibold text-slate-900 dark:text-white shadow-lg transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1e1e1e]"
           >
             Export Sheets
           </button>

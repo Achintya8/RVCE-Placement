@@ -43,7 +43,7 @@ export function ModernStudentProfile() {
         <StudentProfileSkeleton />
       ) : (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="bg-[#1e1e1e] rounded-3xl p-6 shadow-2xl relative overflow-hidden text-white border border-white/5">
+      <div className="bg-[#1e1e1e] rounded-3xl p-6 shadow-2xl relative overflow-hidden text-slate-900 dark:text-white border border-slate-200 dark:border-white/5">
         <div className="flex items-center gap-4 mb-8">
           <div className="w-16 h-16 rounded-[1.35rem] bg-yellow-500 shadow-lg" />
           <div className="flex flex-col">
@@ -68,16 +68,16 @@ export function ModernStudentProfile() {
       </div>
 
       {/* Resume Section */}
-      <div className="bg-[#2a2a2a] rounded-3xl p-5 shadow-lg border border-white/5">
+      <div className="bg-[#2a2a2a] rounded-3xl p-5 shadow-lg border border-slate-200 dark:border-white/5">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-white font-medium text-sm">Resume</span>
-          <button type="button" className="bg-[#107c54] text-white text-xs font-semibold px-4 py-1.5 rounded-full hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2a2a2a]">
+          <span className="text-slate-900 dark:text-white font-medium text-sm">Resume</span>
+          <button type="button" className="bg-[#107c54] text-slate-900 dark:text-white text-xs font-semibold px-4 py-1.5 rounded-full hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2a2a2a]">
             Uploaded
           </button>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex-1 bg-[#1a1a1a] rounded-full px-4 py-3 flex items-center justify-between border border-white/5">
-            <span className="text-white text-sm font-medium">Resume.pdf</span>
+          <div className="flex-1 bg-[#1a1a1a] rounded-full px-4 py-3 flex items-center justify-between border border-slate-200 dark:border-white/5">
+            <span className="text-slate-900 dark:text-white text-sm font-medium">Resume.pdf</span>
           </div>
           <button type="button" className="bg-gray-300 text-gray-900 font-semibold text-sm px-6 py-3 rounded-full hover:bg-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2a2a2a]">
             Replace
@@ -97,7 +97,7 @@ function ProfileField({ label, value, loading }: { label: string; value?: string
       {loading ? (
         <Skeleton className="h-4 w-20" />
       ) : (
-        <span className="text-white text-sm font-medium">{value || "-"}</span>
+        <span className="text-slate-900 dark:text-white text-sm font-medium">{value || "-"}</span>
       )}
     </div>
   );
