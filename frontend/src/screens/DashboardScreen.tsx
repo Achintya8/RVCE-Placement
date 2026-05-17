@@ -217,10 +217,10 @@ export default function DashboardScreen() {
             key={p.id}
             type="button"
             onClick={() => setSelectedIndex(i)}
-            className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 text-xs font-medium transition-all sm:min-w-24 sm:flex-none sm:px-4 ${
+            className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[10px] sm:text-xs font-semibold transition-all sm:min-w-24 sm:flex-none sm:px-4 ${
               i === safeIndex
-                ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-muted-foreground dark:hover:bg-slate-200 dark:bg-white/10 dark:hover:text-slate-900 dark:text-white'
+                ? 'bg-primary text-white shadow-md shadow-primary/20 dark:bg-primary dark:text-white dark:shadow-md dark:shadow-primary/30'
+                : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
             }`}
           >
             {p.icon}

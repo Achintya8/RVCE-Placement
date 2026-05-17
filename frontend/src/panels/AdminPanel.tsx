@@ -38,7 +38,7 @@ import {
   DialogHeader, 
   DialogTitle 
 } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Plus, 
@@ -799,13 +799,13 @@ export function AdminPanel() {
 
       {responsesModal && (
         <Dialog open={true} onOpenChange={() => setResponsesModal(null)}>
-          <DialogContent className="glass-panel text-slate-900 dark:text-white max-w-5xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogContent className="glass-panel text-slate-900 dark:text-white w-[92vw] sm:w-full max-w-5xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-0 overflow-hidden">
             <DialogHeader className="p-6 pb-2">
               <DialogTitle className="text-2xl text-slate-900 dark:text-white">{responsesModal.title}</DialogTitle>
               <DialogDescription className="text-muted-foreground">Viewing raw student submissions for this form.</DialogDescription>
             </DialogHeader>
             
-            <ScrollArea className="flex-1 p-6 pt-2">
+            <div className="flex-1 overflow-y-auto p-6 pt-2">
               {responsesModal.rows.length === 0 ? (
                 <div className="py-20 text-center text-muted-foreground">No responses recorded yet.</div>
               ) : (
@@ -834,7 +834,7 @@ export function AdminPanel() {
                   </Table>
                 </div>
               )}
-            </ScrollArea>
+            </div>
 
             <DialogFooter className="p-6 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/10">
               <Button variant="ghost" onClick={() => setResponsesModal(null)} className="text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-white/5">Close</Button>
@@ -850,13 +850,13 @@ export function AdminPanel() {
 
       {pendingModal && (
         <Dialog open={true} onOpenChange={() => setPendingModal(null)}>
-          <DialogContent className="glass-panel text-slate-900 dark:text-white max-w-2xl max-h-[80vh] flex flex-col p-0 overflow-hidden">
+          <DialogContent className="glass-panel text-slate-900 dark:text-white w-[92vw] sm:w-full max-w-2xl max-h-[80vh] sm:max-h-[80vh] flex flex-col p-0 overflow-hidden">
             <DialogHeader className="p-6 pb-2">
               <DialogTitle className="text-2xl text-slate-900 dark:text-white">Pending Submissions</DialogTitle>
               <DialogDescription className="text-muted-foreground">Students who have not yet submitted "{pendingModal.title}".</DialogDescription>
             </DialogHeader>
             
-            <ScrollArea className="flex-1 p-6 pt-2">
+            <div className="flex-1 overflow-y-auto p-6 pt-2">
               {pendingModal.students.length === 0 ? (
                 <div className="py-10 text-center text-muted-foreground">All eligible students have submitted this form!</div>
               ) : (
@@ -874,7 +874,7 @@ export function AdminPanel() {
                   ))}
                 </div>
               )}
-            </ScrollArea>
+            </div>
             <DialogFooter className="p-6 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/10">
               <Button onClick={() => setPendingModal(null)} className="text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-white/5" variant="ghost">Close</Button>
             </DialogFooter>
@@ -883,12 +883,12 @@ export function AdminPanel() {
       )}
       {reviewStudent && (
         <Dialog open={true} onOpenChange={() => setReviewStudent(null)}>
-          <DialogContent className="glass-panel text-slate-900 dark:text-white max-w-3xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogContent className="glass-panel text-slate-900 dark:text-white w-[92vw] sm:w-full max-w-3xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-0 overflow-hidden">
             <DialogHeader className="p-6 pb-2">
               <DialogTitle className="text-2xl text-slate-900 dark:text-white">Profile Review: {reviewStudent.name}</DialogTitle>
               <DialogDescription className="text-muted-foreground">Review the student's details before verifying.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-1 p-6 pt-2">
+            <div className="flex-1 overflow-y-auto p-6 pt-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div><Label className="text-muted-foreground">Full Name</Label><p className="font-bold text-slate-900 dark:text-white">{reviewStudent.name}</p></div>
@@ -920,7 +920,7 @@ export function AdminPanel() {
                 </div>
               </div>
 
-            </ScrollArea>
+            </div>
             <DialogFooter className="p-6 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex flex-col gap-4">
               {!reviewStudent.verified && (
                 <div className="w-full space-y-2">
@@ -933,14 +933,14 @@ export function AdminPanel() {
                   />
                 </div>
               )}
-              <div className="flex w-full sm:justify-between items-center gap-4">
-                <Button onClick={() => setReviewStudent(null)} className="text-slate-900 dark:text-white hover:bg-slate-200 dark:bg-white/10" variant="ghost">Close</Button>
+              <div className="flex flex-col sm:flex-row w-full sm:justify-between items-stretch sm:items-center gap-2 sm:gap-4">
+                <Button onClick={() => setReviewStudent(null)} className="order-3 sm:order-1 text-slate-900 dark:text-white hover:bg-slate-200 dark:bg-white/10 w-full sm:w-auto" variant="ghost">Close</Button>
                 {!reviewStudent.verified && (
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Button variant="destructive" onClick={handleRejectStudent} disabled={rejecting || !rejectReason.trim()} className="w-full sm:w-auto">Reject Profile</Button>
-                    <Button onClick={handleVerifyStudent} disabled={rejecting} className="bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 w-full sm:w-auto gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto order-1 sm:order-2">
+                    <Button onClick={handleVerifyStudent} disabled={rejecting} className="bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 w-full sm:w-auto gap-2 order-1 sm:order-2">
                       <CheckCircle2 className="w-4 h-4" /> Approve & Lock
                     </Button>
+                    <Button variant="destructive" onClick={handleRejectStudent} disabled={rejecting || !rejectReason.trim()} className="w-full sm:w-auto order-2 sm:order-1">Reject Profile</Button>
                   </div>
                 )}
               </div>
