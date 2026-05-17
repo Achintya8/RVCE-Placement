@@ -226,3 +226,7 @@ EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN
   ALTER TABLE "messages" ADD CONSTRAINT "fk_messages_parent_id" FOREIGN KEY ("parent_id") REFERENCES "messages" ("id") ON DELETE SET NULL DEFERRABLE INITIALLY IMMEDIATE;
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "forms" ADD COLUMN "accepting_responses" boolean DEFAULT true;
+EXCEPTION WHEN duplicate_column THEN NULL; END $$;
