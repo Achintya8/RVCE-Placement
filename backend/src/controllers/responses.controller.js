@@ -23,6 +23,10 @@ export const submitFormResponses = async (req, res, next) => {
       throw new ApiError(404, 'Form not found.');
     }
 
+    if (form.acceptingResponses === false) {
+      throw new ApiError(400, 'This form is no longer accepting responses.');
+    }
+
     const { answers } = responseSchema.parse(req.body);
     const questions = await getFormQuestions(formId);
     const questionMap = new Map(questions.map((question) => [question.id, question]));
@@ -101,6 +105,44 @@ export const exportFormResponses = async (req, res, next) => {
     );
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.send(Buffer.from(buffer));
+  } catch (error) {
+    next(error);
+  }
+};
+
+import { uploadAttachment, uploadToGoogleDrive } from '../services/storage.service.js';
+
+export const uploadResponseFile = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      throw new ApiError(400, 'No file uploaded.');
+    }
+
+    const driveUrl = await uploadToGoogleDrive({
+      buffer: req.file.buffer,
+      fileName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      folderLink: req.body.folderLink,
+    });
+
+    if (driveUrl) {
+      return res.json({
+        fileUrl: driveUrl,
+        fileName: req.file.originalname,
+      });
+    }
+
+    const fileUrl = await uploadAttachment({
+      buffer: req.file.buffer,
+      fileName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      userId: req.auth.userId,
+    });
+
+    res.json({
+      fileUrl,
+      fileName: req.file.originalname,
+    });
   } catch (error) {
     next(error);
   }

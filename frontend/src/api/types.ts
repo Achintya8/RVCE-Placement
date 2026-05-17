@@ -47,6 +47,7 @@ export type PlacementFormSummary = {
   companyName?: string | null
   questionCount?: number | null
   responseCount?: number | null
+  acceptingResponses?: boolean
 }
 
 export type FormQuestion = {
@@ -54,6 +55,7 @@ export type FormQuestion = {
   questionText: string
   fieldType: string
   options: string[]
+  folderLink?: string | null
   isRequired: boolean
   answer?: string | null
 }
@@ -86,6 +88,12 @@ export type ChatMessage = {
   attachmentName?: string | null
   createdAt: string
   mentionedUsers: ChatUser[]
+  parentId?: number | null
+  parentMessage?: {
+    id: number
+    senderName: string
+    messageText: string
+  } | null
 }
 
 export type ChatMessagesResponse = {
@@ -155,6 +163,7 @@ export function parseFormSummary(json: Record<string, unknown>): PlacementFormSu
       json.questionCount != null ? num(json.questionCount) : null,
     responseCount:
       json.responseCount != null ? num(json.responseCount) : null,
+    acceptingResponses: json.acceptingResponses !== undefined ? Boolean(json.acceptingResponses) : true,
   }
 }
 
@@ -164,6 +173,7 @@ export function parseFormQuestion(json: Record<string, unknown>): FormQuestion {
     questionText: String(json.questionText ?? ''),
     fieldType: String(json.fieldType ?? 'text'),
     options: Array.isArray(json.options) ? json.options.map(String) : [],
+    folderLink: json.folderLink as string | null | undefined,
     isRequired: Boolean(json.isRequired),
     answer: json.answer as string | null | undefined,
   }
@@ -206,6 +216,7 @@ export function parseChatUser(json: Record<string, unknown>): ChatUser {
 
 export function parseChatMessage(json: Record<string, unknown>): ChatMessage {
   const mentionedRaw = json.mentionedUsers as unknown[] | undefined
+  const parentRaw = json.parentMessage as Record<string, unknown> | null | undefined
   return {
     id: num(json.id),
     sender: parseChatUser((json.sender as Record<string, unknown>) ?? {}),
@@ -216,5 +227,11 @@ export function parseChatMessage(json: Record<string, unknown>): ChatMessage {
     mentionedUsers: (mentionedRaw ?? []).map((item) =>
       parseChatUser(item as Record<string, unknown>),
     ),
+    parentId: json.parentId != null ? Number(json.parentId) : undefined,
+    parentMessage: parentRaw ? {
+      id: num(parentRaw.id),
+      senderName: String(parentRaw.senderName ?? ''),
+      messageText: String(parentRaw.messageText ?? ''),
+    } : null,
   }
 }

@@ -195,6 +195,7 @@ export const uploadAttachment = async ({
     console.error('MongoDB GridFS upload failed, falling back to local:', error);
   }
 
+
   // 2. Fallback to Local Storage
   try {
     await fs.mkdir(UPLOADS_DIR, { recursive: true });
@@ -232,5 +233,70 @@ export const deleteAttachment = async (url) => {
     await fs.unlink(filePath);
   } catch (err) {
     // Ignore if not found locally
+  }
+};
+
+import { driveClient, isDriveConfigured } from '../config/drive.js';
+
+export const uploadToGoogleDrive = async ({ buffer, fileName, mimeType, folderLink }) => {
+  let folderId = null;
+  if (folderLink) {
+    const match = folderLink.match(/\/folders\/([a-zA-Z0-9-_]+)/);
+    if (match) folderId = match[1];
+    else folderId = folderLink; // Fallback if they provide just the ID
+  }
+
+  if (!folderId) {
+    let globalLink = env.googleDriveFolderId;
+    if (globalLink) {
+      const match = globalLink.match(/\/folders\/([a-zA-Z0-9-_]+)/);
+      folderId = match ? match[1] : globalLink;
+    }
+  }
+
+  if (!isDriveConfigured) {
+    console.warn('Google Drive credentials not fully configured. Falling back to local storage.');
+    return null;
+  }
+
+  try {
+    const readableStream = new Readable();
+    readableStream.push(buffer);
+    readableStream.push(null);
+
+    const fileMetadata = {
+      name: fileName,
+      parents: folderId ? [folderId] : [],
+    };
+
+    const media = {
+      mimeType: mimeType,
+      body: readableStream,
+    };
+
+    const response = await driveClient.files.create({
+      requestBody: fileMetadata,
+      media: media,
+      fields: 'id, webViewLink, webContentLink',
+    });
+
+    console.log('Successfully uploaded file to Google Drive:', response.data.id);
+    
+    try {
+      await driveClient.permissions.create({
+        fileId: response.data.id,
+        requestBody: {
+          role: 'reader',
+          type: 'anyone',
+        },
+      });
+    } catch (shareError) {
+      console.warn('Could not set public read permission on Google Drive file:', shareError);
+    }
+
+    return response.data.webViewLink || response.data.webContentLink;
+  } catch (error) {
+    console.error('Failed to upload file to Google Drive:', error);
+    return null;
   }
 };

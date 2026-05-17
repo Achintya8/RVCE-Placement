@@ -11,6 +11,7 @@ const normalizeForm = (row) => ({
   companyName: row.company_name,
   questionCount: row.question_count ? Number(row.question_count) : undefined,
   responseCount: row.response_count ? Number(row.response_count) : undefined,
+  acceptingResponses: row.accepting_responses !== undefined ? Boolean(row.accepting_responses) : true,
 });
 
 const normalizeQuestion = (row) => {
@@ -46,10 +47,12 @@ export const createForm = async (payload) => {
 export const listForms = async () => {
   const { rows } = await query(
     `SELECT f.*, c."name" AS company_name,
-        COUNT(DISTINCT fqm."id") AS question_count
+        COUNT(DISTINCT fqm."id") AS question_count,
+        COUNT(DISTINCT fr."student_id") AS response_count
       FROM "forms" f
       LEFT JOIN "companies" c ON c."id" = f."company_id"
       LEFT JOIN "form_question_map" fqm ON fqm."form_id" = f."id"
+      LEFT JOIN "form_responses" fr ON fr."form_id" = f."id"
       GROUP BY f."id", c."name"
       ORDER BY f."created_at" DESC NULLS LAST, f."id" DESC`,
   );
@@ -255,5 +258,16 @@ export const deleteForm = async (formId) => {
     await client.query('DELETE FROM "form_responses" WHERE "form_id" = $1', [formId]);
     await client.query('DELETE FROM "forms" WHERE "id" = $1', [formId]);
   });
+};
+
+export const updateFormAcceptingResponses = async (formId, acceptingResponses) => {
+  const { rows } = await query(
+    `UPDATE "forms"
+     SET "accepting_responses" = $2
+     WHERE "id" = $1
+     RETURNING *`,
+    [formId, acceptingResponses],
+  );
+  return rows[0] ? normalizeForm(rows[0]) : null;
 };
 

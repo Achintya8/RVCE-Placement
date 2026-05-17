@@ -12,6 +12,7 @@ import {
   replaceFormQuestionMappings,
   getPendingStudentsForForm,
   deleteForm,
+  updateFormAcceptingResponses,
 } from '../repositories/form.repository.js';
 import { findUserById, listEligibleStudentIds, listStudentIds } from '../repositories/user.repository.js';
 import { sendToUsers } from '../services/notification.service.js';
@@ -26,8 +27,9 @@ const formSchema = z.object({
 
 const questionSchema = z.object({
   questionText: z.string().min(1),
-  fieldType: z.enum(['text', 'number', 'boolean', 'dropdown']),
+  fieldType: z.enum(['text', 'number', 'boolean', 'dropdown', 'file']),
   options: z.array(z.string().min(1)).optional(),
+  folderLink: z.string().optional().nullable(),
 });
 
 const mappingsSchema = z.object({
@@ -216,6 +218,26 @@ export const getPendingStudents = async (req, res, next) => {
   try {
     const formId = Number(req.params.id);
     res.json(await getPendingStudentsForForm(formId));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const toggleFormResponses = async (req, res, next) => {
+  try {
+    const formId = Number(req.params.id);
+    const { acceptingResponses } = req.body;
+
+    if (typeof acceptingResponses !== 'boolean') {
+      throw new ApiError(400, 'acceptingResponses must be a boolean.');
+    }
+
+    const updatedForm = await updateFormAcceptingResponses(formId, acceptingResponses);
+    if (!updatedForm) {
+      throw new ApiError(404, 'Form not found.');
+    }
+
+    res.json(updatedForm);
   } catch (error) {
     next(error);
   }

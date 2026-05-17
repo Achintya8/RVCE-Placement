@@ -1,5 +1,5 @@
 import { GoogleLogin } from '@react-oauth/google'
-import { Bell, BellOff } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
@@ -8,7 +8,6 @@ import { CollegeLogo } from '@/components/modern/CollegeLogo'
 import { Button } from '@/components/ui/button'
 import {
   allowNotifications,
-  blockNotifications,
   getNotificationPreference,
 } from '../notifications/registerNotifications'
 
@@ -36,19 +35,9 @@ export default function HomeScreen() {
     return () => window.removeEventListener('focus', handleFocus)
   }, [])
 
-  const toggleNotifications = async () => {
+  const enableNotifications = async () => {
     if (!notificationPreference.supported) {
       toast.error('Notifications are not supported in this browser.')
-      return
-    }
-
-    if (
-      notificationPreference.permission === 'granted' &&
-      !notificationPreference.optedOut
-    ) {
-      await blockNotifications()
-      refreshNotificationPreference()
-      toast('Notifications blocked for this portal.')
       return
     }
 
@@ -62,13 +51,7 @@ export default function HomeScreen() {
     }
   }
 
-  const notificationButtonLabel =
-    notificationPreference.permission === 'denied'
-      ? 'Notifications blocked'
-      : notificationPreference.permission === 'granted' &&
-          !notificationPreference.optedOut
-        ? 'Block notifications'
-        : 'Allow notifications'
+  const notificationsGranted = notificationPreference.permission === 'granted'
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f8fbff] px-5 py-10 text-slate-950">
@@ -91,21 +74,28 @@ export default function HomeScreen() {
             <p className="mb-6 text-center text-sm font-medium text-slate-700 dark:text-white/80">
               Sign in with your RVCE Google account
             </p>
-            <Button
-              type="button"
-              variant="secondary"
-              className="mb-4 w-full bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white hover:bg-white/20"
-              onClick={() => void toggleNotifications()}
-              disabled={!notificationPreference.supported}
-            >
-              {notificationPreference.permission === 'granted' &&
-              !notificationPreference.optedOut ? (
-                <BellOff />
+
+            {/* Notification status */}
+            {notificationPreference.supported && (
+              notificationsGranted ? (
+                <div className="mb-4 flex items-center justify-center gap-2 rounded-xl bg-green-500/15 border border-green-500/25 px-4 py-2.5">
+                  <Bell className="w-4 h-4 text-green-400 shrink-0" />
+                  <span className="text-sm font-medium text-green-300">Notifications enabled</span>
+                </div>
               ) : (
-                <Bell />
-              )}
-              {notificationButtonLabel}
-            </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="mb-4 w-full gap-2 border-0 text-white font-semibold"
+                  style={{ backgroundColor: '#ef4444' }}
+                  onClick={() => void enableNotifications()}
+                >
+                  <Bell className="w-4 h-4" />
+                  Enable placement alerts
+                </Button>
+              )
+            )}
+
             <div className="flex justify-center rounded-2xl bg-[#0d72d9] px-3 py-3 hover:bg-blue-600 transition-colors">
               <GoogleLogin
                 onSuccess={(cred) => {

@@ -45,6 +45,7 @@ export function ProfilePanel() {
   const { theme, setTheme } = useTheme()
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
+
   const handleFieldChange = (field: keyof AppUser, value: any) => {
     setDraftField(field, value)
     if (fieldErrors[field]) {

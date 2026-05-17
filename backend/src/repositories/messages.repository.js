@@ -7,14 +7,14 @@ import { normalizeUrl } from '../utils/url.js';
  * Insert a message and its mentions atomically inside one transaction.
  * Returns the raw DB row for the new message.
  */
-export const createMessageWithMentions = async (senderId, messageText, mentionedUserIds = [], attachmentUrl = null, attachmentName = null) => {
+export const createMessageWithMentions = async (senderId, messageText, mentionedUserIds = [], attachmentUrl = null, attachmentName = null, parentId = null) => {
   return withTransaction(async (client) => {
     // 1. Insert the message
     const { rows: msgRows } = await client.query(
-      `INSERT INTO "messages" ("sender_id", "message_text", "attachment_url", "attachment_name", "created_at", "updated_at")
-       VALUES ($1, $2, $3, $4, NOW(), NOW())
+      `INSERT INTO "messages" ("sender_id", "message_text", "attachment_url", "attachment_name", "parent_id", "created_at", "updated_at")
+       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
        RETURNING *`,
-      [senderId, messageText, attachmentUrl, attachmentName],
+      [senderId, messageText, attachmentUrl, attachmentName, parentId],
     );
     const message = msgRows[0];
 
@@ -51,6 +51,7 @@ export const getMessages = async (limit = 50, offset = 0) => {
        m."attachment_url",
        m."attachment_name",
        m."created_at",
+       m."parent_id",
        u."name"             AS sender_name,
        u."college_email_id" AS sender_email,
        COALESCE(
@@ -62,19 +63,30 @@ export const getMessages = async (limit = 50, offset = 0) => {
            )
          ) FILTER (WHERE mu."id" IS NOT NULL),
          '[]'::json
-       ) AS mentioned_users
+       ) AS mentioned_users,
+       CASE WHEN m."parent_id" IS NOT NULL THEN
+         JSON_BUILD_OBJECT(
+           'id', pm."id",
+           'senderName', pmu."name",
+           'messageText', pm."message_text"
+         )
+       ELSE NULL END AS parent_message
      FROM "messages" m
-     INNER JOIN "users"    u  ON u."id"  = m."sender_id"
-     LEFT  JOIN "mentions" mn ON mn."message_id"         = m."id"
-     LEFT  JOIN "users"    mu ON mu."id" = mn."mentioned_user_id"
-     GROUP BY m."id", m."sender_id", m."message_text", m."attachment_url", m."attachment_name", m."created_at",
-              u."name", u."college_email_id"
+     INNER JOIN "users"    u   ON u."id"   = m."sender_id"
+     LEFT  JOIN "messages" pm  ON pm."id"  = m."parent_id"
+     LEFT  JOIN "users"    pmu ON pmu."id" = pm."sender_id"
+     LEFT  JOIN "mentions" mn  ON mn."message_id"         = m."id"
+     LEFT  JOIN "users"    mu  ON mu."id"  = mn."mentioned_user_id"
+     GROUP BY m."id", m."sender_id", m."message_text", m."attachment_url", m."attachment_name", m."created_at", m."parent_id",
+              u."name", u."college_email_id", pm."id", pmu."name", pm."message_text"
      ORDER BY m."created_at" DESC
      LIMIT $1 OFFSET $2`,
     [limit, offset],
   );
   return rows.map(r => ({
     ...r,
+    parentId: r.parent_id,
+    parentMessage: r.parent_message,
     attachmentUrl: normalizeUrl(r.attachment_url)
   }));
 };

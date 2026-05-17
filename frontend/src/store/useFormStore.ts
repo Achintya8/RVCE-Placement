@@ -14,6 +14,7 @@ interface FormState {
     formId: number, 
     answers: Record<number, string | number | boolean>
   ) => Promise<void>
+  uploadFile: (file: File, folderLink?: string | null) => Promise<{ fileUrl: string; fileName: string }>
 }
 
 export const useFormStore = create<FormState>((set, get) => ({
@@ -48,5 +49,10 @@ export const useFormStore = create<FormState>((set, get) => ({
     // Refresh the forms list to update the 'responseCount' badge
     const forms = await repo.getAssignedForms()
     set({ forms })
+  },
+
+  uploadFile: async (file, folderLink) => {
+    const repo = useAuthStore.getState().repo
+    return await repo.uploadResponseFile(file, folderLink)
   },
 }))

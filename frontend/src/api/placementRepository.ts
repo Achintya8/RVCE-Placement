@@ -131,6 +131,19 @@ export class PlacementRepository {
     })
   }
 
+  async uploadResponseFile(file: File, folderLink?: string | null): Promise<{ fileUrl: string; fileName: string }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    if (folderLink) {
+      formData.append('folderLink', folderLink)
+    }
+    const json = await this.client.postFormData('/responses/upload', formData)
+    return {
+      fileUrl: String(json.fileUrl ?? ''),
+      fileName: String(json.fileName ?? ''),
+    }
+  }
+
   async getQuestions(): Promise<FormQuestion[]> {
     const list = await this.client.getList('/questions')
     return list.map((item) => {
@@ -140,6 +153,7 @@ export class PlacementRepository {
         questionText: String(q.questionText ?? ''),
         fieldType: String(q.fieldType ?? 'text'),
         options: Array.isArray(q.options) ? q.options.map(String) : [],
+        folderLink: q.folderLink as string | null | undefined,
         isRequired: Boolean(q.isRequired),
         answer: q.answer as string | null | undefined,
       }
@@ -150,11 +164,13 @@ export class PlacementRepository {
     questionText: string
     fieldType: string
     options?: string[]
-  }): Promise<void> {
-    await this.client.postJson('/questions', {
+    folderLink?: string | null
+  }): Promise<any> {
+    return await this.client.postJson('/questions', {
       questionText: payload.questionText,
       fieldType: payload.fieldType,
       ...(payload.options?.length ? { options: payload.options } : {}),
+      ...(payload.folderLink ? { folderLink: payload.folderLink } : {}),
     })
   }
 
@@ -162,8 +178,8 @@ export class PlacementRepository {
     title: string
     type: string
     companyId?: number | null
-  }): Promise<void> {
-    await this.client.postJson('/forms', {
+  }): Promise<any> {
+    return await this.client.postJson('/forms', {
       title: payload.title,
       type: payload.type,
       companyId: payload.companyId ?? undefined,
@@ -183,6 +199,11 @@ export class PlacementRepository {
 
   async deleteForm(formId: number): Promise<void> {
     await this.client.delete(`/forms/${formId}`)
+  }
+
+  async toggleFormResponses(formId: number, acceptingResponses: boolean): Promise<PlacementFormSummary> {
+    const json = await this.client.putJson(`/forms/${formId}/toggle-responses`, { acceptingResponses })
+    return parseFormSummary(json)
   }
 
   async getPendingStudents(formId: number): Promise<StudentSummary[]> {
@@ -244,15 +265,18 @@ export class PlacementRepository {
     return this.client.getBytes(`/companies/${companyId}/export${q}`)
   }
 
-  async sendMessage(messageText: string, file?: File): Promise<ChatMessage> {
+  async sendMessage(messageText: string, file?: File, parentId?: number): Promise<ChatMessage> {
     let json: Record<string, unknown>
     if (file) {
       const form = new FormData()
       form.append('messageText', messageText)
       form.append('attachment', file)
+      if (parentId !== undefined) {
+        form.append('parentId', String(parentId))
+      }
       json = await this.client.postFormData('/messages', form)
     } else {
-      json = await this.client.postJson('/messages', { messageText })
+      json = await this.client.postJson('/messages', { messageText, parentId })
     }
     return parseChatMessage(json)
   }

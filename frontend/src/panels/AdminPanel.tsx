@@ -30,6 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import { 
   Dialog, 
   DialogContent, 
@@ -42,7 +43,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Plus, 
-  Send, 
   CheckCircle2, 
   AlertCircle,
   Download,
@@ -52,7 +52,8 @@ import {
   FileText,
   Users,
   Unlock,
-  Trash2
+  Trash2,
+  Clock
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AdminPanelSkeleton } from '@/components/modern/Skeleton'
@@ -98,20 +99,22 @@ export function AdminPanel() {
   const [cInt, setCInt] = useState('')
   const [cDeadline, setCDeadline] = useState('')
 
-  // Question Form
-  const [qText, setQText] = useState('')
-  const [qType, setQType] = useState<'text' | 'number' | 'boolean' | 'dropdown'>('text')
-  const [qOpts, setQOpts] = useState('')
+  // Google Forms Style Form Builder State
+  interface BuilderQuestion {
+    id: string
+    questionText: string
+    fieldType: 'text' | 'number' | 'boolean' | 'dropdown' | 'file'
+    options: string
+    folderLink?: string
+    isRequired: boolean
+  }
 
-  // Form Creation
   const [fTitle, setFTitle] = useState('')
-  const [fType, setFType] = useState<'consent' | 'tracker' | 'custom'>('custom')
-  const [fCompanyId, setFCompanyId] = useState<string>('global')
-
-  // Mapping Form
-  const [mapFormId, setMapFormId] = useState<string>('')
-  const [mapped, setMapped] = useState<Record<number, boolean>>({})
-  const [required, setRequired] = useState<Set<number>>(() => new Set())
+  const [fFormType, setFFormType] = useState<'general' | 'company'>('general')
+  const [fCompanyId, setFCompanyId] = useState<string>('')
+  const [formQuestions, setFormQuestions] = useState<BuilderQuestion[]>([
+    { id: 'q-1', questionText: '', fieldType: 'text', options: '', folderLink: '', isRequired: false }
+  ])
 
   // Export
   const [exportCompanyId, setExportCompanyId] = useState<number | null>(null)
@@ -191,45 +194,111 @@ export function AdminPanel() {
       setCName(''); setCCgpa(''); setCPkg(''); setCStip(''); setCTest(''); setCInt(''); setCDeadline('')
     }, 'Company created.')
 
-  const createQuestion = () =>
-    run(async () => {
-      const options = qOpts.split(',').map(s => s.trim()).filter(Boolean)
-      await repo.createQuestion({
-        questionText: qText.trim(),
-        fieldType: qType,
-        options: qType === 'dropdown' ? options : undefined,
-      })
-      setQText(''); setQOpts('')
-    }, 'Question created.')
-
-  const createForm = () =>
-    run(async () => {
-      await repo.createForm({
-        title: fTitle.trim(),
-        type: fType,
-        companyId: fCompanyId === 'global' ? null : Number(fCompanyId),
-      })
-      setFTitle('')
-    }, 'Form created.')
-
-  const saveMapping = () => {
-    if (!mapFormId) return toast.error('Select a form.')
-    const questions = Object.entries(mapped)
-      .filter(([, on]) => on)
-      .map(([id]) => ({
-        questionId: Number(id),
-        isRequired: required.has(Number(id)),
-      }))
-    return run(async () => {
-      await repo.mapQuestionsToForm(Number(mapFormId), questions)
-    }, 'Form questions mapped.')
+  const addBuilderQuestion = () => {
+    setFormQuestions(prev => [
+      ...prev,
+      {
+        id: `q-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        questionText: '',
+        fieldType: 'text',
+        options: '',
+        folderLink: '',
+        isRequired: false
+      }
+    ])
   }
 
-  const sendForm = () => {
-    if (!mapFormId) return toast.error('Select a form.')
+  const removeBuilderQuestion = (id: string) => {
+    if (formQuestions.length <= 1) {
+      toast.error('A form must have at least one question.')
+      return
+    }
+    setFormQuestions(prev => prev.filter(q => q.id !== id))
+  }
+
+  const updateBuilderQuestion = (id: string, updates: Partial<BuilderQuestion>) => {
+    setFormQuestions(prev =>
+      prev.map(q => (q.id === id ? { ...q, ...updates } : q))
+    )
+  }
+
+  const createGoogleForm = () => {
+    if (!fTitle.trim()) {
+      return toast.error('Form Title is required.')
+    }
+    if (fFormType === 'company' && !fCompanyId) {
+      return toast.error('Please select a linked company.')
+    }
+    if (formQuestions.length === 0) {
+      return toast.error('Please add at least one question.')
+    }
+
+    // Question Validation
+    for (let i = 0; i < formQuestions.length; i++) {
+      const q = formQuestions[i]
+      if (!q.questionText.trim()) {
+        return toast.error(`Question #${i + 1} label is empty.`)
+      }
+      if (q.fieldType === 'dropdown' && !q.options.trim()) {
+        return toast.error(`Question #${i + 1} (Dropdown) needs at least one option.`)
+      }
+      if (q.fieldType === 'file' && !q.folderLink?.trim()) {
+        return toast.error(`Question #${i + 1} (File Upload) requires a Google Drive folder link.`)
+      }
+    }
+
     return run(async () => {
-      await repo.sendForm(Number(mapFormId))
-    }, 'Notifications sent.')
+      // 1. Create the Form
+      const createdForm = await repo.createForm({
+        title: fTitle.trim(),
+        type: 'custom', // Default type is 'custom' for general forms
+        companyId: fFormType === 'general' ? null : Number(fCompanyId),
+      })
+
+      const formId = (createdForm as any)?.id
+      if (!formId) {
+        throw new Error('Failed to retrieve form ID from the created form.')
+      }
+
+      // 2. Create Questions and map them
+      const mappedQuestionsPayload: { questionId: number; isRequired: boolean }[] = []
+
+      // Create sequentially to ensure order of questions matches insertion
+      for (const q of formQuestions) {
+        const parsedOptions = q.fieldType === 'dropdown'
+          ? q.options.split(',').map(s => s.trim()).filter(Boolean)
+          : undefined
+
+        const createdQuestion = await repo.createQuestion({
+          questionText: q.questionText.trim(),
+          fieldType: q.fieldType,
+          options: parsedOptions,
+          folderLink: q.fieldType === 'file' ? q.folderLink?.trim() || null : null,
+        })
+
+        const qId = (createdQuestion as any)?.id
+        if (qId) {
+          mappedQuestionsPayload.push({
+            questionId: qId,
+            isRequired: q.isRequired
+          })
+        }
+      }
+
+      // 3. Map questions to form
+      await repo.mapQuestionsToForm(formId, mappedQuestionsPayload)
+
+      // 4. Send/assign form to students
+      await repo.sendForm(formId)
+
+      // Reset state
+      setFTitle('')
+      setFFormType('general')
+      setFCompanyId('')
+      setFormQuestions([
+        { id: 'q-1', questionText: '', fieldType: 'text', options: '', folderLink: '', isRequired: false }
+      ])
+    }, 'Form created and published to students successfully!')
   }
 
   const handleRejectStudent = async () => {
@@ -273,6 +342,12 @@ export function AdminPanel() {
     void run(async () => {
       await repo.deleteForm(formId)
     }, 'Form deleted.')
+  }
+
+  const handleToggleResponses = (formId: number, checked: boolean) => {
+    void run(async () => {
+      await repo.toggleFormResponses(formId, checked)
+    }, checked ? 'Form is now accepting student responses.' : 'Form is now closed to new responses.')
   }
 
   const toggleCompanyStatus = (companyId: number, currentStatus: string | undefined) =>
@@ -335,6 +410,48 @@ export function AdminPanel() {
     )
   }
 
+  // 1. Open Forms Count
+  const openFormsCount = data.forms.filter(f => {
+    if (!f.companyId) return true; // General forms are always open
+    const company = data.companies.find(c => c.id === f.companyId);
+    if (!company) return true;
+    if (company.status === 'completed') return false;
+    if (company.deadline && new Date(company.deadline) < new Date()) return false;
+    return true;
+  }).length;
+
+
+
+  // 3. Sum of all pending submissions across all active/open forms
+  let totalPendingSubmissions = 0;
+  data.forms.forEach(f => {
+    let isOpen = true;
+    if (f.companyId) {
+      const company = data.companies.find(c => c.id === f.companyId);
+      if (company) {
+        if (company.status === 'completed') isOpen = false;
+        if (company.deadline && new Date(company.deadline) < new Date()) isOpen = false;
+      }
+    }
+    if (!isOpen) return;
+
+    let assignedCount = 0;
+    if (!f.companyId) {
+      assignedCount = data.students.length;
+    } else {
+      const company = data.companies.find(c => c.id === f.companyId);
+      if (company) {
+        assignedCount = data.students.filter(s => s.ugCgpa >= company.minCgpa).length;
+      } else {
+        assignedCount = data.students.length;
+      }
+    }
+
+    const submittedCount = f.responseCount || 0;
+    const pendingForForm = Math.max(0, assignedCount - submittedCount);
+    totalPendingSubmissions += pendingForForm;
+  });
+
   return (
     <div className="space-y-8 pb-20 animate-in fade-in duration-700">
       <div className="flex flex-col gap-1">
@@ -351,7 +468,7 @@ export function AdminPanel() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="glass-panel">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
@@ -363,25 +480,17 @@ export function AdminPanel() {
             <Card className="glass-panel">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
-                  <Users className="w-4 h-4" /> Total Students
+                  <FileText className="w-4 h-4" /> Open Forms
                 </CardTitle>
-                <div className="text-3xl font-bold text-slate-900 dark:text-white">{data.students.length}</div>
+                <div className="text-3xl font-bold text-slate-900 dark:text-white">{openFormsCount}</div>
               </CardHeader>
             </Card>
             <Card className="glass-panel">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
-                  <FileText className="w-4 h-4" /> Forms Shared
+                  <Clock className="w-4 h-4" /> Pending Submissions
                 </CardTitle>
-                <div className="text-3xl font-bold text-slate-900 dark:text-white">{data.forms.length}</div>
-              </CardHeader>
-            </Card>
-            <Card className="glass-panel">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
-                  <FileQuestion className="w-4 h-4" /> Question Bank
-                </CardTitle>
-                <div className="text-3xl font-bold text-slate-900 dark:text-white">{data.questions.length}</div>
+                <div className="text-3xl font-bold text-slate-900 dark:text-white">{totalPendingSubmissions}</div>
               </CardHeader>
             </Card>
           </div>
@@ -513,162 +622,194 @@ export function AdminPanel() {
         </TabsContent>
 
         <TabsContent value="forms" className="space-y-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card className="glass-panel">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-primary" /> Add Question
+          <Card className="glass-panel border-slate-200 dark:border-white/10 shadow-xl rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-200 dark:border-white/10 pb-6 bg-slate-50/50 dark:bg-white/5">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white">
+                  <FileText className="w-6 h-6 text-primary" /> Create Custom Form
                 </CardTitle>
-                <CardDescription className="text-muted-foreground">Create reusable fields for your forms.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                <CardDescription className="text-slate-500 dark:text-slate-400 mt-1">
+                  Design a new form, add custom questions, and assign it to students in a single flow.
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-8 pt-8">
+              {/* Form Metadata Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-white/5 p-6 rounded-2xl border border-slate-200/60 dark:border-white/5">
                 <div className="space-y-2">
-                  <Label className="text-text-main">Question Label</Label>
-                  <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" placeholder="e.g. Current Location" value={qText} onChange={e => setQText(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-text-main">Field Type</Label>
-                  <Select
-                    value={qType}
-                    onValueChange={(v) => setQType(v as 'text' | 'number' | 'boolean' | 'dropdown')}
-                  >
-                    <SelectTrigger className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
-                      <SelectItem value="text">Plain Text</SelectItem>
-                      <SelectItem value="number">Number</SelectItem>
-                      <SelectItem value="boolean">Yes / No</SelectItem>
-                      <SelectItem value="dropdown">Dropdown Options</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {qType === 'dropdown' && (
-                  <div className="space-y-2 animate-in slide-in-from-top-2">
-                    <Label className="text-text-main">Options (comma separated)</Label>
-                    <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" placeholder="Bangalore, Pune, Hyderabad" value={qOpts} onChange={e => setQOpts(e.target.value)} />
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="justify-end border-t border-slate-200 dark:border-white/10 p-6">
-                <Button onClick={createQuestion} disabled={busy || !qText}>Create Question</Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="glass-panel">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-primary" /> Create Form
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">Group questions into a fillable form.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-text-main">Form Title</Label>
-                  <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" placeholder="e.g. Pre-Placement Survey" value={fTitle} onChange={e => setFTitle(e.target.value)} />
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Form Title</Label>
+                  <Input 
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. Pre-Placement Survey" 
+                    value={fTitle} 
+                    onChange={e => setFTitle(e.target.value)} 
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-text-main">Form Type</Label>
+                    <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Type</Label>
                     <Select
-                      value={fType}
-                      onValueChange={(v) => setFType(v as 'consent' | 'tracker' | 'custom')}
+                      value={fFormType}
+                      onValueChange={(v) => {
+                        setFFormType(v as 'general' | 'company');
+                        if (v === 'general') setFCompanyId('');
+                      }}
                     >
-                      <SelectTrigger className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                      <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
-                        <SelectItem value="consent">Consent</SelectItem>
-                        <SelectItem value="tracker">Tracker</SelectItem>
-                        <SelectItem value="custom">Custom</SelectItem>
+                      <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                        <SelectItem value="general">General (All Students)</SelectItem>
+                        <SelectItem value="company">Company Specific</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-text-main">Link to Drive</Label>
-                    <Select value={fCompanyId} onValueChange={setFCompanyId}>
-                      <SelectTrigger className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
-                        <SelectItem value="global">Global (All Students)</SelectItem>
-                        {data.companies.map(c => (
-                          <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  
+                  {fFormType === 'company' && (
+                    <div className="space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
+                      <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Company</Label>
+                      <Select value={fCompanyId} onValueChange={setFCompanyId}>
+                        <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11">
+                          <SelectValue placeholder="Select Company" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                          {data?.companies.map(c => (
+                            <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-              <CardFooter className="justify-end border-t border-slate-200 dark:border-white/10 p-6">
-                <Button onClick={createForm} disabled={busy || !fTitle}>Create Form</Button>
-              </CardFooter>
-            </Card>
-          </div>
-
-          <Card className="glass-panel">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Map Questions & Publish</CardTitle>
-                <CardDescription className="text-muted-foreground">Select questions for a form and notify students.</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={saveMapping} disabled={busy || !mapFormId} className="border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-white/5">Save Mapping</Button>
-                <Button onClick={sendForm} disabled={busy || !mapFormId} className="gap-2">
-                  <Send className="w-4 h-4" /> Notify
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              <div className="max-w-md">
-                <Label className="mb-2 block text-text-main">Active Form</Label>
-                <Select value={mapFormId} onValueChange={setMapFormId}>
-                  <SelectTrigger className="w-full font-bold bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
-                    <SelectValue placeholder="Select a form to configure" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
-                    {data.forms.map(f => (
-                      <SelectItem key={f.id} value={String(f.id)}>{f.title}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {data.questions.map(q => (
-                  <div key={q.id} className={cn(
-                    "p-4 rounded-xl border transition-all",
-                    mapped[q.id] ? "border-primary bg-primary/10 shadow-lg shadow-primary/10" : "border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-white/5 opacity-60"
-                  )}>
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="space-y-1">
-                        <p className="font-bold leading-none text-slate-900 dark:text-white">{q.questionText}</p>
-                        <p className="text-[10px] uppercase font-bold text-primary tracking-wider">{q.fieldType}</p>
+              {/* Dynamic Questions Builder List */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                    Questions ({formQuestions.length})
+                  </h3>
+                </div>
+
+                <div className="space-y-6">
+                  {formQuestions.map((q, idx) => (
+                    <div 
+                      key={q.id} 
+                      className="group relative p-6 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 border-l-4 border-l-primary shadow-md hover:shadow-lg transition-all duration-300 space-y-5"
+                    >
+                      {/* Question Index Badge */}
+                      <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary dark:bg-primary/20 text-xs font-bold">
+                        <FileQuestion className="w-3.5 h-3.5" /> Question {idx + 1}
+                      </span>
+                      
+                      {/* Remove Button */}
+                      <button
+                        type="button"
+                        onClick={() => removeBuilderQuestion(q.id)}
+                        disabled={formQuestions.length <= 1}
+                        className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-full border border-transparent hover:border-red-100 dark:hover:border-red-950/20 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-30 disabled:pointer-events-none transition-all"
+                        title="Remove question"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 pt-6 px-4">
+                        {/* Question Text */}
+                        <div className="md:col-span-8 space-y-2">
+                          <Label className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Question Label</Label>
+                          <Input 
+                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11"
+                            placeholder="e.g. In which city are you currently located?" 
+                            value={q.questionText} 
+                            onChange={e => updateBuilderQuestion(q.id, { questionText: e.target.value })}
+                          />
+                        </div>
+
+                        {/* Field Type Selector */}
+                        <div className="md:col-span-4 space-y-2">
+                          <Label className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Field Type</Label>
+                          <Select
+                            value={q.fieldType}
+                            onValueChange={(v) => updateBuilderQuestion(q.id, { fieldType: v as any })}
+                          >
+                            <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                              <SelectItem value="text">Plain Text</SelectItem>
+                              <SelectItem value="number">Number</SelectItem>
+                              <SelectItem value="boolean">Yes / No</SelectItem>
+                              <SelectItem value="dropdown">Dropdown Options</SelectItem>
+                              <SelectItem value="file">File Upload</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                      <Checkbox 
-                        className="border-slate-200 dark:border-white/20 data-[state=checked]:bg-primary"
-                        checked={mapped[q.id] || false} 
-                        onCheckedChange={v => setMapped(m => ({...m, [q.id]: !!v}))} 
-                      />
+
+                      {/* Dropdown Options List */}
+                      {q.fieldType === 'dropdown' && (
+                        <div className="px-4 space-y-2 animate-in slide-in-from-top-2 duration-300">
+                          <Label className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Options (comma separated)</Label>
+                          <Input 
+                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11"
+                            placeholder="e.g. Bangalore, Pune, Hyderabad" 
+                            value={q.options} 
+                            onChange={e => updateBuilderQuestion(q.id, { options: e.target.value })}
+                          />
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500">Provide comma-separated values to define the items in the dropdown menu.</p>
+                        </div>
+                      )}
+
+                      {/* File Upload Folder Link Input */}
+                      {q.fieldType === 'file' && (
+                        <div className="px-4 space-y-2 animate-in slide-in-from-top-2 duration-300">
+                          <Label className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Google Drive Folder Link</Label>
+                          <Input 
+                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11"
+                            placeholder="e.g. https://drive.google.com/drive/folders/..." 
+                            value={q.folderLink || ''} 
+                            onChange={e => updateBuilderQuestion(q.id, { folderLink: e.target.value })}
+                          />
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500">Provide the Google Drive folder link where student uploads will be stored.</p>
+                        </div>
+                      )}
+
+                      {/* Required Toggle */}
+                      <div className="px-4 flex items-center gap-3 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-white/5 max-w-fit transition-colors">
+                        <Checkbox 
+                          id={`req-${q.id}`}
+                          className="border-slate-300 dark:border-white/20 data-[state=checked]:bg-primary size-4"
+                          checked={q.isRequired}
+                          onCheckedChange={v => updateBuilderQuestion(q.id, { isRequired: !!v })}
+                        />
+                        <Label htmlFor={`req-${q.id}`} className="text-xs text-slate-700 dark:text-slate-300 font-medium cursor-pointer select-none">
+                          Required field (Student must answer this field to submit)
+                        </Label>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Checkbox 
-                        id={`req-${q.id}`}
-                        className="border-slate-200 dark:border-white/20 data-[state=checked]:bg-primary"
-                        disabled={!mapped[q.id]}
-                        checked={required.has(q.id)}
-                        onCheckedChange={v => setRequired(prev => {
-                          const n = new Set(prev);
-                          if(v) n.add(q.id); else n.delete(q.id);
-                          return n;
-                        })}
-                      />
-                      <Label htmlFor={`req-${q.id}`} className={cn("text-xs", mapped[q.id] ? "text-text-main" : "text-muted-foreground")}>Required field</Label>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+
+                  {/* Add New Question Button Card */}
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    onClick={addBuilderQuestion}
+                    className="w-full py-7 border-dashed border-2 border-slate-200 dark:border-white/10 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all rounded-2xl flex items-center justify-center gap-2 font-bold text-sm bg-transparent shadow-none"
+                  >
+                    <Plus className="w-5 h-5 text-primary" /> Add New Question
+                  </Button>
+                </div>
               </div>
             </CardContent>
+            <CardFooter className="justify-end border-t border-slate-200 dark:border-white/10 p-6 bg-slate-50/50 dark:bg-white/5 rounded-b-2xl">
+              <Button 
+                onClick={createGoogleForm} 
+                disabled={busy || !fTitle.trim()} 
+                className="w-full sm:w-auto px-8 py-6 rounded-xl font-bold bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 hover:to-indigo-600/95 text-white shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 transform active:scale-98"
+              >
+                Create & Publish Form
+              </Button>
+            </CardFooter>
           </Card>
 
           <Card className="glass-panel">
@@ -684,10 +825,31 @@ export function AdminPanel() {
             <CardContent>
               <div className="space-y-4">
                 {(showAllForms ? data.forms : data.forms.slice(0, 10)).map(f => (
-                  <div key={f.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:bg-white/10 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-slate-900 dark:text-white truncate">{f.title}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{f.responseCount || 0} responses</p>
+                  <div key={f.id} className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:bg-white/10 transition-colors">
+                    <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-900 dark:text-white truncate flex items-center gap-2">
+                          {f.title}
+                          {f.acceptingResponses === false && (
+                            <Badge variant="outline" className="text-[10px] border-red-500/20 bg-red-500/10 text-red-400 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Closed
+                            </Badge>
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">{f.responseCount || 0} responses</p>
+                      </div>
+                      
+                      {/* Accepting Responses Switch */}
+                      <div className="flex items-center gap-2.5 sm:ml-auto border border-slate-200 dark:border-white/10 p-2 rounded-xl bg-slate-50/50 dark:bg-white/5 px-3 max-w-fit shadow-inner">
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          {f.acceptingResponses !== false ? "Accepting responses" : "Closed"}
+                        </span>
+                        <Switch 
+                          checked={f.acceptingResponses !== false} 
+                          onCheckedChange={(checked) => handleToggleResponses(f.id, checked)}
+                          disabled={busy}
+                        />
+                      </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => void openResponses(f.id, f.title)} className="border-slate-200 dark:border-white/20 text-slate-900 dark:text-white hover:bg-slate-200 dark:bg-white/10 gap-2">
@@ -825,8 +987,26 @@ export function AdminPanel() {
                         <TableRow key={i} className="border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:bg-white/5">
                           <TableCell className="font-medium whitespace-nowrap text-slate-900 dark:text-white">{r.studentName}</TableCell>
                           <TableCell className="font-mono text-xs whitespace-nowrap text-muted-foreground">{r.usn}</TableCell>
-                          {r.answers.map(a => (
-                            <TableCell key={a.id} className="text-muted-foreground whitespace-nowrap">{a.answer ?? '—'}</TableCell>
+                           {r.answers.map(a => (
+                            <TableCell key={a.id} className="text-muted-foreground whitespace-nowrap">
+                              {a.answer ? (
+                                a.answer.startsWith('http') ? (
+                                  <a 
+                                    href={a.answer} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-primary hover:underline font-bold inline-flex items-center gap-1"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                    View File
+                                  </a>
+                                ) : (
+                                  a.answer
+                                )
+                              ) : (
+                                '—'
+                              )}
+                            </TableCell>
                           ))}
                         </TableRow>
                       ))}

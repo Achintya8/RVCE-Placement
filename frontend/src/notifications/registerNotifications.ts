@@ -99,8 +99,8 @@ function registerForegroundMessageListener() {
 }
 
 export async function registerNotifications(repo: PlacementRepository): Promise<void> {
+  localStorage.removeItem(NOTIFICATION_OPT_OUT_KEY)
   if (!canUsePushNotifications()) return
-  if (localStorage.getItem(NOTIFICATION_OPT_OUT_KEY) === 'true') return
 
   const { configured, publicKey } = await repo.getNotificationPublicKey()
   if (!configured || !publicKey) return

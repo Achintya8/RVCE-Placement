@@ -20,6 +20,7 @@ import { listStudentIds } from '../repositories/user.repository.js';
 
 const messageSchema = z.object({
   messageText: z.string().max(2000).optional(),
+  parentId: z.union([z.string(), z.number()]).transform(val => Number(val)).optional(),
 });
 
 // ── POST /api/messages ────────────────────────────────────────────────────────
@@ -27,6 +28,10 @@ export const createMessageHandler = async (req, res, next) => {
   try {
     const payload = messageSchema.parse(req.body);
     const text = payload.messageText || '';
+    let parentId = null;
+    if (payload.parentId && !isNaN(payload.parentId)) {
+      parentId = payload.parentId;
+    }
 
     // Allow empty text only if there is an attachment
     if (!text.trim() && !req.file) {
@@ -61,7 +66,8 @@ export const createMessageHandler = async (req, res, next) => {
       text,
       mentionedUserIds,
       attachmentUrl,
-      attachmentName
+      attachmentName,
+      parentId
     );
 
     // 3. Fetch sender info for response + notifications
@@ -88,8 +94,23 @@ export const createMessageHandler = async (req, res, next) => {
           type: 'chat_message',
           messageId: String(message.id),
           senderId: String(req.auth.userId),
+          parentId: parentId ? String(parentId) : undefined,
         },
       });
+    }
+
+    // 6. Resolve parent message details if present for response
+    let parentMessage = null;
+    if (parentId) {
+      const pm = await getMessageById(parentId);
+      if (pm) {
+        const pmu = await findUserById(pm.sender_id);
+        parentMessage = {
+          id: pm.id,
+          senderName: pmu?.name || 'User',
+          messageText: pm.message_text,
+        };
+      }
     }
 
     res.status(201).json({
@@ -104,6 +125,8 @@ export const createMessageHandler = async (req, res, next) => {
       attachmentName: message.attachment_name,
       mentionedUsers,
       createdAt:      message.created_at,
+      parentId,
+      parentMessage,
     });
   } catch (error) {
     next(error);
@@ -135,6 +158,8 @@ export const getMessagesHandler = async (req, res, next) => {
         // mentioned_users comes from JSON_AGG — already a parsed JS array
         mentionedUsers: msg.mentioned_users || [],
         createdAt:      msg.created_at,
+        parentId:       msg.parentId,
+        parentMessage:  msg.parentMessage,
       })),
       total,
       limit,

@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChatMessage, ChatUser } from '../api/types'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'sonner'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Send, MessageSquare, Clock, AlertCircle, Paperclip, X, File, Image as ImageIcon, Trash2 } from 'lucide-react'
+import { Send, Clock, AlertCircle, Paperclip, X, File, Image as ImageIcon, Trash2, CornerUpLeft, Search, ChevronUp, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function ChatPanel() {
@@ -24,23 +24,78 @@ export function ChatPanel() {
 
   const [users, setUsers] = useState<ChatUser[]>([])
   const [mentionSearch, setMentionSearch] = useState<string | null>(null)
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null)
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    setErr(null)
+  // Search states
+  const [searchActive, setSearchActive] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [currentMatchIdx, setCurrentMatchIdx] = useState(0)
+
+  const load = useCallback(async (background = false) => {
+    if (!background) {
+      setLoading(true)
+      setErr(null)
+    }
     try {
       const res = await repo.getMessages()
       setMessages([...res.messages].reverse())
     } catch (e) {
-      setErr(e instanceof Error ? e.message : String(e))
+      if (!background) {
+        setErr(e instanceof Error ? e.message : String(e))
+      }
     } finally {
-      setLoading(false)
+      if (!background) {
+        setLoading(false)
+      }
     }
   }, [repo])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load()
+  }, [load])
+
+  // Real-time Service Worker Push Notification message listener
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+
+    const handleSWMessage = (event: MessageEvent) => {
+      const payload = event.data as {
+        type?: string
+        notification?: {
+          title?: string
+          body?: string
+          data?: {
+            type?: string
+            messageId?: string
+            senderId?: string
+          }
+        }
+      } | undefined
+
+      if (payload?.type !== 'PUSH_NOTIFICATION') return
+
+      const pushType = payload.notification?.data?.type
+      if (pushType === 'chat_message' || pushType === 'message_mention' || pushType === 'announcement') {
+        void load(true) // Background refresh (no loader skeletons!)
+      }
+    }
+
+    navigator.serviceWorker.addEventListener('message', handleSWMessage)
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleSWMessage)
+    }
+  }, [load])
+
+  // Periodic fallback background polling to sync messages when active
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void load(true) // Background refresh (no loader skeletons!)
+      }
+    }, 5000)
+
+    return () => clearInterval(timer)
   }, [load])
 
   useEffect(() => {
@@ -61,11 +116,12 @@ export function ChatPanel() {
     if (!t && !attachment) return
     setSending(true)
     try {
-      const msg = await repo.sendMessage(t, attachment || undefined)
+      const msg = await repo.sendMessage(t, attachment || undefined, replyingTo?.id || undefined)
       setMessages((m) => [...m, msg])
       setText('')
       setAttachment(null)
       setMentionSearch(null)
+      setReplyingTo(null)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e))
     } finally {
@@ -80,6 +136,51 @@ export function ChatPanel() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e))
     }
+  }
+
+  const scrollToMessage = (id: number) => {
+    const el = document.getElementById(`msg-${id}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('bg-primary/20', 'dark:bg-white/20', 'ring-2', 'ring-primary', 'scale-[1.02]')
+      setTimeout(() => {
+        el.classList.remove('bg-primary/20', 'dark:bg-white/20', 'ring-2', 'ring-primary', 'scale-[1.02]')
+      }, 1500)
+    }
+  }
+
+  const formatDividerDate = (dateStr: string | Date) => {
+    const date = new Date(dateStr)
+    const today = new Date()
+    const yesterday = new Date()
+    yesterday.setDate(today.getDate() - 1)
+
+    const isSameDay = (d1: Date, d2: Date) =>
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate()
+
+    if (isSameDay(date, today)) {
+      return 'Today'
+    } else if (isSameDay(date, yesterday)) {
+      return 'Yesterday'
+    } else {
+      return date.toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' })
+    }
+  }
+
+  // Memoized search matches
+  const matches = useMemo(() => {
+    if (!searchQuery.trim()) return []
+    return messages.filter(m =>
+      m.messageText?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [messages, searchQuery])
+
+  const jumpToMatch = (idx: number) => {
+    if (matches.length === 0) return
+    setCurrentMatchIdx(idx)
+    scrollToMessage(matches[idx].id)
   }
 
   const filteredUsers = mentionSearch !== null
@@ -121,7 +222,7 @@ export function ChatPanel() {
             a: ({ node, href, children, ...props }) => {
               if (href?.startsWith('mention:')) {
                 return (
-                  <span className={cn("font-bold", isMe ? "text-white" : "text-primary drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]")}>
+                  <span className={cn("font-bold", isMe ? "text-indigo-600 dark:text-indigo-300 font-extrabold" : "text-primary font-bold")}>
                     {children}
                   </span>
                 )
@@ -162,15 +263,8 @@ export function ChatPanel() {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] lg:h-[calc(100vh-12rem)] pb-20 lg:pb-8">
-      <Card className="h-full border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 backdrop-blur-xl flex flex-col overflow-hidden">
-        <CardHeader className="pb-4 border-b border-slate-200 dark:border-white/10">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary" />
-            Global Discussion
-          </CardTitle>
-        </CardHeader>
-
+    <div className="h-[calc(100vh-9rem)] w-full">
+      <Card className="h-full border-0 rounded-none bg-slate-100 dark:bg-white/5 backdrop-blur-xl flex flex-col overflow-hidden">
         <CardContent className="flex-1 flex flex-col p-0 overflow-hidden relative">
           {err ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-4">
@@ -185,6 +279,79 @@ export function ChatPanel() {
             </div>
           ) : (
             <>
+              {/* Animated Search Bar */}
+              {searchActive && (
+                <div className="flex items-center justify-between bg-white dark:bg-slate-900 px-4 py-2.5 border-b border-slate-200 dark:border-white/10 shadow-sm animate-in slide-in-from-top duration-200 z-50">
+                  <div className="flex items-center gap-2 flex-1 max-w-md">
+                    <Search className="w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search messages..."
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value)
+                        setCurrentMatchIdx(0)
+                      }}
+                      className="bg-transparent text-sm border-0 focus:ring-0 focus:outline-none w-full text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {matches.length > 0 && (
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                        {currentMatchIdx + 1} of {matches.length} matches
+                      </span>
+                    )}
+                    {searchQuery.trim() && matches.length === 0 && (
+                      <span className="text-xs text-red-500 font-mono">No matches</span>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-8 h-8 rounded-full"
+                      disabled={matches.length === 0}
+                      onClick={() => jumpToMatch((currentMatchIdx - 1 + matches.length) % matches.length)}
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-8 h-8 rounded-full"
+                      disabled={matches.length === 0}
+                      onClick={() => jumpToMatch((currentMatchIdx + 1) % matches.length)}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                      onClick={() => {
+                        setSearchActive(false)
+                        setSearchQuery('')
+                        setCurrentMatchIdx(0)
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Floating Search Toggle Button */}
+              {!searchActive && (
+                <Button
+                  onClick={() => setSearchActive(true)}
+                  variant="secondary"
+                  size="icon"
+                  className="absolute top-4 right-4 z-40 rounded-full w-10 h-10 shadow-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-300 backdrop-blur-md opacity-90 hover:opacity-100 scale-100 active:scale-95"
+                  title="Search messages"
+                >
+                  <Search className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                </Button>
+              )}
+
               <ScrollArea className="flex-1 p-4" ref={scrollRef}>
                 <div className="space-y-4">
                   {loading ? (
@@ -201,45 +368,119 @@ export function ChatPanel() {
                       <p>No messages in the thread yet.</p>
                     </div>
                   ) : (
-                    messages.map((m) => {
+                    messages.map((m, idx) => {
                       const isMe = m.sender.id === session?.user.id
                       const isAdmin = session?.isSpc
                       const canDelete = isMe || isAdmin
+
+                      const prevMsg = idx > 0 ? messages[idx - 1] : null
+                      const isNewDay = !prevMsg || 
+                        new Date(m.createdAt).toDateString() !== new Date(prevMsg.createdAt).toDateString()
+
+                      const isCurrentMatch = matches.length > 0 && matches[currentMatchIdx]?.id === m.id
+
+                      let startX = 0
+                      let startY = 0
+
                       return (
                         <div
                           key={m.id}
-                          className={cn(
-                            "flex flex-col max-w-[85%] space-y-1",
-                            isMe ? "ml-auto items-end" : "items-start"
-                          )}
+                          className="w-full flex flex-col"
+                          onTouchStart={(e) => {
+                            startX = e.touches[0].clientX
+                            startY = e.touches[0].clientY
+                          }}
+                          onTouchEnd={(e) => {
+                            const diffX = e.changedTouches[0].clientX - startX
+                            const diffY = e.changedTouches[0].clientY - startY
+                            if (diffX > 60 && Math.abs(diffY) < 30) {
+                              setReplyingTo(m)
+                              if ('vibrate' in navigator) {
+                                navigator.vibrate(20)
+                              }
+                            }
+                          }}
                         >
-                          <div className="flex items-center gap-2 px-1 relative group/msg">
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
-                              {isMe ? 'You' : m.sender.name}
-                            </span>
-                            <span className="text-[10px] text-slate-400 dark:text-white/30">
-                              {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            {canDelete && (
-                              <button
-                                onClick={() => void deleteMessage(m.id)}
-                                className="opacity-0 group-hover/msg:opacity-100 transition-opacity p-1 text-red-400 hover:bg-red-400/20 rounded-md"
-                                title="Delete message"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            )}
-                          </div>
+                          {isNewDay && (
+                            <div className="flex justify-center my-6">
+                              <span className="bg-slate-200/80 dark:bg-white/10 text-slate-600 dark:text-slate-300 text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-sm">
+                                {formatDividerDate(m.createdAt)}
+                              </span>
+                            </div>
+                          )}
                           <div
                             className={cn(
-                              "px-4 py-2.5 rounded-2xl text-sm shadow-lg",
-                              isMe
-                                ? "bg-primary text-white rounded-tr-none shadow-primary/20"
-                                : "bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white rounded-tl-none shadow-black/20"
+                              "flex flex-col max-w-[75%] space-y-1 mb-2",
+                              isMe ? "ml-auto items-end" : "items-start"
                             )}
                           >
-                            {m.messageText && renderMessageText(m, isMe)}
-                            {m.attachmentUrl && m.attachmentName && renderAttachment(m.attachmentUrl, m.attachmentName)}
+                            <div className="flex items-center gap-2 px-1 relative group/msg">
+                              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
+                                {isMe ? 'You' : m.sender.name}
+                              </span>
+                              <span className="text-[11px] text-slate-400 dark:text-white/30">
+                                {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <button
+                                onClick={() => setReplyingTo(m)}
+                                className="opacity-0 max-md:opacity-75 group-hover/msg:opacity-100 transition-opacity p-1.5 text-slate-400 hover:text-primary hover:bg-slate-200 dark:hover:bg-white/10 rounded-md"
+                                title="Reply to message"
+                              >
+                                <CornerUpLeft className="w-4 h-4" />
+                              </button>
+                              {canDelete && (
+                                <button
+                                  onClick={() => void deleteMessage(m.id)}
+                                  className="opacity-0 max-md:opacity-75 group-hover/msg:opacity-100 transition-opacity p-1.5 text-red-400 hover:bg-red-400/20 rounded-md"
+                                  title="Delete message"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                            <div
+                              id={`msg-${m.id}`}
+                              className={cn(
+                                "px-4 py-2 rounded-[16px] text-base transition-all duration-300 border shadow-sm",
+                                isMe
+                                  ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 border-indigo-100 dark:border-indigo-900/50 rounded-tr-none shadow-indigo-100/30"
+                                  : "bg-slate-100 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 border-slate-200/50 dark:border-slate-800/50 rounded-tl-none",
+                                isCurrentMatch && "ring-2 ring-yellow-400 dark:ring-yellow-500 scale-[1.01] shadow-[0_0_15px_rgba(234,179,8,0.4)]"
+                              )}
+                            >
+                              {m.parentMessage && (
+                                <div
+                                  onClick={() => scrollToMessage(m.parentMessage!.id)}
+                                  className={cn(
+                                    "mb-2 p-2 border-l-4 rounded-r-lg text-sm cursor-pointer transition-all text-left",
+                                    isMe
+                                      ? "bg-indigo-100/70 dark:bg-indigo-900/40 border-indigo-400 hover:bg-indigo-200/60 dark:hover:bg-indigo-900/60"
+                                      : "bg-black/5 dark:bg-white/5 border-primary hover:bg-black/10 dark:hover:bg-white/10"
+                                  )}
+                                >
+                                  <div
+                                    className={cn(
+                                      "font-bold truncate mb-0.5",
+                                      isMe ? "text-indigo-700 dark:text-indigo-300" : "text-primary"
+                                    )}
+                                  >
+                                    {m.parentMessage.senderName === session?.user.name ? 'You' : m.parentMessage.senderName}
+                                  </div>
+                                  <div
+                                    className={cn(
+                                      "truncate",
+                                      isMe 
+                                        ? "text-indigo-900/80 dark:text-indigo-300/80" 
+                                        : "text-slate-700 dark:text-slate-300"
+                                    )}
+                                  >
+                                    {m.parentMessage.messageText || 'Sent an attachment'}
+                                  </div>
+                                </div>
+                              )}
+                              {m.messageText && renderMessageText(m, isMe)}
+                              {m.attachmentUrl && m.attachmentName && renderAttachment(m.attachmentUrl, m.attachmentName)}
+                            </div>
                           </div>
                         </div>
                       )
@@ -250,16 +491,16 @@ export function ChatPanel() {
 
               <div className="relative p-4 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 flex flex-col gap-2">
                 {mentionSearch !== null && filteredUsers.length > 0 && (
-                  <div className="absolute bottom-full left-4 mb-2 w-64 bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
+                  <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden z-50">
                     {filteredUsers.map(u => (
                       <button
                         key={u.id}
                         type="button"
-                        className="w-full text-left px-4 py-2 text-sm text-slate-900 dark:text-white hover:bg-slate-200 dark:bg-white/10 transition-colors flex flex-col"
+                        className="w-full text-left px-4 py-2 text-sm text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors flex flex-col"
                         onClick={() => selectMention(u)}
                       >
                         <span className="font-medium">{u.name}</span>
-                        {u.email && <span className="text-xs text-slate-500 dark:text-white/50 truncate w-full">{u.email}</span>}
+                        {u.email && <span className="text-xs text-slate-500 dark:text-slate-400 truncate w-full">{u.email}</span>}
                       </button>
                     ))}
                   </div>
@@ -273,6 +514,27 @@ export function ChatPanel() {
                     </div>
                     <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white/20" onClick={() => setAttachment(null)}>
                       <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
+
+                {replyingTo && (
+                  <div className="flex items-center justify-between bg-white dark:bg-slate-900 px-3 py-2 rounded-lg border-l-4 border-primary border border-slate-200 dark:border-slate-800 shadow-sm animate-in slide-in-from-bottom-2 duration-200">
+                    <div className="flex flex-col text-left overflow-hidden">
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                        Replying to {replyingTo.sender.id === session?.user.id ? 'You' : replyingTo.sender.name}
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[80vw]">
+                        {replyingTo.messageText || 'Sent an attachment'}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 shrink-0"
+                      onClick={() => setReplyingTo(null)}
+                    >
+                      <X className="w-3 h-3 text-slate-500" />
                     </Button>
                   </div>
                 )}

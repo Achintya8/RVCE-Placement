@@ -14,18 +14,10 @@ import {
   MessageSquare, 
   Settings, 
   LogOut,
-  Bell,
-  BellOff,
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { CollegeLogo } from '@/components/modern/CollegeLogo'
 import { cn } from '@/lib/utils'
-import {
-  allowNotifications,
-  blockNotifications,
-  getNotificationPreference,
-  registerNotificationsSafely,
-} from '../notifications/registerNotifications'
+import { registerNotificationsSafely } from '../notifications/registerNotifications'
 
 type Panel = {
   id: string
@@ -44,9 +36,6 @@ function getRequestedPanelId() {
 export default function DashboardScreen() {
   const { session, logout, repo } = useAuth()
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [notificationPreference, setNotificationPreference] = useState(() =>
-    getNotificationPreference(),
-  )
 
   const panels: Panel[] = useMemo(
     () => {
@@ -116,41 +105,12 @@ export default function DashboardScreen() {
   }, [panels])
 
   useEffect(() => {
-    const handleFocus = () => setNotificationPreference(getNotificationPreference())
-    window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
-  }, [])
+    if (session) {
+      void registerNotificationsSafely(repo)
+    }
+  }, [session, repo])
 
   if (!session) return null
-
-  const enableNotifications = async () => {
-    const permission = await allowNotifications()
-    setNotificationPreference(getNotificationPreference())
-
-    if (permission !== 'granted') {
-      toast.error('Notifications are blocked in your browser settings.')
-      return
-    }
-
-    const registered = await registerNotificationsSafely(repo)
-    setNotificationPreference(getNotificationPreference())
-
-    if (registered) {
-      toast.success('Notifications enabled for placement alerts.')
-    } else {
-      toast.error('Could not register this device for notifications.')
-    }
-  }
-
-  const disableNotifications = async () => {
-    await blockNotifications()
-    setNotificationPreference(getNotificationPreference())
-    toast('Notifications blocked for this portal.')
-  }
-
-  const notificationsEnabled =
-    notificationPreference.permission === 'granted' &&
-    !notificationPreference.optedOut
 
   const safeIndex = Math.min(selectedIndex, panels.length - 1)
   const active = panels[safeIndex] ?? panels[0]
@@ -175,27 +135,6 @@ export default function DashboardScreen() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() =>
-              void (notificationsEnabled
-                ? disableNotifications()
-                : enableNotifications())
-            }
-            disabled={!notificationPreference.supported}
-            className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-slate-200 dark:bg-white/10 sm:w-auto sm:px-4"
-            title={notificationsEnabled ? 'Block notifications' : 'Allow notifications'}
-          >
-            {notificationsEnabled ? (
-              <BellOff className="w-4 h-4" />
-            ) : (
-              <Bell className="w-4 h-4" />
-            )}
-            <span className="hidden sm:inline">
-              {notificationsEnabled ? 'Block notifications' : 'Allow notifications'}
-            </span>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
             onClick={logout}
             className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-slate-200 dark:bg-white/10 sm:w-auto sm:px-4"
             title="Logout"
@@ -206,7 +145,10 @@ export default function DashboardScreen() {
         </div>
       </header>
 
-      <main className={cn("mx-auto min-h-[calc(100vh-4rem)] w-full px-3 py-4 pb-28 sm:px-5 lg:px-8", active.id === 'chat' ? "max-w-full lg:px-4" : "max-w-7xl")}>
+      <main className={cn(
+        "mx-auto min-h-[calc(100vh-4rem)] w-full px-3 py-4 pb-28 sm:px-5 lg:px-8",
+        active.id === 'chat' ? "max-w-full p-0 pb-20" : "max-w-7xl"
+      )}>
         {active.element}
       </main>
 
