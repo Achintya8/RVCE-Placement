@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { ChatMessage, ChatUser } from '../api/types'
+import type { ChatMessage, ChatUser } from '@/types'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'

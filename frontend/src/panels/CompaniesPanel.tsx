@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import type { Company } from '../api/types'
+import type { Company } from '@/types'
 import { useCompanyStore } from '../store/useCompanyStore'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'

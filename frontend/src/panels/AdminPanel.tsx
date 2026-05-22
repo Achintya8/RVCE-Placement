@@ -5,7 +5,7 @@ import type {
   FormResponseRecord,
   PlacementFormSummary,
   StudentSummary,
-} from '../api/types'
+} from '@/types'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'sonner'
 import { downloadBlob, formatDate } from '../lib/format'

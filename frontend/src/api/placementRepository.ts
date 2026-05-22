@@ -11,7 +11,7 @@ import type {
   PlacementFormSummary,
   Session,
   StudentSummary,
-} from './types'
+} from '@/types'
 import {
   parseAppUser,
   parseChatMessage,

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { ApiClient } from '../api/client'
 import { PlacementRepository } from '../api/placementRepository'
-import type { Session } from '../api/types'
+import type { Session } from '@/types'
 import { API_BASE_URL, AUTH_TOKEN_KEY } from '../config'
 import { registerNotificationsSafely } from '../notifications/registerNotifications'
 

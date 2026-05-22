@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { PlacementFormDetail, PlacementFormSummary } from '../api/types'
+import type { PlacementFormDetail, PlacementFormSummary } from '@/types'
 import { useFormStore } from '../store/useFormStore'
 import { toast } from 'sonner'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'

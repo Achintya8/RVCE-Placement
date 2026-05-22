@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { CheckCircle2, AlertCircle, Upload, Save, FileText, Clock, Unlock, Camera, Moon, Sun, User } from 'lucide-react'
 import { StudentProfileSkeleton } from '@/components/modern/Skeleton'
 import { ApiClientError } from '../api/client'
-import type { AppUser } from '../api/types'
+import type { AppUser } from '@/types'
 
 const FormField = ({ label, value, onChange, id, type = 'text', disabled = false, error }: {
   label: string

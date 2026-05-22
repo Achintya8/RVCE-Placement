@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { useAuthStore } from './useAuthStore'
-import type { AppUser } from '../api/types'
+import type { AppUser } from '@/types'
 
 interface ProfileState {
   profile: AppUser | null

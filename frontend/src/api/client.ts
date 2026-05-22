@@ -1,28 +1,51 @@
 import { saveTokenAndUrl, queueRequest } from '../lib/offlineDb'
 
-function isNetworkError(error: any): boolean {
-  return (
-    !navigator.onLine ||
-    error instanceof TypeError ||
-    error.message?.includes('Failed to fetch') ||
-    error.message?.includes('NetworkError') ||
-    error.message?.includes('network connection')
-  )
+interface ValidationErrorDetail {
+  path?: string[] | string
+  message?: string
+  code?: string
+  format?: string
+  pattern?: string
+  type?: string
+  minimum?: number | string
+  maximum?: number | string
+}
+
+function isNetworkError(error: unknown): boolean {
+  if (error instanceof Error) {
+    return (
+      !navigator.onLine ||
+      error instanceof TypeError ||
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('NetworkError') ||
+      error.message.includes('network connection')
+    )
+  }
+  return !navigator.onLine
 }
 
 async function registerSyncTag() {
   if ('serviceWorker' in navigator && 'SyncManager' in window) {
     try {
       const reg = await navigator.serviceWorker.ready
-      await (reg as any).sync.register('sync-api-requests')
+      const regWithSync = reg as unknown as {
+        sync: {
+          register: (tag: string) => Promise<void>
+        }
+      }
+      await regWithSync.sync.register('sync-api-requests')
     } catch (e) {
       console.warn('Background sync registration failed:', e)
     }
   }
 }
 
+type SerializedFormEntry = 
+  | { key: string; value: File; isFile: true; fileName: string; fileType: string }
+  | { key: string; value: string; isFile: false }
+
 async function serializeFormData(form: FormData) {
-  const entries: any[] = []
+  const entries: SerializedFormEntry[] = []
   for (const [key, value] of form.entries()) {
     if (value instanceof File) {
       entries.push({
@@ -45,9 +68,9 @@ async function serializeFormData(form: FormData) {
 
 export class ApiClientError extends Error {
   status: number
-  details: any
+  details: unknown
 
-  constructor(message: string, status: number, details?: any) {
+  constructor(message: string, status: number, details?: unknown) {
     super(message)
     this.name = 'ApiClientError'
     this.status = status
@@ -57,7 +80,7 @@ export class ApiClientError extends Error {
 
 async function readError(res: Response): Promise<Error> {
   try {
-    const data = (await res.json()) as { message?: string; details?: any }
+    const data = (await res.json()) as { message?: string; details?: unknown }
     if (data?.message) {
       let msg = data.message
       if (msg.trim().startsWith('[') && msg.trim().endsWith(']')) {
@@ -96,9 +119,9 @@ async function readError(res: Response): Promise<Error> {
               messageText: 'Message Text',
             }
 
-            const formatted = parsed.map((err: any) => {
+            const formatted = parsed.map((err: ValidationErrorDetail) => {
               const path = Array.isArray(err.path) ? err.path.join('.') : ''
-              const label = fieldLabels[path] || path || 'Field'
+              const label = fieldLabels[path] || (typeof path === 'string' ? path : '') || 'Field'
               let errMessage = err.message || 'Invalid value'
 
               if (err.code === 'invalid_format' && err.format === 'email') {
@@ -195,7 +218,7 @@ export class ApiClient {
       })
       if (!res.ok) throw await readError(res)
       return (await res.json()) as Record<string, unknown>
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (isNetworkError(err)) {
         await queueRequest({
           url: path,
@@ -224,7 +247,7 @@ export class ApiClient {
       })
       if (!res.ok) throw await readError(res)
       return (await res.json()) as Record<string, unknown>
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (isNetworkError(err)) {
         await queueRequest({
           url: path,
@@ -253,7 +276,7 @@ export class ApiClient {
       })
       if (!res.ok) throw await readError(res)
       return (await res.json()) as Record<string, unknown>
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (isNetworkError(err)) {
         const serialized = await serializeFormData(form)
         await queueRequest({
@@ -287,7 +310,7 @@ export class ApiClient {
         headers: this.authHeaders(),
       })
       if (!res.ok) throw await readError(res)
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (isNetworkError(err)) {
         await queueRequest({
           url: path,

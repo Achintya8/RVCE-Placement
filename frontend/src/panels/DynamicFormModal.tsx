@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { PlacementFormDetail } from '../api/types'
+import type { PlacementFormDetail } from '@/types'
 import { useFormStore } from '../store/useFormStore'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { useAuthStore } from './useAuthStore'
-import type { PlacementFormSummary, PlacementFormDetail } from '../api/types'
+import type { PlacementFormSummary, PlacementFormDetail } from '@/types'
 
 interface FormState {
   forms: PlacementFormSummary[] | null

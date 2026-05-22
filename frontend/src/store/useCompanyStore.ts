@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { useAuthStore } from './useAuthStore'
-import type { Company } from '../api/types'
+import type { Company } from '@/types'
 
 interface CompanyState {
   companies: Company[] | null
