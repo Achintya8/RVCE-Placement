@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { useProfileStore } from '../store/useProfileStore'
+import { useAuthStore } from '../store/useAuthStore'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle2, AlertCircle, Upload, Save, FileText, Clock, Unlock, Camera, Moon, Sun, User } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Upload, Save, FileText, Clock, Unlock, Camera, Moon, Sun, User, LogOut } from 'lucide-react'
 import { StudentProfileSkeleton } from '@/components/modern/Skeleton'
 import { ApiClientError } from '../api/client'
 import type { AppUser } from '@/types'
@@ -43,6 +44,7 @@ const FormField = ({ label, value, onChange, id, type = 'text', disabled = false
 
 export function ProfilePanel() {
   const { theme, setTheme } = useTheme()
+  const logout = useAuthStore((state) => state.logout)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
 
@@ -218,6 +220,14 @@ export function ProfilePanel() {
             >
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={logout}
+              className="w-full gap-2 border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20 dark:border-destructive/20 dark:bg-destructive/10 dark:text-destructive-foreground dark:hover:bg-destructive/20 sm:w-auto"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
             </Button>
           </div>
         </CardContent>

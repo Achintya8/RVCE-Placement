@@ -16,11 +16,26 @@ export default {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
-        'bg-dark': '#0f172a',
-        'bg-card': 'rgba(30, 41, 59, 0.7)',
-        'text-main': '#f8fafc',
-        'text-muted': '#94a3b8',
-        'glass-border': 'rgba(255, 255, 255, 0.1)',
+        'bg-dark': ({ opacityValue }: { opacityValue?: string }) => 
+          opacityValue !== undefined 
+            ? `rgba(var(--color-bg-dark), ${opacityValue})` 
+            : `rgb(var(--color-bg-dark))`,
+        'bg-card': ({ opacityValue }: { opacityValue?: string }) => 
+          opacityValue !== undefined 
+            ? `rgba(var(--color-bg-card), ${opacityValue})` 
+            : `rgba(var(--color-bg-card), var(--color-bg-card-opacity, 1))`,
+        'text-main': ({ opacityValue }: { opacityValue?: string }) => 
+          opacityValue !== undefined 
+            ? `rgba(var(--color-text-main), ${opacityValue})` 
+            : `rgb(var(--color-text-main))`,
+        'text-muted': ({ opacityValue }: { opacityValue?: string }) => 
+          opacityValue !== undefined 
+            ? `rgba(var(--color-text-muted), ${opacityValue})` 
+            : `rgb(var(--color-text-muted))`,
+        'glass-border': ({ opacityValue }: { opacityValue?: string }) => 
+          opacityValue !== undefined 
+            ? `rgba(var(--color-glass-border), ${opacityValue})` 
+            : `rgba(var(--color-glass-border), var(--color-glass-border-opacity, 1))`,
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
