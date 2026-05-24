@@ -2,26 +2,33 @@ import { useEffect } from 'react'
 import { useAuthStore } from './store/useAuthStore'
 import DashboardScreen from './screens/DashboardScreen'
 import HomeScreen from './screens/HomeScreen'
-import { LoadingRegion, Skeleton } from '@/components/modern/Skeleton'
+import { LoadingRegion } from '@/components/modern/Skeleton'
 import { CollegeLogo } from '@/components/modern/CollegeLogo'
+
+const spinnerSpokes = Array.from({ length: 12 }, (_, index) => index)
+
+function CupertinoActivityIndicator() {
+  return (
+    <div className="cupertino-activity-indicator" aria-hidden="true">
+      {spinnerSpokes.map((spoke) => (
+        <span key={spoke} />
+      ))}
+    </div>
+  )
+}
 
 function Splash() {
   return (
     <LoadingRegion
       label="Initialising placement portal"
-      className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950"
+      className="ios-glass-screen min-h-screen flex flex-col items-center justify-center px-6 text-slate-950 dark:text-white"
     >
-      <div className="relative">
-        <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-        <div className="relative rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl animate-bounce dark:border-slate-800">
-          <CollegeLogo imageClassName="w-48" />
-        </div>
+      <div className="ios-glass-panel relative z-10 rounded-[1.35rem] p-6">
+        <CollegeLogo imageClassName="w-44 sm:w-48" />
       </div>
-      <div className="mt-8 flex flex-col items-center gap-2">
-        <div className="h-1 w-48 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-          <Skeleton tone="blue" className="h-full w-full rounded-full" />
-        </div>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Initialising Portal</p>
+      <div className="relative z-10 mt-8 flex flex-col items-center gap-3">
+        <CupertinoActivityIndicator />
+        <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Initialising Portal</p>
       </div>
     </LoadingRegion>
   )

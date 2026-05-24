@@ -57,7 +57,7 @@ export function CompaniesPanel() {
 
   if (companies.length === 0) {
     return (
-      <div className="text-center py-20 bg-slate-100 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
+      <div className="ios-glass-panel rounded-[1.5rem] border-dashed py-20 text-center">
         <Building2 className="w-16 h-16 text-slate-400 dark:text-white/20 mx-auto mb-4" />
         <h3 className="text-xl font-semibold text-slate-900 dark:text-white">No companies yet</h3>
         <p className="text-muted-foreground">Stay tuned for upcoming placement drives.</p>
@@ -70,7 +70,7 @@ export function CompaniesPanel() {
       {companies.map((c) => {
         const isBusy = busyIds.has(c.id)
         return (
-          <Card key={c.id} className="glass-panel hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
+          <Card key={c.id} className="glass-panel transition-all duration-300 hover:-translate-y-0.5">
             <CardHeader className="pb-4">
               <div className="flex justify-between items-start gap-4">
                 <div className="space-y-1">
@@ -87,25 +87,25 @@ export function CompaniesPanel() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <div className="ios-glass-control space-y-1.5 rounded-2xl p-3">
                   <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     <IndianRupee className="w-3 h-3 text-primary" /> Package
                   </div>
                   <p className="text-sm font-bold text-slate-900 dark:text-white">{c.package || 'TBD'}</p>
                 </div>
-                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <div className="ios-glass-control space-y-1.5 rounded-2xl p-3">
                   <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     <IndianRupee className="w-3 h-3 text-primary" /> Stipend
                   </div>
                   <p className="text-sm font-bold text-slate-900 dark:text-white">{c.stipend || 'TBD'}</p>
                 </div>
-                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <div className="ios-glass-control space-y-1.5 rounded-2xl p-3">
                   <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     <Calendar className="w-3 h-3 text-primary" /> Test Date
                   </div>
                   <p className="text-sm font-bold text-slate-900 dark:text-white">{formatDate(c.testDate ?? null)}</p>
                 </div>
-                <div className="space-y-1.5 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <div className="ios-glass-control space-y-1.5 rounded-2xl p-3">
                   <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     <Calendar className="w-3 h-3 text-primary" /> Interview
                   </div>

@@ -208,7 +208,7 @@ export function DynamicFormModal({
           <Button 
             onClick={() => void submit()} 
             disabled={saving || detail.summary.acceptingResponses === false} 
-            className="bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20"
+            className="shadow-lg shadow-primary/20"
           >
             {detail.summary.acceptingResponses === false ? 'Form Closed' : (saving ? 'Submitting...' : 'Submit Responses')}
           </Button>

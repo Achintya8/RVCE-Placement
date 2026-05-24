@@ -49,7 +49,7 @@ export function FormsPanel() {
   if (forms.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-center">
-        <div className="p-6 rounded-full bg-slate-100 dark:bg-white/5">
+        <div className="ios-glass-control rounded-full p-6">
           <ClipboardList className="w-10 h-10 text-muted-foreground opacity-50" />
         </div>
         <div>
@@ -77,7 +77,7 @@ export function FormsPanel() {
       <Card
         key={f.id}
         className={cn(
-          "glass-panel hover:shadow-2xl transition-all duration-300 border",
+          "glass-panel transition-all duration-300 hover:-translate-y-0.5",
           isClosed
             ? "border-red-500/10 hover:shadow-red-500/2 bg-slate-900/40"
             : "hover:shadow-primary/5 border-slate-200 dark:border-white/10"
@@ -122,7 +122,7 @@ export function FormsPanel() {
                 "gap-2 w-full sm:w-auto font-bold transition-all",
                 !hasSubmitted &&
                   !isClosed &&
-                  "bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20",
+                  "bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20",
                 hasSubmitted &&
                   !isClosed &&
                   "border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-white/5",

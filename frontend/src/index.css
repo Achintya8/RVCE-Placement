@@ -6,14 +6,14 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    --background: 210 100% 98%;
     --foreground: 222.2 47.4% 11.2%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 47.4% 11.2%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47.4% 11.2%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 211 100% 50%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 214.3 31.8% 91.4%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 214.3 31.8% 91.4%;
@@ -24,11 +24,11 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 224.3 76.3% 48%;
+    --ring: 211 100% 50%;
     --radius: 0.75rem;
 
-    --color-primary: #6366f1;
-    --color-primary-hover: #4f46e5;
+    --color-primary: #007aff;
+    --color-primary-hover: #006ee6;
     --color-bg-dark: 248, 250, 252;
     --color-bg-card: 255, 255, 255;
     --color-bg-card-opacity: 0.8;
@@ -39,12 +39,13 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222 47% 7%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 222 47% 9%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 47% 9%;
     --popover-foreground: 210 40% 98%;
+    --primary: 211 100% 56%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -60,6 +61,7 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', sans-serif;
+    min-height: 100dvh;
   }
 }
 
@@ -79,6 +81,11 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes cupertino-indicator-fade {
+  0% { opacity: 0.95; }
+  100% { opacity: 0.18; }
+}
+
 @keyframes skeleton-shimmer {
   0% {
     transform: translateX(-120%);
@@ -86,6 +93,171 @@
   100% {
     transform: translateX(120%);
   }
+}
+
+.cupertino-activity-indicator {
+  --cupertino-spinner-size: 32px;
+  --cupertino-spinner-spoke-width: 3px;
+  --cupertino-spinner-spoke-height: 8px;
+
+  position: relative;
+  width: var(--cupertino-spinner-size);
+  height: var(--cupertino-spinner-size);
+  color: rgb(71 85 105);
+}
+
+.cupertino-activity-indicator span {
+  position: absolute;
+  top: 2px;
+  left: calc(50% - (var(--cupertino-spinner-spoke-width) / 2));
+  width: var(--cupertino-spinner-spoke-width);
+  height: var(--cupertino-spinner-spoke-height);
+  border-radius: 999px;
+  background: currentColor;
+  transform-origin: 50% calc((var(--cupertino-spinner-size) / 2) - 2px);
+  animation: cupertino-indicator-fade 1s linear infinite;
+}
+
+.cupertino-activity-indicator span:nth-child(1) {
+  transform: rotate(0deg);
+  animation-delay: -0.9167s;
+}
+
+.cupertino-activity-indicator span:nth-child(2) {
+  transform: rotate(30deg);
+  animation-delay: -0.8333s;
+}
+
+.cupertino-activity-indicator span:nth-child(3) {
+  transform: rotate(60deg);
+  animation-delay: -0.75s;
+}
+
+.cupertino-activity-indicator span:nth-child(4) {
+  transform: rotate(90deg);
+  animation-delay: -0.6667s;
+}
+
+.cupertino-activity-indicator span:nth-child(5) {
+  transform: rotate(120deg);
+  animation-delay: -0.5833s;
+}
+
+.cupertino-activity-indicator span:nth-child(6) {
+  transform: rotate(150deg);
+  animation-delay: -0.5s;
+}
+
+.cupertino-activity-indicator span:nth-child(7) {
+  transform: rotate(180deg);
+  animation-delay: -0.4167s;
+}
+
+.cupertino-activity-indicator span:nth-child(8) {
+  transform: rotate(210deg);
+  animation-delay: -0.3333s;
+}
+
+.cupertino-activity-indicator span:nth-child(9) {
+  transform: rotate(240deg);
+  animation-delay: -0.25s;
+}
+
+.cupertino-activity-indicator span:nth-child(10) {
+  transform: rotate(270deg);
+  animation-delay: -0.1667s;
+}
+
+.cupertino-activity-indicator span:nth-child(11) {
+  transform: rotate(300deg);
+  animation-delay: -0.0833s;
+}
+
+.cupertino-activity-indicator span:nth-child(12) {
+  transform: rotate(330deg);
+  animation-delay: 0s;
+}
+
+.ios-glass-screen {
+  position: relative;
+  isolation: isolate;
+  overflow-x: hidden;
+  background:
+    linear-gradient(135deg, #f8fbff 0%, #edf7ff 36%, #f7f1ff 68%, #f7fff7 100%);
+}
+
+.ios-glass-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0.26) 42%, rgba(255, 255, 255, 0.72) 100%),
+    linear-gradient(90deg, rgba(0, 122, 255, 0.1), rgba(52, 199, 89, 0.08), rgba(175, 82, 222, 0.08));
+}
+
+.dark .ios-glass-screen {
+  background:
+    linear-gradient(135deg, #07111f 0%, #101827 38%, #15172d 70%, #071914 100%);
+}
+
+.dark .ios-glass-screen::before {
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 44%, rgba(255, 255, 255, 0.07) 100%),
+    linear-gradient(90deg, rgba(0, 122, 255, 0.16), rgba(52, 199, 89, 0.08), rgba(175, 82, 222, 0.12));
+}
+
+.ios-glass-panel,
+.glass-panel {
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 24px 70px rgba(31, 41, 55, 0.14);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+}
+
+.dark .ios-glass-panel,
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.58);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 24px 70px rgba(0, 0, 0, 0.36);
+}
+
+.ios-glass-nav {
+  background: rgba(255, 255, 255, 0.68);
+  border-color: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 16px 42px rgba(15, 23, 42, 0.1);
+  backdrop-filter: blur(30px) saturate(190%);
+  -webkit-backdrop-filter: blur(30px) saturate(190%);
+}
+
+.dark .ios-glass-nav {
+  background: rgba(8, 13, 24, 0.68);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.36);
+}
+
+.ios-glass-control {
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 8px 24px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(20px) saturate(170%);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+}
+
+.dark .ios-glass-control {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 8px 24px rgba(0, 0, 0, 0.24);
 }
 
 @layer utilities {
@@ -114,19 +286,32 @@
     transform: translateX(0);
     opacity: 0;
   }
+
+  .cupertino-activity-indicator span,
+  .plc-splash-spinner {
+    animation: none;
+  }
 }
 
 .plc-splash {
-  @apply fixed inset-0 flex items-center justify-center bg-bg-dark;
+  @apply fixed inset-0 flex items-center justify-center;
+  background:
+    linear-gradient(135deg, #f8fbff 0%, #edf7ff 36%, #f7f1ff 68%, #f7fff7 100%);
   z-index: 9999;
 }
 
 .plc-splash-spinner {
-  @apply w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full;
-  animation: spin 1s linear infinite;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(71, 85, 105, 0.18),
+    rgba(71, 85, 105, 0.95)
+  );
+  mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+  animation: spin 0.9s linear infinite;
 }
 
-/* Glass effect utilities */
-.glass-panel {
-  @apply bg-white/80 backdrop-blur-xl border border-slate-200 shadow-sm dark:bg-white/5 dark:border-white/10;
-}
+/* Glass effect utilities live above so shared components can reuse them. */
