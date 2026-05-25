@@ -96,8 +96,8 @@ export function SkeletonText({
 export function AuthCardSkeleton() {
   return (
     <LoadingRegion label="Loading sign in controls" className="w-full">
-      <div className="rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-6 shadow-2xl">
-        <div className="mb-8 grid grid-cols-2 gap-2 rounded-full bg-slate-100 dark:bg-white/5 p-1.5">
+      <div className="ios-glass-panel rounded-[1.75rem] p-6">
+        <div className="ios-glass-control mb-8 grid grid-cols-2 gap-2 rounded-full p-1.5">
           <Skeleton tone="soft" className="h-11 rounded-full bg-white" />
           <Skeleton tone="soft" className="h-11 rounded-full" />
         </div>
@@ -114,7 +114,7 @@ export function AuthCardSkeleton() {
 export function StudentProfileSkeleton() {
   return (
     <LoadingRegion label="Loading student profile" className="space-y-5">
-      <div className="rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-5 shadow-2xl">
+      <div className="ios-glass-panel rounded-[1.75rem] p-5">
         <div className="mb-8 flex items-center gap-4">
           <Skeleton tone="gold" className="size-20 shrink-0 rounded-[1.65rem]" />
           <div className="w-full min-w-0 space-y-2">
@@ -132,7 +132,7 @@ export function StudentProfileSkeleton() {
           ))}
         </div>
       </div>
-      <div className="rounded-[1.75rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-4 shadow-xl">
+      <div className="ios-glass-panel rounded-[1.5rem] p-4">
         <div className="mb-3 flex items-center justify-between">
           <Skeleton className="h-4 w-20 rounded-full" />
           <Skeleton tone="green" className="h-8 w-28 rounded-full" />
@@ -159,7 +159,7 @@ export function StudentDashboardSkeleton() {
         <Skeleton className="aspect-square rounded-[1.75rem]" />
       </div>
       <Skeleton className="mx-auto h-11 w-40 rounded-full" />
-      <div className="rounded-[1.75rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-4 shadow-2xl">
+      <div className="ios-glass-panel rounded-[1.5rem] p-4">
         <Skeleton className="mb-3 h-4 w-36 rounded-full" />
         <div className="space-y-2">
           {range(3).map((row) => (
@@ -175,7 +175,7 @@ export function SPCVerificationSkeleton() {
   return (
     <LoadingRegion label="Loading verification table" className="space-y-6">
       <Skeleton tone="light" className="mx-auto h-3 w-64 rounded-full" />
-      <div className="rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-5 shadow-2xl">
+      <div className="ios-glass-panel rounded-[1.75rem] p-5">
         <div className="mb-4 grid grid-cols-4 gap-3 px-2">
           {range(4).map((heading) => (
             <Skeleton key={heading} className="h-3 rounded-full" />
@@ -206,7 +206,7 @@ export function SPCOverviewSkeleton() {
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {range(2).map((card) => (
-          <div key={card} className="rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-3 shadow-xl">
+          <div key={card} className="ios-glass-panel rounded-[1.5rem] p-3">
             <Skeleton className="mb-3 h-4 w-32 rounded-full" />
             <div className="space-y-2">
               {range(3).map((row) => (
@@ -226,7 +226,7 @@ export function CompanyListSkeleton({ count = 3 }: { count?: number }) {
       {range(count).map((company) => (
         <div
           key={company}
-          className="flex items-center gap-4 rounded-[1.75rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-4 shadow-2xl"
+          className="ios-glass-panel flex items-center gap-4 rounded-[1.75rem] p-4"
         >
           <Skeleton tone="light" className="size-16 shrink-0 rounded-full" />
           <div className="flex-1 space-y-2">
@@ -247,7 +247,7 @@ export function CompanyListSkeleton({ count = 3 }: { count?: number }) {
 export function ApplicationFormSkeleton() {
   return (
     <LoadingRegion label="Loading application form">
-      <div className="min-h-[460px] rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-6 shadow-2xl">
+      <div className="ios-glass-panel min-h-[460px] rounded-[1.75rem] p-6">
         <Skeleton className="mb-2 h-3 w-28 rounded-full" />
         <Skeleton className="mb-14 h-5 w-40 rounded-full" />
         <Skeleton className="mx-auto mb-4 h-10 w-full max-w-xs rounded-full" />
@@ -261,7 +261,7 @@ export function ApplicationFormSkeleton() {
 export function CreateDriveSkeleton() {
   return (
     <LoadingRegion label="Loading create drive form">
-      <div className="rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-6 shadow-2xl">
+      <div className="ios-glass-panel rounded-[1.75rem] p-6">
         <div className="space-y-3">
           {range(6).map((field) => (
             <Skeleton
@@ -280,7 +280,7 @@ export function FormsPanelSkeleton() {
   return (
     <LoadingRegion label="Loading placement forms" className="grid grid-cols-1 gap-5">
       {range(3).map((form) => (
-        <div key={form} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-5">
+        <div key={form} className="ios-glass-panel rounded-2xl p-5">
           <div className="mb-4 flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
               <Skeleton className="h-5 w-2/3 rounded-full" />
@@ -307,13 +307,13 @@ export function AdminPanelSkeleton() {
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {range(4).map((stat) => (
-          <div key={stat} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-5">
+          <div key={stat} className="ios-glass-panel rounded-2xl p-5">
             <Skeleton className="mb-4 h-3 w-28 rounded-full" />
             <Skeleton className="h-8 w-16 rounded-full" />
           </div>
         ))}
       </div>
-      <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-5">
+      <div className="ios-glass-panel rounded-2xl p-5">
         <Skeleton className="mb-5 h-6 w-40 rounded-full" />
         <div className="space-y-3">
           {range(5).map((row) => (

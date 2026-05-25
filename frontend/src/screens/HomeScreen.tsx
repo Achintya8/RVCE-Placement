@@ -62,40 +62,42 @@ export default function HomeScreen() {
   const notificationsGranted = notificationPreference.permission === 'granted'
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f8fbff] px-5 py-10 text-slate-950">
-      <div className="pointer-events-none absolute inset-x-[-35%] top-[-8rem] h-[25rem] rounded-b-[55%] bg-[#dff0ff]" />
-      <div className="pointer-events-none absolute inset-x-[-25%] top-[-2rem] h-[20rem] rounded-b-[55%] bg-white" />
-
+    <div className="ios-glass-screen flex min-h-screen items-center justify-center px-5 py-10 text-slate-950 dark:text-white">
       <main className="relative z-10 flex w-full max-w-md flex-col items-center">
-        <div className="mb-20 flex flex-col items-center sm:mb-16">
-          <CollegeLogo imageClassName="w-48" />
-          <h1 className="mt-3 text-xl font-medium tracking-tight">Placement</h1>
+        <div className="mb-16 flex flex-col items-center sm:mb-14">
+          <div className="ios-glass-panel rounded-[1.5rem] p-5">
+            <CollegeLogo imageClassName="w-44" />
+          </div>
+          <h1 className="mt-5 text-2xl font-semibold tracking-tight">Placement</h1>
+          <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">RVCE portal</p>
         </div>
 
         {isBusy ? (
-          <AuthCardSkeleton />
+          <div className="w-full overflow-hidden rounded-[1.75rem]">
+            <AuthCardSkeleton />
+          </div>
         ) : (
           <section
             aria-label="Placement portal sign in"
-            className="w-full rounded-[2rem] border border-slate-200 dark:border-white/10 bg-[#444444] p-8 shadow-[0_24px_60px_rgba(15,23,42,0.28)] animate-in fade-in slide-in-from-bottom-2 duration-500"
+            className="ios-glass-panel w-full rounded-[1.75rem] p-7 shadow-[0_24px_70px_rgba(15,23,42,0.14)] animate-in fade-in slide-in-from-bottom-2 duration-500"
           >
-            <p className="mb-6 text-center text-sm font-medium text-slate-700 dark:text-white/80">
-              Sign in with your RVCE Google account
-            </p>
+            <div className="mb-6 text-center">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                Sign in with your RVCE Google account
+              </p>
+            </div>
 
-            {/* Notification status */}
             {notificationPreference.supported && (
               notificationsGranted ? (
-                <div className="mb-4 flex items-center justify-center gap-2 rounded-xl bg-green-500/15 border border-green-500/25 px-4 py-2.5">
-                  <Bell className="w-4 h-4 text-green-400 shrink-0" />
-                  <span className="text-sm font-medium text-green-300">Notifications enabled</span>
+                <div className="mb-4 flex items-center justify-center gap-2 rounded-2xl border border-green-500/20 bg-green-500/15 px-4 py-2.5 backdrop-blur-xl">
+                  <Bell className="w-4 h-4 text-green-600 dark:text-green-300 shrink-0" />
+                  <span className="text-sm font-semibold text-green-700 dark:text-green-200">Notifications enabled</span>
                 </div>
               ) : (
                 <Button
                   type="button"
-                  variant="secondary"
-                  className="mb-4 w-full gap-2 border-0 text-white font-semibold"
-                  style={{ backgroundColor: '#ef4444' }}
+                  variant="destructive"
+                  className="mb-4 w-full gap-2"
                   onClick={() => void enableNotifications()}
                 >
                   <Bell className="w-4 h-4" />
@@ -104,7 +106,7 @@ export default function HomeScreen() {
               )
             )}
 
-            <div className="flex justify-center rounded-2xl bg-[#0d72d9] px-3 py-3 hover:bg-blue-600 transition-colors">
+            <div className="flex justify-center rounded-[1.35rem] bg-primary px-3 py-3 shadow-[0_14px_30px_rgba(0,122,255,0.22)] transition-colors hover:bg-primary/90">
               <GoogleLogin
                 onSuccess={(cred) => {
                   if (cred.credential) void loginWithGoogle(cred.credential)

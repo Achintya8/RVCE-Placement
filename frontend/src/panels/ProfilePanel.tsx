@@ -208,7 +208,7 @@ export function ProfilePanel() {
               variant="outline"
               onClick={onUploadProfilePicture}
               disabled={saving}
-              className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-slate-200 dark:bg-white/10 sm:w-auto"
+              className="w-full gap-2 sm:w-auto"
             >
               <Camera className="w-4 h-4" />
               Upload Photo
@@ -216,7 +216,7 @@ export function ProfilePanel() {
             <Button
               variant="outline"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-slate-200 dark:bg-white/10 sm:w-auto"
+              className="w-full gap-2 sm:w-auto"
             >
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
@@ -262,7 +262,7 @@ export function ProfilePanel() {
                   variant="outline"
                   onClick={onRequestUnlock}
                   disabled={user.unlockRequested || saving}
-                  className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-slate-200 dark:bg-white/10 sm:w-auto"
+                  className="w-full gap-2 sm:w-auto"
                 >
                   <Unlock className="w-4 h-4" />
                   {user.unlockRequested ? 'Edit Request Pending' : 'Request Profile Edit'}
@@ -272,7 +272,7 @@ export function ProfilePanel() {
                 variant="outline"
                 onClick={onUploadResume}
                 disabled={saving}
-                className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-slate-200 dark:bg-white/10 sm:w-auto"
+                className="w-full gap-2 sm:w-auto"
               >
                 <Upload className="w-4 h-4" />
                 {user.resumeUrl ? 'Update Resume' : 'Upload Resume'}
@@ -282,7 +282,7 @@ export function ProfilePanel() {
         </CardHeader>
         {user.resumeUrl && (
           <CardContent>
-            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 dark:bg-white/5 dark:border-white/10">
+            <div className="ios-glass-control flex items-center gap-3 rounded-2xl p-3">
               <div className="p-2 bg-white rounded-lg border border-slate-200 shadow-sm dark:bg-white/10 dark:border-white/10">
                 <FileText className="w-5 h-5 text-primary" />
               </div>
@@ -326,8 +326,8 @@ export function ProfilePanel() {
             <FormField label="12th Aggregate (%)" value={String(draft.twelfthMarks ?? '')} onChange={(v) => handleFieldChange('twelfthMarks', v)} id="pf-12" type="number" disabled={readOnly} error={fieldErrors.twelfthMarks} />
           </div>
         </CardContent>
-        <CardFooter className="justify-end border-t border-slate-200 p-4 bg-slate-50 dark:border-white/10 dark:bg-white/5 sm:p-6">
-          <Button onClick={onSave} disabled={readOnly} className="w-full gap-2 bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 sm:w-auto">
+        <CardFooter className="justify-end border-t border-white/45 p-4 bg-white/20 dark:border-white/10 dark:bg-white/5 sm:p-6">
+          <Button onClick={onSave} disabled={readOnly} className="w-full gap-2 sm:w-auto">
             <Save className="w-4 h-4" />
             {saving ? 'Saving...' : 'Save Profile'}
           </Button>

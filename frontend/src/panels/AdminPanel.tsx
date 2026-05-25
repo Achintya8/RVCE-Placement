@@ -971,7 +971,7 @@ export function AdminPanel() {
                         <Button 
                           size="sm" 
                           variant={s.verified ? "ghost" : "default"}
-                          className={cn("w-full", s.verified ? "text-green-400 bg-green-400/10 hover:bg-green-400/20" : "bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20")}
+                          className={cn("w-full", s.verified ? "text-green-500 bg-green-400/10 hover:bg-green-400/20 dark:text-green-300" : "shadow-lg shadow-primary/20")}
                           disabled={busy}
                           onClick={() => setReviewStudent(s)}
                         >
@@ -1045,7 +1045,7 @@ export function AdminPanel() {
             ) : null}
             <DialogFooter>
               <Button variant="ghost" onClick={() => setExportCompanyId(null)} className="text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-white/5">Cancel</Button>
-              <Button onClick={doExportCompany} className="gap-2 bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20">
+              <Button onClick={doExportCompany} className="gap-2 shadow-lg shadow-primary/20">
                 <Download className="w-4 h-4" /> Start Export
               </Button>
             </DialogFooter>
@@ -1113,7 +1113,7 @@ export function AdminPanel() {
             <DialogFooter className="p-6 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/10">
               <Button variant="ghost" onClick={() => setResponsesModal(null)} className="text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-white/5">Close</Button>
               {responsesModal.rows.length > 0 && (
-                <Button onClick={() => void exportFormExcel(responsesModal.formId)} className="gap-2 bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20">
+                <Button onClick={() => void exportFormExcel(responsesModal.formId)} className="gap-2 shadow-lg shadow-primary/20">
                   <Download className="w-4 h-4" /> Download Excel
                 </Button>
               )}
@@ -1211,7 +1211,7 @@ export function AdminPanel() {
                 <Button onClick={() => setReviewStudent(null)} className="order-3 sm:order-1 text-slate-900 dark:text-white hover:bg-slate-200 dark:bg-white/10 w-full sm:w-auto" variant="ghost">Close</Button>
                 {!reviewStudent.verified && (
                   <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto order-1 sm:order-2">
-                    <Button onClick={handleVerifyStudent} disabled={rejecting} className="bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 w-full sm:w-auto gap-2 order-1 sm:order-2">
+                    <Button onClick={handleVerifyStudent} disabled={rejecting} className="w-full gap-2 order-1 shadow-lg shadow-primary/20 sm:w-auto sm:order-2">
                       <CheckCircle2 className="w-4 h-4" /> Approve & Lock
                     </Button>
                     <Button variant="destructive" onClick={handleRejectStudent} disabled={rejecting || !rejectReason.trim()} className="w-full sm:w-auto order-2 sm:order-1">Reject Profile</Button>
