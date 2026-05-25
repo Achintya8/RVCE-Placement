@@ -31,5 +31,5 @@ export const env = {
   },
   mongodbUri: process.env.MONGODB_URI ?? 'mongodb://localhost:27017/mca_placement',
   baseUrl: process.env.BACKEND_URL ?? `http://localhost:${Number(process.env.PORT ?? 4000)}`,
-  spcEmails: (process.env.SPC_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
+  spcEmails: (process.env.SPC_EMAILS || process.env.SPC_EMAIL || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
 };

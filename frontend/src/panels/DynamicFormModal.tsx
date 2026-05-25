@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { PlacementFormDetail } from '@/types'
 import { useFormStore } from '../store/useFormStore'
+import { useAuthStore } from '../store/useAuthStore'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,10 @@ export function DynamicFormModal({
   const uploadFile = useFormStore((state) => state.uploadFile)
   const [saving, setSaving] = useState(false)
 
+  const formId = detail.summary.id
+  const userId = useAuthStore.getState().session?.user?.id
+  const storageKey = `form-draft-${userId}-${formId}`
+
   const initial = useMemo(() => {
     const m: Record<number, string> = {}
     for (const q of detail.questions) {
@@ -44,10 +49,24 @@ export function DynamicFormModal({
     return m
   }, [detail.questions])
 
-  const [values, setValues] = useState<Record<number, string>>(initial)
+  const [values, setValues] = useState<Record<number, string>>(() => {
+    const saved = localStorage.getItem(storageKey)
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch (e) {
+        // ignore
+      }
+    }
+    return initial
+  })
 
   const setVal = (id: number, v: string) => {
-    setValues((prev) => ({ ...prev, [id]: v }))
+    setValues((prev) => {
+      const next = { ...prev, [id]: v }
+      localStorage.setItem(storageKey, JSON.stringify(next))
+      return next
+    })
   }
 
   const submit = async () => {
@@ -73,6 +92,7 @@ export function DynamicFormModal({
     try {
       await submitResponse(detail.summary.id, answers)
       toast.success('Responses submitted successfully.')
+      localStorage.removeItem(storageKey)
       onSubmitted()
       onClose()
     } catch (e) {
