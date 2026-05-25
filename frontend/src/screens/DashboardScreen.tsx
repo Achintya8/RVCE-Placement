@@ -25,6 +25,7 @@ type Panel = {
 }
 
 const notificationPanelIds = new Set(['companies', 'forms', 'chat'])
+const PANEL_IDS = ['companies', 'forms', 'chat', 'profile', 'admin']
 
 function getRequestedPanelId() {
   const panel = new URLSearchParams(window.location.search).get('panel')
@@ -37,7 +38,17 @@ export default function DashboardScreen() {
       session: state.session,
     }))
   )
-  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [selectedIndex, setSelectedIndex] = useState(() => {
+    const requestedPanelId = getRequestedPanelId()
+    const savedPanelId = requestedPanelId || localStorage.getItem('active-panel-id')
+    if (savedPanelId) {
+      const idx = PANEL_IDS.indexOf(savedPanelId)
+      if (idx >= 0) {
+        return idx
+      }
+    }
+    return 0
+  })
   const [showHeader, setShowHeader] = useState(true)
 
   useEffect(() => {
@@ -112,6 +123,7 @@ export default function DashboardScreen() {
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedIndex(panelIndex)
+    localStorage.setItem('active-panel-id', requestedPanelId)
     window.history.replaceState({}, '', window.location.pathname)
   }, [panels])
 
@@ -123,6 +135,7 @@ export default function DashboardScreen() {
         const index = panels.findIndex((p) => p.id === targetPanel)
         if (index >= 0) {
           setSelectedIndex(index)
+          localStorage.setItem('active-panel-id', targetPanel)
         }
       }
     }
@@ -179,7 +192,10 @@ export default function DashboardScreen() {
           <button
             key={p.id}
             type="button"
-            onClick={() => setSelectedIndex(i)}
+            onClick={() => {
+              setSelectedIndex(i)
+              localStorage.setItem('active-panel-id', p.id)
+            }}
             className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[10px] sm:text-xs font-semibold transition-all sm:min-w-24 sm:flex-none sm:px-4 active:scale-[0.98] ${
               i === safeIndex
                 ? 'bg-primary text-white shadow-[0_10px_24px_rgba(0,122,255,0.24)]'

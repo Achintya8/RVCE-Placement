@@ -74,6 +74,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         localStorage.removeItem(AUTH_TOKEN_KEY)
+        localStorage.removeItem('active-panel-id')
         client.setToken(null)
         set({ status: 'unauthenticated', session: null, errorMessage: null })
       },
