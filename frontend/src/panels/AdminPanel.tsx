@@ -53,7 +53,9 @@ import {
   Users,
   Unlock,
   Trash2,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AdminPanelSkeleton } from '@/components/modern/Skeleton'
@@ -88,6 +90,21 @@ export function AdminPanel() {
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+
+  // Expanded companies in Manage Drives table
+  const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<number>>(new Set())
+
+  const toggleExpandCompany = (id: number) => {
+    setExpandedCompanyIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
 
   // Company Form
   const [cName, setCName] = useState('')
@@ -637,48 +654,99 @@ export function AdminPanel() {
                   <TableHeader className="bg-slate-100 dark:bg-white/5">
                     <TableRow className="border-slate-200 dark:border-white/10 hover:bg-transparent">
                       <TableHead className="text-text-main font-bold">Company</TableHead>
-                      <TableHead className="text-text-main font-bold">Package</TableHead>
-                      <TableHead className="text-text-main font-bold">Stipend</TableHead>
-                      <TableHead className="text-text-main font-bold">Min CGPA</TableHead>
-                      <TableHead className="text-text-main font-bold">Status</TableHead>
+                      <TableHead className="text-text-main font-bold hidden md:table-cell">Package</TableHead>
+                      <TableHead className="text-text-main font-bold hidden md:table-cell">Stipend</TableHead>
+                      <TableHead className="text-text-main font-bold hidden md:table-cell">Min CGPA</TableHead>
+                      <TableHead className="text-text-main font-bold hidden md:table-cell">Status</TableHead>
                       <TableHead className="text-text-main font-bold">Block Consent</TableHead>
                       <TableHead className="text-text-main font-bold">Block Tracker</TableHead>
                       <TableHead className="text-right text-text-main font-bold">Export</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.companies.map(c => (
-                      <TableRow key={c.id} className="border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:bg-white/5">
-                        <TableCell className="font-bold text-primary">{c.name}</TableCell>
-                        <TableCell className="text-muted-foreground">{c.package || 'TBD'}</TableCell>
-                        <TableCell className="text-muted-foreground">{c.stipend || 'TBD'}</TableCell>
-                        <TableCell className="text-muted-foreground">{c.minCgpa}</TableCell>
-                        <TableCell>
-                          <Badge variant={c.status === 'completed' ? 'outline' : 'default'} className={cn("cursor-pointer", c.status === 'completed' ? "text-amber-400 border-amber-400/20 bg-amber-400/10" : "bg-green-500/20 text-green-400 hover:bg-green-500/30")} onClick={() => void toggleCompanyStatus(c.id, c.status)}>
-                            {c.status === 'completed' ? 'Completed' : 'Ongoing'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Switch
-                            checked={c.consentBlocked ?? false}
-                            onCheckedChange={() => void toggleCompanyBlock(c.id, 'consent', c.consentBlocked ?? false)}
-                            disabled={busy}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Switch
-                            checked={c.trackerBlocked ?? false}
-                            onCheckedChange={() => void toggleCompanyBlock(c.id, 'tracker', c.trackerBlocked ?? false)}
-                            disabled={busy}
-                          />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" onClick={() => setExportCompanyId(c.id)} className="hover:bg-slate-200 dark:bg-white/10">
-                            <Download className="w-4 h-4 text-primary" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {data.companies.map(c => {
+                      const isExpanded = expandedCompanyIds.has(c.id)
+                      return (
+                        <>
+                          <TableRow key={c.id} className="border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:bg-white/5">
+                            <TableCell 
+                              className="font-bold text-primary cursor-pointer hover:underline select-none md:cursor-default md:hover:no-underline"
+                              onClick={() => toggleExpandCompany(c.id)}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <span className="md:hidden">
+                                  {isExpanded ? (
+                                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                                  ) : (
+                                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                                  )}
+                                </span>
+                                {c.name}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground hidden md:table-cell">{c.package || 'TBD'}</TableCell>
+                            <TableCell className="text-muted-foreground hidden md:table-cell">{c.stipend || 'TBD'}</TableCell>
+                            <TableCell className="text-muted-foreground hidden md:table-cell">{c.minCgpa}</TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <Badge variant={c.status === 'completed' ? 'outline' : 'default'} className={cn("cursor-pointer", c.status === 'completed' ? "text-amber-400 border-amber-400/20 bg-amber-400/10" : "bg-green-500/20 text-green-400 hover:bg-green-500/30")} onClick={() => void toggleCompanyStatus(c.id, c.status)}>
+                                {c.status === 'completed' ? 'Completed' : 'Ongoing'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Switch
+                                checked={c.consentBlocked ?? false}
+                                onCheckedChange={() => void toggleCompanyBlock(c.id, 'consent', c.consentBlocked ?? false)}
+                                disabled={busy}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Switch
+                                checked={c.trackerBlocked ?? false}
+                                onCheckedChange={() => void toggleCompanyBlock(c.id, 'tracker', c.trackerBlocked ?? false)}
+                                disabled={busy}
+                              />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="sm" onClick={() => setExportCompanyId(c.id)} className="hover:bg-slate-200 dark:bg-white/10">
+                                <Download className="w-4 h-4 text-primary" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                          {isExpanded && (
+                            <TableRow className="border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 hover:bg-transparent md:hidden">
+                              <TableCell colSpan={4} className="p-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-200">
+                                  <div className="space-y-1">
+                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Package</span>
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.package || 'TBD'}</p>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Stipend</span>
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.stipend || 'TBD'}</p>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Min CGPA</span>
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.minCgpa}</p>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</span>
+                                    <div>
+                                      <Badge 
+                                        variant={c.status === 'completed' ? 'outline' : 'default'} 
+                                        className={cn("cursor-pointer mt-0.5", c.status === 'completed' ? "text-amber-400 border-amber-400/20 bg-amber-400/10" : "bg-green-500/20 text-green-400 hover:bg-green-500/30")} 
+                                        onClick={() => void toggleCompanyStatus(c.id, c.status)}
+                                      >
+                                        {c.status === 'completed' ? 'Completed' : 'Ongoing'}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
+                      )
+                    })}
                   </TableBody>
                 </Table>
               </div>
