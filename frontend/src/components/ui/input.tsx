@@ -2,7 +2,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, onFocus, ...props }, ref) => {
     return (
       <input
         type={type}
@@ -11,6 +11,14 @@ const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
           className
         )}
         ref={ref}
+        onFocus={(e) => {
+          const val = props.value;
+          if (val !== undefined && val !== null && val !== "" && Number(val) === 0) {
+            e.target.value = "";
+            props.onChange?.(e);
+          }
+          onFocus?.(e);
+        }}
         {...props}
       />
     )

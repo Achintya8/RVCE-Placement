@@ -54,6 +54,14 @@
     --accent-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
+
+    --color-bg-dark: 8, 13, 24;
+    --color-bg-card: 30, 41, 59;
+    --color-bg-card-opacity: 0.4;
+    --color-text-main: 248, 250, 252;
+    --color-text-muted: 148, 163, 184;
+    --color-glass-border: 255, 255, 255;
+    --color-glass-border-opacity: 0.08;
   }
   * {
     @apply border-border;

@@ -37,10 +37,21 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       // Update official profile
       set({ profile, loading: false })
       
-      // If draft is empty, initialize it with official data
-      if (Object.keys(get().draft).length === 0) {
-        set({ draft: { ...profile } })
+      // Check for locally saved draft first
+      const userId = useAuthStore.getState().session?.user?.id
+      const savedDraftStr = userId ? localStorage.getItem(`profile-draft-${userId}`) : null
+      if (savedDraftStr) {
+        try {
+          const savedDraft = JSON.parse(savedDraftStr)
+          set({ draft: savedDraft })
+          return
+        } catch (e) {
+          // Ignore parse errors and fallback
+        }
       }
+      
+      // If no local draft, initialize with official data
+      set({ draft: { ...profile } })
     } catch (e) {
       set({ 
         error: e instanceof Error ? e.message : String(e), 
@@ -50,14 +61,25 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   },
 
   setDraftField: (field, value) => {
-    set((state) => ({
-      draft: { ...state.draft, [field]: value }
-    }))
+    set((state) => {
+      const newDraft = { ...state.draft, [field]: value }
+      const userId = useAuthStore.getState().session?.user?.id
+      if (userId) {
+        localStorage.setItem(`profile-draft-${userId}`, JSON.stringify(newDraft))
+      }
+      return { draft: newDraft }
+    })
   },
 
   resetDraft: () => {
     const { profile } = get()
-    if (profile) set({ draft: { ...profile } })
+    if (profile) {
+      const userId = useAuthStore.getState().session?.user?.id
+      if (userId) {
+        localStorage.removeItem(`profile-draft-${userId}`)
+      }
+      set({ draft: { ...profile } })
+    }
   },
 
   saveProfile: async () => {
@@ -77,6 +99,12 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
       const updated = await repo.updateProfile(payload)
       useAuthStore.getState().setSessionUser(updated)
+      
+      const userId = useAuthStore.getState().session?.user?.id
+      if (userId) {
+        localStorage.removeItem(`profile-draft-${userId}`)
+      }
+
       set({ profile: updated, draft: { ...updated }, saving: false })
     } catch (e) {
       set({ saving: false })
@@ -89,6 +117,12 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     try {
       const updated = await repo.uploadResume(file)
       useAuthStore.getState().setSessionUser(updated)
+      
+      const userId = useAuthStore.getState().session?.user?.id
+      if (userId) {
+        localStorage.removeItem(`profile-draft-${userId}`)
+      }
+
       set({ profile: updated, draft: { ...updated }, saving: false })
     } catch (e) {
       set({ saving: false })
@@ -101,6 +135,12 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     try {
       const updated = await repo.uploadProfilePicture(file)
       useAuthStore.getState().setSessionUser(updated)
+      
+      const userId = useAuthStore.getState().session?.user?.id
+      if (userId) {
+        localStorage.removeItem(`profile-draft-${userId}`)
+      }
+
       set({ profile: updated, draft: { ...updated }, saving: false })
     } catch (e) {
       set({ saving: false })
@@ -112,6 +152,12 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     set({ saving: true })
     try {
       const updated = await repo.requestProfileUnlock()
+      
+      const userId = useAuthStore.getState().session?.user?.id
+      if (userId) {
+        localStorage.removeItem(`profile-draft-${userId}`)
+      }
+
       set({ profile: updated, draft: { ...updated }, saving: false })
     } catch (e) {
       set({ saving: false })
