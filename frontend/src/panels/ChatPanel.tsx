@@ -307,7 +307,7 @@ export function ChatPanel() {
   }
 
   return (
-    <div className="h-[calc(100vh-9rem)] w-full">
+    <div className="h-full w-full">
       <Card className="h-full border-0 rounded-none bg-slate-100 dark:bg-white/5 backdrop-blur-xl flex flex-col overflow-hidden">
         <CardContent className="flex-1 flex flex-col p-0 overflow-hidden relative">
           {err ? (
@@ -429,7 +429,7 @@ export function ChatPanel() {
                       const canDelete = isMe || isAdmin
 
                       const prevMsg = idx > 0 ? messages[idx - 1] : null
-                      const isNewDay = !prevMsg || 
+                      const isNewDay = !prevMsg ||
                         new Date(m.createdAt).toDateString() !== new Date(prevMsg.createdAt).toDateString()
 
                       const isCurrentMatch = matches.length > 0 && matches[currentMatchIdx]?.id === m.id
@@ -524,8 +524,8 @@ export function ChatPanel() {
                                   <div
                                     className={cn(
                                       "truncate",
-                                      isMe 
-                                        ? "text-indigo-900/80 dark:text-indigo-300/80" 
+                                      isMe
+                                        ? "text-indigo-900/80 dark:text-indigo-300/80"
                                         : "text-slate-700 dark:text-slate-300"
                                     )}
                                   >
@@ -623,7 +623,7 @@ export function ChatPanel() {
                     <Paperclip className="w-4 h-4" />
                   </Button>
                   <Textarea
-                    placeholder="Write a message... (Markdown supported, Shift+Enter for new line)"
+                    placeholder="Type a message"
                     value={text}
                     disabled={sending || !!err}
                     onChange={(e) => {
@@ -648,39 +648,39 @@ export function ChatPanel() {
                         const textarea = e.currentTarget
                         const start = textarea.selectionStart
                         const end = textarea.selectionEnd
-                        
+
                         const lineStart = text.lastIndexOf('\n', start - 1) + 1
                         const currentLine = text.slice(lineStart, start)
                         const match = currentLine.match(/^(\d+)\.\s/)
-                        
+
                         let insertStr = '\n'
                         if (match) {
                           if (currentLine === match[0]) {
-                             const newText = text.slice(0, lineStart) + text.slice(start)
-                             setText(newText)
-                             setTimeout(() => {
-                               textarea.focus()
-                               textarea.setSelectionRange(lineStart, lineStart)
-                             }, 0)
-                             return
+                            const newText = text.slice(0, lineStart) + text.slice(start)
+                            setText(newText)
+                            setTimeout(() => {
+                              textarea.focus()
+                              textarea.setSelectionRange(lineStart, lineStart)
+                            }, 0)
+                            return
                           } else {
-                             const nextNum = parseInt(match[1], 10) + 1
-                             insertStr = `\n${nextNum}. `
+                            const nextNum = parseInt(match[1], 10) + 1
+                            insertStr = `\n${nextNum}. `
                           }
                         } else if (currentLine.match(/^-\s/)) {
                           if (currentLine === '- ') {
-                             const newText = text.slice(0, lineStart) + text.slice(start)
-                             setText(newText)
-                             setTimeout(() => {
-                               textarea.focus()
-                               textarea.setSelectionRange(lineStart, lineStart)
-                             }, 0)
-                             return
+                            const newText = text.slice(0, lineStart) + text.slice(start)
+                            setText(newText)
+                            setTimeout(() => {
+                              textarea.focus()
+                              textarea.setSelectionRange(lineStart, lineStart)
+                            }, 0)
+                            return
                           } else {
-                             insertStr = '\n- '
+                            insertStr = '\n- '
                           }
                         }
-                        
+
                         const newText = text.slice(0, start) + insertStr + text.slice(end)
                         setText(newText)
                         setTimeout(() => {
