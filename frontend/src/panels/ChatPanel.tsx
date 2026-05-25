@@ -22,6 +22,8 @@ export function ChatPanel() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isLoadingRef = useRef(false)
+  const [showScrollBtn, setShowScrollBtn] = useState(false)
+  const isAtBottomRef = useRef(true)
 
   const [users, setUsers] = useState<ChatUser[]>([])
   const [mentionSearch, setMentionSearch] = useState<string | null>(null)
@@ -120,14 +122,38 @@ export function ChatPanel() {
     void repo.getAllUsersForMention().then(setUsers).catch(console.error)
   }, [])
 
+  // Track scroll position to know if user is near the bottom
   useEffect(() => {
-    if (scrollRef.current) {
-      const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight
-      }
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
+    if (!scrollContainer) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+      const atBottom = distanceFromBottom < 80
+      isAtBottomRef.current = atBottom
+      setShowScrollBtn(!atBottom)
+    }
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
+    return () => scrollContainer.removeEventListener('scroll', handleScroll)
+  }, [loading])
+
+  // Only auto-scroll when user is already near the bottom
+  useEffect(() => {
+    if (!isAtBottomRef.current) return
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
+    if (scrollContainer) {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight
     }
   }, [messages])
+
+  const scrollToBottom = () => {
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' })
+    }
+  }
 
   const send = async () => {
     const t = text.trim()
@@ -281,7 +307,7 @@ export function ChatPanel() {
   }
 
   return (
-    <div className="h-[calc(100vh-9rem)] w-full">
+    <div className="h-full w-full">
       <Card className="h-full border-0 rounded-none bg-slate-100 dark:bg-white/5 backdrop-blur-xl flex flex-col overflow-hidden">
         <CardContent className="flex-1 flex flex-col p-0 overflow-hidden relative">
           {err ? (
@@ -370,6 +396,17 @@ export function ChatPanel() {
                 </Button>
               )}
 
+              {/* WhatsApp-style scroll to bottom button */}
+              {showScrollBtn && (
+                <button
+                  onClick={scrollToBottom}
+                  className="absolute bottom-[90px] right-5 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 animate-in fade-in zoom-in-95"
+                  title="Scroll to latest messages"
+                >
+                  <ChevronDown className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                </button>
+              )}
+
               <ScrollArea className="flex-1 p-4" ref={scrollRef}>
                 <div className="space-y-4">
                   {loading ? (
@@ -392,7 +429,7 @@ export function ChatPanel() {
                       const canDelete = isMe || isAdmin
 
                       const prevMsg = idx > 0 ? messages[idx - 1] : null
-                      const isNewDay = !prevMsg || 
+                      const isNewDay = !prevMsg ||
                         new Date(m.createdAt).toDateString() !== new Date(prevMsg.createdAt).toDateString()
 
                       const isCurrentMatch = matches.length > 0 && matches[currentMatchIdx]?.id === m.id
@@ -487,8 +524,8 @@ export function ChatPanel() {
                                   <div
                                     className={cn(
                                       "truncate",
-                                      isMe 
-                                        ? "text-indigo-900/80 dark:text-indigo-300/80" 
+                                      isMe
+                                        ? "text-indigo-900/80 dark:text-indigo-300/80"
                                         : "text-slate-700 dark:text-slate-300"
                                     )}
                                   >
@@ -586,7 +623,7 @@ export function ChatPanel() {
                     <Paperclip className="w-4 h-4" />
                   </Button>
                   <Textarea
-                    placeholder="Write a message... (Markdown supported, Shift+Enter for new line)"
+                    placeholder="Type a message"
                     value={text}
                     disabled={sending || !!err}
                     onChange={(e) => {
@@ -611,39 +648,39 @@ export function ChatPanel() {
                         const textarea = e.currentTarget
                         const start = textarea.selectionStart
                         const end = textarea.selectionEnd
-                        
+
                         const lineStart = text.lastIndexOf('\n', start - 1) + 1
                         const currentLine = text.slice(lineStart, start)
                         const match = currentLine.match(/^(\d+)\.\s/)
-                        
+
                         let insertStr = '\n'
                         if (match) {
                           if (currentLine === match[0]) {
-                             const newText = text.slice(0, lineStart) + text.slice(start)
-                             setText(newText)
-                             setTimeout(() => {
-                               textarea.focus()
-                               textarea.setSelectionRange(lineStart, lineStart)
-                             }, 0)
-                             return
+                            const newText = text.slice(0, lineStart) + text.slice(start)
+                            setText(newText)
+                            setTimeout(() => {
+                              textarea.focus()
+                              textarea.setSelectionRange(lineStart, lineStart)
+                            }, 0)
+                            return
                           } else {
-                             const nextNum = parseInt(match[1], 10) + 1
-                             insertStr = `\n${nextNum}. `
+                            const nextNum = parseInt(match[1], 10) + 1
+                            insertStr = `\n${nextNum}. `
                           }
                         } else if (currentLine.match(/^-\s/)) {
                           if (currentLine === '- ') {
-                             const newText = text.slice(0, lineStart) + text.slice(start)
-                             setText(newText)
-                             setTimeout(() => {
-                               textarea.focus()
-                               textarea.setSelectionRange(lineStart, lineStart)
-                             }, 0)
-                             return
+                            const newText = text.slice(0, lineStart) + text.slice(start)
+                            setText(newText)
+                            setTimeout(() => {
+                              textarea.focus()
+                              textarea.setSelectionRange(lineStart, lineStart)
+                            }, 0)
+                            return
                           } else {
-                             insertStr = '\n- '
+                            insertStr = '\n- '
                           }
                         }
-                        
+
                         const newText = text.slice(0, start) + insertStr + text.slice(end)
                         setText(newText)
                         setTimeout(() => {
