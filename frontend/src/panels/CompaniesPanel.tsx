@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { Company } from '@/types'
 import { useCompanyStore } from '../store/useCompanyStore'
 import { toast } from 'sonner'
@@ -7,11 +7,26 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Building2, Calendar, IndianRupee, Star, Mail, CheckCircle2, AlertCircle, Lock } from 'lucide-react'
+import { Building2, Calendar, IndianRupee, Star, Mail, CheckCircle2, AlertCircle, Lock, ChevronDown, ChevronRight } from 'lucide-react'
 import { formatDate } from '../lib/format'
 import { CompanyListSkeleton } from '@/components/modern/Skeleton'
+import { cn } from '@/lib/utils'
 
 export function CompaniesPanel() {
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
+
+  const toggleExpand = (id: number) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
   const { 
     companies, 
     loading, 
@@ -69,51 +84,62 @@ export function CompaniesPanel() {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {companies.map((c) => {
         const isBusy = busyIds.has(c.id)
+        const isExpanded = expandedIds.has(c.id)
         return (
-          <Card key={c.id} className="glass-panel transition-all duration-300 hover:-translate-y-0.5">
-            <CardHeader className="pb-4">
+          <Card key={c.id} className="glass-panel transition-all duration-300 hover:-translate-y-0.5 overflow-hidden">
+            <CardHeader className="pb-4 cursor-pointer select-none hover:bg-slate-100/5 transition-colors" onClick={() => toggleExpand(c.id)}>
               <div className="flex justify-between items-start gap-4">
-                <div className="space-y-1">
-                  <CardTitle className="text-xl text-slate-900 dark:text-white">{c.name}</CardTitle>
-                  <CardDescription className="flex items-center gap-2 text-muted-foreground">
-                    <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                    Min CGPA: {c.minCgpa.toFixed(1)}
-                  </CardDescription>
+                <div className="space-y-1 flex-1 min-w-0">
+                  <CardTitle className="text-xl text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                    {isExpanded ? <ChevronDown className="w-4 h-4 shrink-0 text-slate-400" /> : <ChevronRight className="w-4 h-4 shrink-0 text-slate-400" />}
+                    {c.name}
+                  </CardTitle>
+                  {isExpanded && (
+                    <CardDescription className="flex items-center gap-2 text-muted-foreground animate-in fade-in duration-200">
+                      <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                      Min CGPA: {c.minCgpa.toFixed(1)}
+                    </CardDescription>
+                  )}
                 </div>
-                <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/20">
+                <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/20 shrink-0">
                   Drive Active
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="ios-glass-control space-y-1.5 rounded-2xl p-3">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    <IndianRupee className="w-3 h-3 text-primary" /> Package
+              {isExpanded && (
+                <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2 duration-300">
+                  <div className="ios-glass-control space-y-1.5 rounded-2xl p-3">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      <IndianRupee className="w-3 h-3 text-primary" /> Package
+                    </div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{c.package || 'TBD'}</p>
                   </div>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">{c.package || 'TBD'}</p>
-                </div>
-                <div className="ios-glass-control space-y-1.5 rounded-2xl p-3">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    <IndianRupee className="w-3 h-3 text-primary" /> Stipend
+                  <div className="ios-glass-control space-y-1.5 rounded-2xl p-3">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      <IndianRupee className="w-3 h-3 text-primary" /> Stipend
+                    </div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{c.stipend || 'TBD'}</p>
                   </div>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">{c.stipend || 'TBD'}</p>
-                </div>
-                <div className="ios-glass-control space-y-1.5 rounded-2xl p-3">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    <Calendar className="w-3 h-3 text-primary" /> Test Date
+                  <div className="ios-glass-control space-y-1.5 rounded-2xl p-3">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      <Calendar className="w-3 h-3 text-primary" /> Test Date
+                    </div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{formatDate(c.testDate ?? null)}</p>
                   </div>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">{formatDate(c.testDate ?? null)}</p>
-                </div>
-                <div className="ios-glass-control space-y-1.5 rounded-2xl p-3">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    <Calendar className="w-3 h-3 text-primary" /> Interview
+                  <div className="ios-glass-control space-y-1.5 rounded-2xl p-3">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      <Calendar className="w-3 h-3 text-primary" /> Interview
+                    </div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{formatDate(c.interviewDate ?? null)}</p>
                   </div>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">{formatDate(c.interviewDate ?? null)}</p>
                 </div>
-              </div>
+              )}
 
-              <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-white/10">
+              <div className={cn(
+                "space-y-4",
+                isExpanded ? "pt-4 border-t border-slate-200 dark:border-white/10" : ""
+              )}>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor={`consent-${c.id}`} className="text-sm font-semibold text-slate-900 dark:text-white">Consent Provided</Label>
