@@ -307,7 +307,7 @@ export function ChatPanel() {
   }
 
   return (
-    <div className="h-[calc(100vh-9rem)] w-full">
+    <div className="h-full w-full">
       <Card className="h-full border-0 rounded-none bg-slate-100 dark:bg-white/5 backdrop-blur-xl flex flex-col overflow-hidden">
         <CardContent className="flex-1 flex flex-col p-0 overflow-hidden relative">
           {err ? (
