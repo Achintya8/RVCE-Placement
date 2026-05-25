@@ -22,6 +22,8 @@ export function ChatPanel() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isLoadingRef = useRef(false)
+  const [showScrollBtn, setShowScrollBtn] = useState(false)
+  const isAtBottomRef = useRef(true)
 
   const [users, setUsers] = useState<ChatUser[]>([])
   const [mentionSearch, setMentionSearch] = useState<string | null>(null)
@@ -120,14 +122,38 @@ export function ChatPanel() {
     void repo.getAllUsersForMention().then(setUsers).catch(console.error)
   }, [])
 
+  // Track scroll position to know if user is near the bottom
   useEffect(() => {
-    if (scrollRef.current) {
-      const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight
-      }
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
+    if (!scrollContainer) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+      const atBottom = distanceFromBottom < 80
+      isAtBottomRef.current = atBottom
+      setShowScrollBtn(!atBottom)
+    }
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
+    return () => scrollContainer.removeEventListener('scroll', handleScroll)
+  }, [loading])
+
+  // Only auto-scroll when user is already near the bottom
+  useEffect(() => {
+    if (!isAtBottomRef.current) return
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
+    if (scrollContainer) {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight
     }
   }, [messages])
+
+  const scrollToBottom = () => {
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' })
+    }
+  }
 
   const send = async () => {
     const t = text.trim()
@@ -368,6 +394,17 @@ export function ChatPanel() {
                 >
                   <Search className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                 </Button>
+              )}
+
+              {/* WhatsApp-style scroll to bottom button */}
+              {showScrollBtn && (
+                <button
+                  onClick={scrollToBottom}
+                  className="absolute bottom-[90px] right-5 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 animate-in fade-in zoom-in-95"
+                  title="Scroll to latest messages"
+                >
+                  <ChevronDown className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                </button>
               )}
 
               <ScrollArea className="flex-1 p-4" ref={scrollRef}>
