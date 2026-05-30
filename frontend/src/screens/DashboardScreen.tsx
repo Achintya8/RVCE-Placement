@@ -169,15 +169,9 @@ export default function DashboardScreen() {
           {/* Hamburger button — top-left corner */}
           <button
             type="button"
-            onClick={() => {
-              setSelectedIndex(i)
-              localStorage.setItem('active-panel-id', p.id)
-            }}
-            className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[10px] sm:text-xs font-semibold transition-all sm:min-w-24 sm:flex-none sm:px-4 active:scale-[0.98] ${
-              i === safeIndex
-                ? 'bg-primary text-white shadow-[0_10px_24px_rgba(0,122,255,0.24)]'
-                : 'bg-transparent text-slate-500 hover:bg-white/45 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white'
-            }`}
+            onClick={() => setMenuOpen((o) => !o)}
+            className="absolute top-3 left-3 z-[60] flex items-center justify-center w-9 h-9 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-md backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95"
+            aria-label="Navigation menu"
           >
             {menuOpen ? <X className="w-4 h-4 text-slate-700 dark:text-slate-200" /> : <Menu className="w-4 h-4 text-slate-700 dark:text-slate-200" />}
           </button>
