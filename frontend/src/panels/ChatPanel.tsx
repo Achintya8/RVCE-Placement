@@ -16,7 +16,7 @@ export function ChatPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
-  const [text, setText] = useState('')
+  const [text, setText] = useState(() => localStorage.getItem('chat_draft_msg') ?? '')
   const [sending, setSending] = useState(false)
   const [attachment, setAttachment] = useState<File | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -163,6 +163,7 @@ export function ChatPanel() {
       const msg = await repo.sendMessage(t, attachment || undefined, replyingTo?.id || undefined)
       setMessages((m) => [...m, msg])
       setText('')
+      localStorage.removeItem('chat_draft_msg')
       setAttachment(null)
       setMentionSearch(null)
       setReplyingTo(null)
@@ -629,6 +630,7 @@ export function ChatPanel() {
                     onChange={(e) => {
                       const val = e.target.value
                       setText(val)
+                      localStorage.setItem('chat_draft_msg', val)
                       const lastAt = val.lastIndexOf('@')
                       if (lastAt !== -1 && !val.includes(' ', lastAt) && !val.includes('\n', lastAt)) {
                         setMentionSearch(val.slice(lastAt + 1).toLowerCase())

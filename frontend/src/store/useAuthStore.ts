@@ -5,6 +5,7 @@ import { PlacementRepository } from '../api/placementRepository'
 import type { Session } from '@/types'
 import { API_BASE_URL, AUTH_TOKEN_KEY } from '../config'
 import { registerNotificationsSafely } from '../notifications/registerNotifications'
+import { clearOfflineData } from '../lib/offlineDb'
 
 export type AuthStatus = 'checking' | 'loading' | 'authenticated' | 'unauthenticated'
 
@@ -74,8 +75,27 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         localStorage.removeItem(AUTH_TOKEN_KEY)
+        localStorage.removeItem('dashboard_active_panel')
+        localStorage.removeItem('rvce-profile-storage')
+        localStorage.removeItem('chat_draft_msg')
         client.setToken(null)
         set({ status: 'unauthenticated', session: null, errorMessage: null })
+
+        // Clear offline IndexedDB data
+        void clearOfflineData()
+
+        // Clear user-specific API response and file caches
+        if ('caches' in window) {
+          caches.keys().then((names) => {
+            for (const name of names) {
+              if (name.includes('api-cache') || name.includes('api-file-cache')) {
+                caches.delete(name)
+              }
+            }
+          }).catch((err) => {
+            console.warn('Failed to clear caches on logout:', err)
+          })
+        }
       },
 
       clearError: () => set({ errorMessage: null }),

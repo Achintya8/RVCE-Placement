@@ -151,3 +151,19 @@ export async function saveCachedIds(key: string, ids: number[]): Promise<void> {
     console.warn('Failed to save syncCache IDs:', err)
   }
 }
+
+export async function clearOfflineData(): Promise<void> {
+  try {
+    const db = await openDB()
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(['requests', 'syncCache'], 'readwrite')
+      tx.objectStore('requests').clear()
+      tx.objectStore('syncCache').clear()
+      tx.oncomplete = () => resolve()
+      tx.onerror = () => reject(tx.error)
+    })
+  } catch (err) {
+    console.warn('Failed to clear offline data from IndexedDB:', err)
+  }
+}
+

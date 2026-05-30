@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { useAuthStore, repo } from './useAuthStore'
 import type { AppUser } from '@/types'
 
@@ -19,8 +20,10 @@ interface ProfileState {
   resetDraft: () => void
 }
 
-export const useProfileStore = create<ProfileState>((set, get) => ({
-  profile: null,
+export const useProfileStore = create<ProfileState>()(
+  persist(
+    (set, get) => ({
+      profile: null,
   draft: {},
   loading: false,
   saving: false,
@@ -118,4 +121,10 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       throw e
     }
   }
-}))
+    }),
+    {
+      name: 'rvce-profile-storage',
+      partialize: (state) => ({ draft: state.draft }),
+    }
+  )
+)
