@@ -29,14 +29,18 @@ precacheAndRoute(self.__WB_MANIFEST)
 
 // Register a navigation route to serve index.html for all offline navigation requests (SPAs)
 // Except for API requests which should bypass the service worker's shell caching
-registerRoute(
-  new NavigationRoute(
-    createHandlerBoundToURL('index.html'),
-    {
-      denylist: [/^\/api/],
-    }
+try {
+  registerRoute(
+    new NavigationRoute(
+      createHandlerBoundToURL('index.html'),
+      {
+        denylist: [/^\/api/],
+      }
+    )
   )
-)
+} catch (error) {
+  console.warn('NavigationRoute not registered (expected in dev mode):', error)
+}
 
 // Cache API GET requests with Network-First strategy
 registerRoute(

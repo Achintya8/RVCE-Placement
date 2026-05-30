@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { PlacementFormDetail } from '@/types'
 import { useFormStore } from '../store/useFormStore'
+import { useAuthStore } from '../store/useAuthStore'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,10 @@ export function DynamicFormModal({
   const uploadFile = useFormStore((state) => state.uploadFile)
   const [saving, setSaving] = useState(false)
 
+  const formId = detail.summary.id
+  const userId = useAuthStore.getState().session?.user?.id
+  const storageKey = `form-draft-${userId}-${formId}`
+
   const initial = useMemo(() => {
     const cached = localStorage.getItem(`form_draft_${detail.summary.id}`)
     if (cached) {
@@ -52,7 +57,17 @@ export function DynamicFormModal({
     return m
   }, [detail])
 
-  const [values, setValues] = useState<Record<number, string>>(initial)
+  const [values, setValues] = useState<Record<number, string>>(() => {
+    const saved = localStorage.getItem(storageKey)
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch (e) {
+        // ignore
+      }
+    }
+    return initial
+  })
 
   const setVal = (id: number, v: string) => {
     setValues((prev) => {

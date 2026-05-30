@@ -49,6 +49,12 @@ export default defineConfig({
         background_color: '#f8fbff',
         icons: [
           {
+            src: 'pwa-64x64.png',
+            sizes: '64x64',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
             src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',

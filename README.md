@@ -2,7 +2,7 @@
 
 Full-stack MCA Placement Management System scaffolded as a monorepo with:
 
-- `frontend/`: React + Vite + TypeScript frontend using modern UI/UX principles.
+- `frontend/`: React + Vite + TypeScript frontend using modern UI/UX principles
 - `backend/`: Node.js + Express + PostgreSQL REST API with JWT auth, Excel export, AWS S3 upload, and FCM integration points
 
 ## What is implemented
