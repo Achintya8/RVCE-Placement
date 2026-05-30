@@ -27,7 +27,6 @@ type Panel = {
 }
 
 const notificationPanelIds = new Set(['companies', 'forms', 'chat'])
-const PANEL_IDS = ['companies', 'forms', 'chat', 'profile', 'admin']
 
 function getRequestedPanelId() {
   const panel = new URLSearchParams(window.location.search).get('panel')
