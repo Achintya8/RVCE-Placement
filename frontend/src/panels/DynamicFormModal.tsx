@@ -42,12 +42,20 @@ export function DynamicFormModal({
   const storageKey = `form-draft-${userId}-${formId}`
 
   const initial = useMemo(() => {
+    const cached = localStorage.getItem(`form_draft_${detail.summary.id}`)
+    if (cached) {
+      try {
+        return JSON.parse(cached) as Record<number, string>
+      } catch {
+        // ignore
+      }
+    }
     const m: Record<number, string> = {}
     for (const q of detail.questions) {
       m[q.id] = q.answer ?? ''
     }
     return m
-  }, [detail.questions])
+  }, [detail])
 
   const [values, setValues] = useState<Record<number, string>>(() => {
     const saved = localStorage.getItem(storageKey)
@@ -64,7 +72,7 @@ export function DynamicFormModal({
   const setVal = (id: number, v: string) => {
     setValues((prev) => {
       const next = { ...prev, [id]: v }
-      localStorage.setItem(storageKey, JSON.stringify(next))
+      localStorage.setItem(`form_draft_${detail.summary.id}`, JSON.stringify(next))
       return next
     })
   }
@@ -92,7 +100,7 @@ export function DynamicFormModal({
     try {
       await submitResponse(detail.summary.id, answers)
       toast.success('Responses submitted successfully.')
-      localStorage.removeItem(storageKey)
+      localStorage.removeItem(`form_draft_${detail.summary.id}`)
       onSubmitted()
       onClose()
     } catch (e) {

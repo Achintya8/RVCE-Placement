@@ -40,19 +40,21 @@ export default function DashboardScreen() {
       session: state.session,
     }))
   )
-  const [selectedIndex, setSelectedIndex] = useState(() => {
-    const requestedPanelId = getRequestedPanelId()
-    const savedPanelId = requestedPanelId || localStorage.getItem('active-panel-id')
-    if (savedPanelId) {
-      const idx = PANEL_IDS.indexOf(savedPanelId)
-      if (idx >= 0) {
-        return idx
-      }
+  const [selectedPanelId, setSelectedPanelId] = useState(() => {
+    const urlPanel = new URLSearchParams(window.location.search).get('panel')
+    const allowed = new Set(['companies', 'forms', 'chat', 'profile', 'admin'])
+    if (urlPanel && allowed.has(urlPanel)) {
+      return urlPanel
     }
-    return 0
+    return localStorage.getItem('dashboard_active_panel') || 'companies'
   })
   const [showHeader, setShowHeader] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
+
+  const changePanel = (id: string) => {
+    setSelectedPanelId(id)
+    localStorage.setItem('dashboard_active_panel', id)
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -113,20 +115,13 @@ export default function DashboardScreen() {
   )
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedIndex((i) => Math.min(i, Math.max(0, panels.length - 1)))
-  }, [panels.length])
-
-  useEffect(() => {
     const requestedPanelId = getRequestedPanelId()
     if (!requestedPanelId) return
 
-    const panelIndex = panels.findIndex((panel) => panel.id === requestedPanelId)
-    if (panelIndex < 0) return
+    const hasPanel = panels.some((panel) => panel.id === requestedPanelId)
+    if (!hasPanel) return
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedIndex(panelIndex)
-    localStorage.setItem('active-panel-id', requestedPanelId)
+    changePanel(requestedPanelId)
     window.history.replaceState({}, '', window.location.pathname)
   }, [panels])
 
@@ -135,10 +130,9 @@ export default function DashboardScreen() {
       const customEvent = event as CustomEvent<{ panel: string }>
       const targetPanel = customEvent.detail?.panel
       if (targetPanel) {
-        const index = panels.findIndex((p) => p.id === targetPanel)
-        if (index >= 0) {
-          setSelectedIndex(index)
-          localStorage.setItem('active-panel-id', targetPanel)
+        const hasPanel = panels.some((p) => p.id === targetPanel)
+        if (hasPanel) {
+          changePanel(targetPanel)
         }
       }
     }
@@ -156,7 +150,11 @@ export default function DashboardScreen() {
 
   if (!session) return null
 
-  const safeIndex = Math.min(selectedIndex, panels.length - 1)
+  const safeIndex = useMemo(() => {
+    const idx = panels.findIndex((p) => p.id === selectedPanelId)
+    return idx >= 0 ? idx : 0
+  }, [panels, selectedPanelId])
+
   const active = panels[safeIndex] ?? panels[0]
 
   return (
@@ -190,7 +188,7 @@ export default function DashboardScreen() {
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => { setSelectedIndex(i); setMenuOpen(false) }}
+                    onClick={() => { changePanel(p.id); setMenuOpen(false) }}
                     className={cn(
                       "flex items-center gap-3 w-full px-4 py-3 text-sm font-medium transition-colors text-left",
                       i === safeIndex
@@ -248,7 +246,7 @@ export default function DashboardScreen() {
               <button
                 key={p.id}
                 type="button"
-                onClick={() => setSelectedIndex(i)}
+                onClick={() => changePanel(p.id)}
                 className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[10px] sm:text-xs font-semibold transition-all sm:min-w-24 sm:flex-none sm:px-4 ${
                   i === safeIndex
                     ? 'bg-primary text-white shadow-md shadow-primary/20 dark:bg-primary dark:text-white dark:shadow-md dark:shadow-primary/30'

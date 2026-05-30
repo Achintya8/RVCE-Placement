@@ -3,6 +3,9 @@
 import { clientsClaim } from 'workbox-core'
 import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
+import { NetworkFirst, CacheFirst } from 'workbox-strategies'
+import { ExpirationPlugin } from 'workbox-expiration'
+import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{
@@ -38,6 +41,52 @@ try {
 } catch (error) {
   console.warn('NavigationRoute not registered (expected in dev mode):', error)
 }
+
+// Cache API GET requests with Network-First strategy
+registerRoute(
+  ({ url, request }) => {
+    const isApi = url.pathname.startsWith('/api') || url.pathname.includes('/api/');
+    const isGet = request.method === 'GET';
+    const isExport = url.pathname.endsWith('/export');
+    return isApi && isGet && !isExport;
+  },
+  new NetworkFirst({
+    cacheName: 'api-cache',
+    networkTimeoutSeconds: 5,
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+      new ExpirationPlugin({
+        maxEntries: 100,
+        maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+      }),
+    ],
+  })
+)
+
+// Cache file storage (resumes, profile pictures, attachments) with Cache-First strategy
+registerRoute(
+  ({ url }) => {
+    const isStorage = 
+      url.pathname.includes('/resumes/') || 
+      url.pathname.includes('/attachments/') || 
+      url.pathname.includes('/profile-pictures/');
+    return isStorage;
+  },
+  new CacheFirst({
+    cacheName: 'api-file-cache',
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      }),
+    ],
+  })
+)
 
 import { getConfig, getQueuedRequests, deleteQueuedRequest, getCachedIds, saveCachedIds } from './lib/offlineDb'
 
