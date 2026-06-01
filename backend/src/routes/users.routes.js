@@ -11,7 +11,8 @@ import {
   verifyStudent,
   rejectStudent,
   requestUnlock,
-  approveUnlock
+  approveUnlock,
+  markPlaced
 } from '../controllers/users.controller.js';
 import { authenticate, requireSpc } from '../middleware/auth.js';
 
@@ -28,5 +29,6 @@ router.get('/students', requireSpc, getStudents);
 router.post('/students/:id/verify', requireSpc, verifyStudent);
 router.post('/students/:id/reject', requireSpc, rejectStudent);
 router.post('/students/:id/unlock', requireSpc, approveUnlock);
+router.post('/students/:id/placed', requireSpc, markPlaced);
 
 export default router;

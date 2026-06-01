@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS "users" (
   "profile_picture_url" text,
   "verified"            boolean,
   "unlock_requested"    boolean DEFAULT false,
+  "placed"              boolean DEFAULT false,
   "created_at"          timestamp
 );
 
@@ -132,6 +133,7 @@ ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "tracker_blocked" boolean DEFAU
 ALTER TABLE "forms" ADD COLUMN IF NOT EXISTS "accepting_responses" boolean DEFAULT true;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "unlock_requested" boolean DEFAULT false;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "profile_picture_url" text;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "placed" boolean DEFAULT false;
 
 -- ── Foreign keys (idempotent — safe to re-run on existing DB) ─────────────────
 

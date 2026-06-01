@@ -390,6 +390,11 @@ export function AdminPanel() {
       await repo.approveProfileUnlock(id)
     }, 'Unlock request approved. Profile is now unverified.')
 
+  const handleTogglePlaced = (studentId: number, placed: boolean) =>
+    run(async () => {
+      await repo.updateStudentPlacedStatus(studentId, placed)
+    }, `Student placement status updated to ${placed ? 'Placed' : 'Not Placed'}.`)
+
   const deleteForm = (formId: number) => {
     if (!confirm('Are you sure you want to delete this form? This action cannot be undone.')) return
     void run(async () => {
@@ -1021,7 +1026,14 @@ export function AdminPanel() {
                           {s.name.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold truncate text-slate-900 dark:text-white">{s.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold truncate text-slate-900 dark:text-white">{s.name}</p>
+                            {s.placed && (
+                              <Badge className="bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/20 hover:bg-green-500/20 text-[10px] px-1.5 py-0.5 font-bold shrink-0">
+                                Placed
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-xs text-muted-foreground truncate">{s.collegeEmailId}</p>
                         </div>
                       </div>
@@ -1046,6 +1058,18 @@ export function AdminPanel() {
                           {s.verified ? <><CheckCircle2 className="w-4 h-4 mr-2" /> View Verified Profile</> : "Review Profile"}
                         </Button>
                       )}
+                      <div className="flex items-center justify-between border-t border-slate-200 dark:border-white/10 pt-3 mt-1">
+                        <Label htmlFor={`placed-${s.id}`} className="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                          Mark Placed
+                        </Label>
+                        <Switch
+                          id={`placed-${s.id}`}
+                          checked={s.placed ?? false}
+                          onCheckedChange={(checked) => void handleTogglePlaced(s.id, checked)}
+                          disabled={busy}
+                          className="data-[state=checked]:bg-green-500"
+                        />
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -1253,10 +1277,16 @@ export function AdminPanel() {
                       {reviewStudent.resumeUrl ? <a href={reviewStudent.resumeUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline font-bold">View Resume</a> : <span className="text-muted-foreground">No Resume</span>}
                     </div>
                   </div>
-                  <div>
-                    <Label className="text-muted-foreground">Status</Label>
+                   <div>
+                    <Label className="text-muted-foreground">Verification Status</Label>
                     <p className="font-bold text-slate-900 dark:text-white">
                       {reviewStudent.verified ? <span className="text-green-500">Verified</span> : <span className="text-amber-500">Unverified</span>}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Placement Status</Label>
+                    <p className="font-bold text-slate-900 dark:text-white">
+                      {reviewStudent.placed ? <span className="text-green-500">Placed (Consent Frozen)</span> : <span className="text-muted-foreground">Not Placed</span>}
                     </p>
                   </div>
                 </div>

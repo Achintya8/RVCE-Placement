@@ -25,6 +25,7 @@ const normalizeUser = (row) => {
     profilePictureUrl: normalizeUrl(row.profile_picture_url),
     verified: row.verified ?? false,
     unlockRequested: row.unlock_requested ?? false,
+    placed: row.placed ?? false,
     createdAt: row.created_at,
   };
 };
@@ -209,5 +210,13 @@ export const listEligibleStudentIds = async (companyId) => {
   );
 
   return rows.map((row) => row.id);
+};
+
+export const updateUserPlacedStatus = async (userId, placed) => {
+  const { rows } = await query(
+    'UPDATE "users" SET "placed" = $2 WHERE "id" = $1 RETURNING *',
+    [userId, placed],
+  );
+  return normalizeUser(rows[0]);
 };
 

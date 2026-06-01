@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { findCompanyById } from '../repositories/company.repository.js';
 import { upsertApplication } from '../repositories/application.repository.js';
+import { findUserById } from '../repositories/user.repository.js';
 import { ApiError } from '../utils/apiError.js';
 
 const applicationSchema = z.object({
@@ -11,8 +12,14 @@ const applicationSchema = z.object({
 
 export const saveApplication = async (req, res, next) => {
   try {
+    const studentId = req.auth.userId;
+    const user = await findUserById(studentId);
+    if (user?.placed) {
+      throw new ApiError(403, 'You have been marked as placed. Further placement activities are frozen.');
+    }
+
     const companyId = Number(req.params.companyId);
-    const company = await findCompanyById(companyId, req.auth.userId);
+    const company = await findCompanyById(companyId, studentId);
 
     if (!company) {
       throw new ApiError(404, 'Company not found.');

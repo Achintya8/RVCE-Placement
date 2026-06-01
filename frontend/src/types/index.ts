@@ -16,6 +16,7 @@ export type AppUser = {
   resumeUrl?: string | null
   profilePictureUrl?: string | null
   unlockRequested?: boolean
+  placed?: boolean
 }
 
 export type Session = {

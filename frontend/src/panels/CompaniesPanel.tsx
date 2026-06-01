@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Company } from '@/types'
 import { useCompanyStore } from '../store/useCompanyStore'
+import { useAuthStore } from '../store/useAuthStore'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -35,6 +36,9 @@ export function CompaniesPanel() {
     fetchCompanies, 
     updateApplication 
   } = useCompanyStore()
+
+  const session = useAuthStore((state) => state.session)
+  const isPlaced = session?.user?.placed ?? false
 
   useEffect(() => {
     void fetchCompanies()
@@ -82,6 +86,15 @@ export function CompaniesPanel() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {isPlaced && (
+        <div className="col-span-full ios-glass-panel border-green-500/20 bg-green-500/5 text-green-700 dark:text-green-400 p-4 rounded-2xl flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 shrink-0 text-green-500" />
+          <div>
+            <p className="text-sm font-semibold">Congratulations! You are marked as Placed.</p>
+            <p className="text-xs opacity-90">Your consent and mail tracking settings for all placement drives have been frozen.</p>
+          </div>
+        </div>
+      )}
       {companies.map((c) => {
         const isBusy = busyIds.has(c.id)
         const isExpanded = expandedIds.has(c.id)
@@ -144,17 +157,17 @@ export function CompaniesPanel() {
                   <div className="space-y-0.5">
                     <Label htmlFor={`consent-${c.id}`} className="text-sm font-semibold text-slate-900 dark:text-white">Consent Provided</Label>
                     <p className="text-xs text-muted-foreground">
-                      {c.consentBlocked ? 'Consent submission is locked' : 'Willing to sit for this drive?'}
+                      {isPlaced ? 'Locked (Placed)' : c.consentBlocked ? 'Consent submission is locked' : 'Willing to sit for this drive?'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {c.consentBlocked && <Lock className="w-3.5 h-3.5 text-amber-500" />}
+                    {(c.consentBlocked || isPlaced) && <Lock className="w-3.5 h-3.5 text-amber-500" />}
                     {c.consent && <CheckCircle2 className="w-4 h-4 text-green-500" />}
                     <Switch
                       id={`consent-${c.id}`}
                       checked={c.consent ?? false}
                       onCheckedChange={(v) => void onUpdate(c, { consent: v })}
-                      disabled={c.consentBlocked || isBusy}
+                      disabled={c.consentBlocked || isPlaced || isBusy}
                       className="data-[state=checked]:bg-primary"
                     />
                   </div>
@@ -163,17 +176,17 @@ export function CompaniesPanel() {
                   <div className="space-y-0.5">
                     <Label htmlFor={`tracker-${c.id}`} className="text-sm font-semibold text-slate-900 dark:text-white">Mail Tracker</Label>
                     <p className="text-xs text-muted-foreground">
-                      {c.trackerBlocked ? 'Mail tracker is locked' : 'Received email from company?'}
+                      {isPlaced ? 'Locked (Placed)' : c.trackerBlocked ? 'Mail tracker is locked' : 'Received email from company?'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {c.trackerBlocked && <Lock className="w-3.5 h-3.5 text-amber-500" />}
+                    {(c.trackerBlocked || isPlaced) && <Lock className="w-3.5 h-3.5 text-amber-500" />}
                     {c.tracker && <Mail className="w-4 h-4 text-primary" />}
                     <Switch
                       id={`tracker-${c.id}`}
                       checked={c.tracker ?? false}
                       onCheckedChange={(v) => void onUpdate(c, { tracker: v })}
-                      disabled={c.trackerBlocked || isBusy}
+                      disabled={c.trackerBlocked || isPlaced || isBusy}
                       className="data-[state=checked]:bg-primary"
                     />
                   </div>

@@ -318,4 +318,8 @@ export class PlacementRepository {
       parseChatUser(item as Record<string, unknown>),
     )
   }
+
+  async updateStudentPlacedStatus(studentId: number, placed: boolean): Promise<void> {
+    await this.client.postJson(`/users/students/${studentId}/placed`, { placed })
+  }
 }

@@ -1,7 +1,7 @@
 import multer from 'multer';
 import { z } from 'zod';
 
-import { findUserById, listStudents, updateUserProfile, updateUserProfilePicture, updateUserResume, updateUserVerification, requestProfileUnlock, approveProfileUnlock } from '../repositories/user.repository.js';
+import { findUserById, listStudents, updateUserProfile, updateUserProfilePicture, updateUserResume, updateUserVerification, requestProfileUnlock, approveProfileUnlock, updateUserPlacedStatus } from '../repositories/user.repository.js';
 import { sendToUsers } from '../services/notification.service.js';
 import { uploadProfilePicture, uploadResume } from '../services/storage.service.js';
 import { ApiError } from '../utils/apiError.js';
@@ -227,6 +227,40 @@ export const approveUnlock = async (req, res, next) => {
       body: 'You can now edit your profile details ',
       data: {
         type: 'profile_unlock_approved',
+      },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const markPlaced = async (req, res, next) => {
+  try {
+    const studentId = Number(req.params.id);
+    const { placed } = req.body;
+    const student = await findUserById(studentId);
+
+    if (!student) {
+      throw new ApiError(404, 'Student not found.');
+    }
+
+    if (typeof placed !== 'boolean') {
+      throw new ApiError(400, 'placed (boolean) is required.');
+    }
+
+    const updated = await updateUserPlacedStatus(studentId, placed);
+
+    await sendToUsers({
+      userIds: [studentId],
+      title: placed ? 'Placed Status Update 🎉' : 'Placed Status Update',
+      body: placed
+        ? 'Congratulations! You have been marked as PLACED. Your future placement activities are now frozen.'
+        : 'Your placement status has been set to Not Placed.',
+      data: {
+        type: 'placed_status_changed',
+        placed: String(placed),
       },
     });
 
