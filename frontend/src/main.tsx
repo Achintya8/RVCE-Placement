@@ -21,6 +21,15 @@ if ('serviceWorker' in navigator) {
   })
 
   navigator.serviceWorker.ready.then(async (registration) => {
+    // Check for service worker updates on load
+    registration.update().catch((err) => console.warn('SW update check failed:', err))
+
+    // Check for updates when window gains focus
+    const handleFocus = () => {
+      registration.update().catch((err) => console.warn('SW update check failed on focus:', err))
+    }
+    window.addEventListener('focus', handleFocus)
+
     if ('periodicSync' in registration) {
       try {
         const status = await (navigator as any).permissions.query({
