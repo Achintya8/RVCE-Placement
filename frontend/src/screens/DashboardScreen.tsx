@@ -161,51 +161,51 @@ export default function DashboardScreen() {
 
       {/* ── CHAT LAYOUT: hamburger button + full-height chat ────────────── */}
       {active.id === 'chat' ? (
-        <div className="relative h-[100dvh] w-full overflow-hidden bg-slate-100 text-slate-950 dark:bg-[#080d18] dark:text-white md:p-4">
-          <div className="relative mx-auto h-full w-full max-w-6xl overflow-hidden">
+        <div className="relative h-screen w-full overflow-hidden">
 
-            {/* Hamburger button — top-left corner */}
-            <button
-              type="button"
-              onClick={() => setMenuOpen((o) => !o)}
-              className="absolute left-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/90 shadow-md backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95 dark:border-white/10 dark:bg-slate-900/90"
-              aria-label="Navigation menu"
-            >
-              {menuOpen ? <X className="w-4 h-4 text-slate-700 dark:text-slate-200" /> : <Menu className="w-4 h-4 text-slate-700 dark:text-slate-200" />}
-            </button>
+          {/* Hamburger button — top-left corner */}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            className="absolute top-3 left-3 z-[60] flex items-center justify-center w-9 h-9 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-md backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95"
+            aria-label="Navigation menu"
+          >
+            {menuOpen ? <X className="w-4 h-4 text-slate-700 dark:text-slate-200" /> : <Menu className="w-4 h-4 text-slate-700 dark:text-slate-200" />}
+          </button>
 
-            {/* Dropdown menu */}
-            {menuOpen && (
-              <>
-                {/* Backdrop */}
-                <div
-                  className="absolute inset-0 z-[55]"
-                  onClick={() => setMenuOpen(false)}
-                />
-                {/* Menu panel */}
-                <div className="absolute left-3 top-[calc(env(safe-area-inset-top)+3.5rem)] z-[60] min-w-[170px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 origin-top-left dark:border-white/10 dark:bg-slate-900">
-                  {panels.map((p, i) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => { changePanel(p.id); setMenuOpen(false) }}
-                      className={cn(
-                        "flex items-center gap-3 w-full px-4 py-3 text-sm font-medium transition-colors text-left",
-                        i === safeIndex
-                          ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
-                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                      )}
-                    >
-                      {p.icon}
-                      {p.label}
-                      {i === safeIndex && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+          {/* Dropdown menu */}
+          {menuOpen && (
+            <>
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 z-[55]"
+                onClick={() => setMenuOpen(false)}
+              />
+              {/* Menu panel */}
+              <div className="absolute top-14 left-3 z-[60] min-w-[170px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 origin-top-left">
+                {panels.map((p, i) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => { changePanel(p.id); setMenuOpen(false) }}
+                    className={cn(
+                      "flex items-center gap-3 w-full px-4 py-3 text-sm font-medium transition-colors text-left",
+                      i === safeIndex
+                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
+                    )}
+                  >
+                    {p.icon}
+                    {p.label}
+                    {i === safeIndex && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
-            {/* Chat fills full space */}
+          {/* Chat fills full space */}
+          <div className="h-full w-full overflow-hidden">
             <ChatPanel />
           </div>
         </div>
