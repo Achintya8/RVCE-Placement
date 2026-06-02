@@ -260,7 +260,7 @@ export function ChatPanel() {
   const renderMessageText = (msg: ChatMessage, isMe: boolean) => {
     const md = prepareMarkdown(msg)
     return (
-      <div className="min-w-0 max-w-full break-words [overflow-wrap:anywhere]">
+      <div className="break-words">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
@@ -281,7 +281,7 @@ export function ChatPanel() {
             strong: ({ children }) => <strong className="font-bold">{children}</strong>,
             em: ({ children }) => <em className="italic">{children}</em>,
             code: ({ children }) => <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-[0.85em] font-mono">{children}</code>,
-            pre: ({ children }) => <pre className="max-w-full bg-black/10 dark:bg-white/10 p-2 rounded text-[0.85em] font-mono overflow-x-auto mb-2 last:mb-0">{children}</pre>,
+            pre: ({ children }) => <pre className="bg-black/10 dark:bg-white/10 p-2 rounded text-[0.85em] font-mono overflow-x-auto mb-2 last:mb-0">{children}</pre>,
           }}
         >
           {md}
@@ -294,23 +294,23 @@ export function ChatPanel() {
     const isImage = url.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i)
     if (isImage) {
       return (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="block mt-2 max-w-full overflow-hidden rounded-lg">
-          <img src={url} alt={name} className="block h-auto max-h-[min(48vh,520px)] w-auto max-w-full rounded-lg border border-slate-200 object-contain shadow-md dark:border-white/10" />
+        <a href={url} target="_blank" rel="noopener noreferrer" className="block mt-2">
+          <img src={url} alt={name} className="max-w-[200px] sm:max-w-xs rounded-lg shadow-md border border-slate-200 dark:border-white/10" />
         </a>
       )
     }
     return (
-      <a href={url} download target="_blank" rel="noopener noreferrer" className="mt-2 flex max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-black/10 px-3 py-2 transition-colors hover:bg-black/20 dark:border-white/5 dark:bg-white/10 dark:hover:bg-white/15">
+      <a href={url} download target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 mt-2 px-3 py-2 bg-black/20 hover:bg-black/40 rounded-lg transition-colors border border-slate-200 dark:border-white/5 w-fit">
         <File className="w-4 h-4 text-primary" />
-        <span className="min-w-0 truncate text-sm">{name}</span>
+        <span className="text-sm truncate max-w-[200px]">{name}</span>
       </a>
     )
   }
 
   return (
-    <div className="h-full min-h-0 w-full">
-      <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-0 bg-slate-50 shadow-none backdrop-blur-xl dark:bg-[#0b1220] md:rounded-2xl md:border md:border-slate-200/70 md:bg-white/90 md:shadow-2xl md:shadow-slate-950/10 md:dark:border-white/10 md:dark:bg-[#0f172a]/95">
-        <CardContent className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+    <div className="h-full w-full">
+      <Card className="h-full border-0 rounded-none bg-slate-100 dark:bg-white/5 backdrop-blur-xl flex flex-col overflow-hidden">
+        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden relative">
           {err ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-4">
               <AlertCircle className="w-12 h-12 text-destructive opacity-50" />
@@ -324,105 +324,97 @@ export function ChatPanel() {
             </div>
           ) : (
             <>
-              <div className="z-40 border-b border-slate-200/80 bg-white/[0.92] px-3 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#0b1220]/[0.92] sm:px-4 md:rounded-t-2xl">
-                <div className="mx-auto flex w-full max-w-5xl items-center gap-3 pl-12">
-                  {searchActive ? (
-                    <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 shadow-inner dark:border-white/10 dark:bg-white/5">
-                      <Search className="h-4 w-4 shrink-0 text-slate-400" />
-                      <input
-                        type="text"
-                        placeholder="Search messages..."
-                        value={searchQuery}
-                        onChange={(e) => {
-                          setSearchQuery(e.target.value)
-                          setCurrentMatchIdx(0)
-                        }}
-                        className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none dark:text-slate-100"
-                        autoFocus
-                      />
-                    </div>
-                  ) : (
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-slate-950 dark:text-white sm:text-base">
-                        Placement Chat
-                      </p>
-                      <p className="truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                        Announcements, replies, and placement updates
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    {searchActive && (
-                      <>
-                        <span className="hidden text-xs font-medium text-slate-500 dark:text-slate-400 sm:inline">
-                          {searchQuery.trim()
-                            ? matches.length > 0
-                              ? `${currentMatchIdx + 1} of ${matches.length}`
-                              : 'No matches'
-                            : 'Search'}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10"
-                          disabled={matches.length === 0}
-                          onClick={() => jumpToMatch((currentMatchIdx - 1 + matches.length) % matches.length)}
-                          title="Previous match"
-                        >
-                          <ChevronUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10"
-                          disabled={matches.length === 0}
-                          onClick={() => jumpToMatch((currentMatchIdx + 1) % matches.length)}
-                          title="Next match"
-                        >
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </>
+              {/* Animated Search Bar */}
+              {searchActive && (
+                <div className="flex items-center justify-between bg-white dark:bg-slate-900 px-4 py-2.5 border-b border-slate-200 dark:border-white/10 shadow-sm animate-in slide-in-from-top duration-200 z-50">
+                  <div className="flex items-center gap-2 flex-1 max-w-md">
+                    <Search className="w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search messages..."
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value)
+                        setCurrentMatchIdx(0)
+                      }}
+                      className="bg-transparent text-sm border-0 focus:ring-0 focus:outline-none w-full text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {matches.length > 0 && (
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                        {currentMatchIdx + 1} of {matches.length} matches
+                      </span>
+                    )}
+                    {searchQuery.trim() && matches.length === 0 && (
+                      <span className="text-xs text-red-500 font-mono">No matches</span>
                     )}
                     <Button
-                      onClick={() => {
-                        if (searchActive) {
-                          setSearchActive(false)
-                          setSearchQuery('')
-                          setCurrentMatchIdx(0)
-                        } else {
-                          setSearchActive(true)
-                        }
-                      }}
-                      variant="secondary"
+                      variant="ghost"
                       size="icon"
-                      className="h-9 w-9 rounded-xl border border-slate-200 bg-slate-100 text-slate-600 shadow-none hover:bg-slate-200 dark:border-white/10 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
-                      title={searchActive ? 'Close search' : 'Search messages'}
+                      className="w-8 h-8 rounded-full"
+                      disabled={matches.length === 0}
+                      onClick={() => jumpToMatch((currentMatchIdx - 1 + matches.length) % matches.length)}
                     >
-                      {searchActive ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+                      <ChevronUp className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-8 h-8 rounded-full"
+                      disabled={matches.length === 0}
+                      onClick={() => jumpToMatch((currentMatchIdx + 1) % matches.length)}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                      onClick={() => {
+                        setSearchActive(false)
+                        setSearchQuery('')
+                        setCurrentMatchIdx(0)
+                      }}
+                    >
+                      <X className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* Floating Search Toggle Button */}
+              {!searchActive && (
+                <Button
+                  onClick={() => setSearchActive(true)}
+                  variant="secondary"
+                  size="icon"
+                  className="absolute top-4 right-4 z-40 rounded-full w-10 h-10 shadow-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-300 backdrop-blur-md opacity-90 hover:opacity-100 scale-100 active:scale-95"
+                  title="Search messages"
+                >
+                  <Search className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                </Button>
+              )}
 
               {/* WhatsApp-style scroll to bottom button */}
               {showScrollBtn && (
                 <button
                   onClick={scrollToBottom}
-                  className="absolute bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-4 z-50 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-lg transition-all duration-200 animate-in fade-in zoom-in-95 hover:scale-105 hover:shadow-xl active:scale-95 dark:border-white/10 dark:bg-slate-800 md:right-6"
+                  className="absolute bottom-[90px] right-5 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 animate-in fade-in zoom-in-95"
                   title="Scroll to latest messages"
                 >
                   <ChevronDown className="w-5 h-5 text-slate-600 dark:text-slate-300" />
                 </button>
               )}
 
-              <ScrollArea className="min-h-0 flex-1 bg-slate-100/70 px-3 py-4 dark:bg-[#111827] sm:px-4" ref={scrollRef}>
-                <div className="mx-auto w-full max-w-5xl space-y-4">
+              <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+                <div className="space-y-4">
                   {loading ? (
                     <div className="flex flex-col gap-4">
-                      {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className={cn("w-full max-w-[17rem] space-y-1", i % 2 === 0 ? "ml-auto" : "")}>
-                          <div className="h-10 w-full rounded-2xl bg-white shadow-sm animate-pulse dark:bg-white/5" />
+                      {[1, 2, 3, 4].map(i => (
+                        <div key={i} className={cn("max-w-[80%] space-y-1", i % 2 === 0 ? "ml-auto" : "")}>
+                          <div className="h-10 w-48 bg-slate-100 dark:bg-white/5 rounded-2xl animate-pulse" />
                         </div>
                       ))}
                     </div>
@@ -474,20 +466,20 @@ export function ChatPanel() {
                           )}
                           <div
                             className={cn(
-                              "mb-2 flex min-w-0 max-w-[86%] flex-col space-y-1 sm:max-w-[76%] lg:max-w-[38rem]",
+                              "flex flex-col max-w-[75%] space-y-1 mb-2",
                               isMe ? "ml-auto items-end" : "items-start"
                             )}
                           >
-                            <div className="group/msg relative flex max-w-full items-center gap-1.5 px-1 sm:gap-2">
-                              <span className="min-w-0 truncate text-[11px] font-bold uppercase tracking-normal text-muted-foreground">
+                            <div className="flex items-center gap-2 px-1 relative group/msg">
+                              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
                                 {isMe ? 'You' : m.sender.name}
                               </span>
-                              <span className="shrink-0 text-[11px] text-slate-400 dark:text-white/30">
+                              <span className="text-[11px] text-slate-400 dark:text-white/30">
                                 {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                               <button
                                 onClick={() => setReplyingTo(m)}
-                                className="rounded-md p-1.5 text-slate-400 opacity-75 transition-opacity hover:bg-slate-200 hover:text-primary group-hover/msg:opacity-100 dark:hover:bg-white/10 md:opacity-0"
+                                className="opacity-0 max-md:opacity-75 group-hover/msg:opacity-100 transition-opacity p-1.5 text-slate-400 hover:text-primary hover:bg-slate-200 dark:hover:bg-white/10 rounded-md"
                                 title="Reply to message"
                               >
                                 <CornerUpLeft className="w-4 h-4" />
@@ -495,7 +487,7 @@ export function ChatPanel() {
                               {canDelete && (
                                 <button
                                   onClick={() => void deleteMessage(m.id)}
-                                  className="rounded-md p-1.5 text-red-400 opacity-75 transition-opacity hover:bg-red-400/20 group-hover/msg:opacity-100 md:opacity-0"
+                                  className="opacity-0 max-md:opacity-75 group-hover/msg:opacity-100 transition-opacity p-1.5 text-red-400 hover:bg-red-400/20 rounded-md"
                                   title="Delete message"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -505,10 +497,10 @@ export function ChatPanel() {
                             <div
                               id={`msg-${m.id}`}
                               className={cn(
-                                "min-w-0 max-w-full overflow-hidden rounded-[16px] border px-3.5 py-2.5 text-[0.95rem] shadow-sm transition-all duration-300 sm:px-4 sm:text-base",
+                                "px-4 py-2 rounded-[16px] text-base transition-all duration-300 border shadow-sm",
                                 isMe
-                                  ? "rounded-tr-none border-sky-200 bg-sky-50 text-sky-950 shadow-sky-100/30 dark:border-sky-400/20 dark:bg-sky-500/[0.12] dark:text-sky-100"
-                                  : "rounded-tl-none border-slate-200/80 bg-white text-slate-900 dark:border-white/10 dark:bg-slate-800/80 dark:text-slate-100",
+                                  ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 border-indigo-100 dark:border-indigo-900/50 rounded-tr-none shadow-indigo-100/30"
+                                  : "bg-slate-100 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 border-slate-200/50 dark:border-slate-800/50 rounded-tl-none",
                                 isCurrentMatch && "ring-2 ring-yellow-400 dark:ring-yellow-500 scale-[1.01] shadow-[0_0_15px_rgba(234,179,8,0.4)]"
                               )}
                             >
@@ -516,9 +508,9 @@ export function ChatPanel() {
                                 <div
                                   onClick={() => scrollToMessage(m.parentMessage!.id)}
                                   className={cn(
-                                    "mb-2 min-w-0 cursor-pointer rounded-r-lg border-l-4 p-2 text-left text-sm transition-all",
+                                    "mb-2 p-2 border-l-4 rounded-r-lg text-sm cursor-pointer transition-all text-left",
                                     isMe
-                                      ? "border-sky-400 bg-sky-100/70 hover:bg-sky-200/60 dark:bg-sky-500/10 dark:hover:bg-sky-500/15"
+                                      ? "bg-indigo-100/70 dark:bg-indigo-900/40 border-indigo-400 hover:bg-indigo-200/60 dark:hover:bg-indigo-900/60"
                                       : "bg-black/5 dark:bg-white/5 border-primary hover:bg-black/10 dark:hover:bg-white/10"
                                   )}
                                 >
@@ -553,9 +545,9 @@ export function ChatPanel() {
                 </div>
               </ScrollArea>
 
-              <div className="relative flex flex-col gap-2 border-t border-slate-200 bg-white/95 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#0b1220]/95 sm:px-4">
+              <div className="relative p-4 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 flex flex-col gap-2">
                 {mentionSearch !== null && filteredUsers.length > 0 && (
-                  <div className="absolute bottom-full left-3 z-50 mb-2 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:left-4">
+                  <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden z-50">
                     {filteredUsers.map(u => (
                       <button
                         key={u.id}
@@ -571,8 +563,8 @@ export function ChatPanel() {
                 )}
 
                 {attachment && (
-                  <div className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 dark:border-white/5 dark:bg-white/10">
-                    <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+                  <div className="flex items-center justify-between bg-slate-200 dark:bg-white/10 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/5">
+                    <div className="flex items-center gap-2 overflow-hidden">
                       {attachment.type.startsWith('image/') ? <ImageIcon className="w-4 h-4 text-primary shrink-0" /> : <File className="w-4 h-4 text-primary shrink-0" />}
                       <span className="text-sm text-slate-900 dark:text-white truncate">{attachment.name}</span>
                     </div>
@@ -583,8 +575,8 @@ export function ChatPanel() {
                 )}
 
                 {replyingTo && (
-                  <div className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-lg border border-l-4 border-slate-200 border-l-primary bg-white px-3 py-2 shadow-sm animate-in slide-in-from-bottom-2 duration-200 dark:border-slate-800 dark:bg-slate-900">
-                    <div className="flex min-w-0 flex-col overflow-hidden text-left">
+                  <div className="flex items-center justify-between bg-white dark:bg-slate-900 px-3 py-2 rounded-lg border-l-4 border-primary border border-slate-200 dark:border-slate-800 shadow-sm animate-in slide-in-from-bottom-2 duration-200">
+                    <div className="flex flex-col text-left overflow-hidden">
                       <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
                         Replying to {replyingTo.sender.id === session?.user.id ? 'You' : replyingTo.sender.name}
                       </span>
@@ -604,7 +596,7 @@ export function ChatPanel() {
                 )}
 
                 <form
-                  className="mx-auto flex w-full max-w-5xl items-end gap-2"
+                  className="flex w-full gap-2 items-end"
                   onSubmit={(e) => {
                     e.preventDefault()
                     void send()
@@ -625,7 +617,7 @@ export function ChatPanel() {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-10 w-10 shrink-0 rounded-xl border-slate-200 bg-slate-100 hover:bg-slate-200 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+                    className="shrink-0 bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:bg-white/10 h-10 w-10"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={sending || !!err}
                   >
@@ -749,13 +741,13 @@ export function ChatPanel() {
                         }
                       }
                     }}
-                    className="min-h-[40px] min-w-0 max-h-[150px] flex-1 resize-none rounded-xl border-slate-200 bg-slate-100 py-2 text-slate-900 focus:ring-primary/50 dark:border-white/10 dark:bg-white/10 dark:text-white"
+                    className="min-h-[40px] max-h-[150px] bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-primary/50 resize-none py-2"
                   />
                   <Button
                     type="submit"
                     size="icon"
                     disabled={sending || !!err || (!text.trim() && !attachment)}
-                    className="h-10 w-10 shrink-0 rounded-xl shadow-lg shadow-primary/20"
+                    className="shrink-0 shadow-lg shadow-primary/20 h-10 w-10"
                   >
                     <Send className="w-4 h-4" />
                   </Button>
