@@ -12,8 +12,6 @@ import {
   FileText, 
   MessageSquare, 
   Settings,
-  Menu,
-  X,
 } from 'lucide-react'
 import { CollegeLogo } from '@/components/modern/CollegeLogo'
 import { cn } from '@/lib/utils'
@@ -48,7 +46,6 @@ export default function DashboardScreen() {
     return localStorage.getItem('dashboard_active_panel') || 'companies'
   })
   const [showHeader, setShowHeader] = useState(true)
-  const [menuOpen, setMenuOpen] = useState(false)
 
   const changePanel = (id: string) => {
     setSelectedPanelId(id)
@@ -157,109 +154,59 @@ export default function DashboardScreen() {
   const active = panels[safeIndex] ?? panels[0]
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-white">
-
-      {/* ── CHAT LAYOUT: hamburger button + full-height chat ────────────── */}
-      {active.id === 'chat' ? (
-        <div className="relative h-screen w-full overflow-hidden">
-
-          {/* Hamburger button — top-left corner */}
-          <button
-            type="button"
-            onClick={() => setMenuOpen((o) => !o)}
-            className="absolute top-3 left-3 z-[60] flex items-center justify-center w-9 h-9 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-md backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95"
-            aria-label="Navigation menu"
-          >
-            {menuOpen ? <X className="w-4 h-4 text-slate-700 dark:text-slate-200" /> : <Menu className="w-4 h-4 text-slate-700 dark:text-slate-200" />}
-          </button>
-
-          {/* Dropdown menu */}
-          {menuOpen && (
-            <>
-              {/* Backdrop */}
-              <div
-                className="absolute inset-0 z-[55]"
-                onClick={() => setMenuOpen(false)}
-              />
-              {/* Menu panel */}
-              <div className="absolute top-14 left-3 z-[60] min-w-[170px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 origin-top-left">
-                {panels.map((p, i) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => { changePanel(p.id); setMenuOpen(false) }}
-                    className={cn(
-                      "flex items-center gap-3 w-full px-4 py-3 text-sm font-medium transition-colors text-left",
-                      i === safeIndex
-                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
-                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                    )}
-                  >
-                    {p.icon}
-                    {p.label}
-                    {i === safeIndex && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* Chat fills full space */}
-          <div className="h-full w-full overflow-hidden">
-            <ChatPanel />
+    <div className="h-[100dvh] w-full flex flex-col bg-slate-50 text-slate-950 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-white overflow-hidden">
+      {/* ── HEADER (Hidden for chat or when header autohides) ────────────────── */}
+      {active.id !== 'chat' && (
+        <header className={cn(
+          "sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/85 px-4 py-3 backdrop-blur-xl transition-all duration-500 ease-in-out dark:border-white/10 dark:bg-slate-950/70 sm:px-6 lg:px-8 overflow-hidden flex-shrink-0",
+          showHeader ? "max-h-24 opacity-100" : "max-h-0 opacity-0 py-0 border-b-0 pointer-events-none"
+        )}>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-white px-1.5 py-1 shadow-sm">
+              <CollegeLogo imageClassName="w-10 h-10 object-cover rounded-md" />
+            </div>
+            <div className="hidden min-w-0 sm:block">
+              <h1 className="truncate text-base font-semibold lg:text-xl">
+                Welcome, {session.user.name?.trim() || 'Student'}
+              </h1>
+              <p className="truncate text-xs text-muted-foreground">
+                {session.isSpc ? 'Student + SPC' : 'Student Access'}
+              </p>
+            </div>
           </div>
-        </div>
-
-      ) : (
-        /* ── DEFAULT LAYOUT: top header + bottom nav ──────────────────────── */
-        <>
-          <header className={cn(
-            "sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/85 px-4 py-3 backdrop-blur-xl transition-all duration-500 ease-in-out dark:border-white/10 dark:bg-slate-950/70 sm:px-6 lg:px-8 overflow-hidden",
-            showHeader ? "max-h-24 opacity-100" : "max-h-0 opacity-0 py-0 border-b-0 pointer-events-none"
-          )}>
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-white px-1.5 py-1 shadow-sm">
-                <CollegeLogo imageClassName="w-10 h-10 object-cover rounded-md" />
-              </div>
-              <div className="hidden min-w-0 sm:block">
-                <h1 className="truncate text-base font-semibold lg:text-xl">
-                  Welcome, {session.user.name?.trim() || 'Student'}
-                </h1>
-                <p className="truncate text-xs text-muted-foreground">
-                  {session.isSpc ? 'Student + SPC' : 'Student Access'}
-                </p>
-              </div>
-            </div>
-          </header>
-
-          <main className={cn(
-            "mx-auto min-h-[calc(100vh-4rem)] w-full transition-all duration-500 ease-in-out",
-            cn("max-w-7xl px-3 sm:px-5 lg:px-8 pb-28", showHeader ? "pt-6 sm:pt-8" : "pt-12 sm:pt-16")
-          )}>
-            {active.element}
-          </main>
-
-          <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/90 px-2 py-2 shadow-[0_-12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
-            <div className="mx-auto flex max-w-3xl justify-around gap-1 sm:justify-center sm:gap-2">
-            {panels.map((p, i) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => changePanel(p.id)}
-                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[10px] sm:text-xs font-semibold transition-all sm:min-w-24 sm:flex-none sm:px-4 ${
-                  i === safeIndex
-                    ? 'bg-primary text-white shadow-md shadow-primary/20 dark:bg-primary dark:text-white dark:shadow-md dark:shadow-primary/30'
-                    : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
-                }`}
-              >
-                {p.icon}
-                <span className="max-w-full truncate">{p.label}</span>
-              </button>
-            ))}
-            </div>
-          </nav>
-        </>
+        </header>
       )}
+
+      {/* ── MAIN CONTENT AREA ──────────────────────────────────────────────── */}
+      <main className={cn(
+        "flex-1 min-h-0 w-full transition-all duration-500 ease-in-out relative",
+        active.id === 'chat'
+          ? "p-0 overflow-hidden"
+          : cn("mx-auto max-w-7xl px-3 sm:px-5 lg:px-8 overflow-y-auto pb-12", showHeader ? "pt-6 sm:pt-8" : "pt-12 sm:pt-16")
+      )}>
+        {active.element}
+      </main>
+
+      {/* ── BOTTOM NAVIGATION ──────────────────────────────────────────────── */}
+      <nav className="z-50 flex-shrink-0 border-t border-slate-200 bg-white/90 px-2 py-2 shadow-[0_-12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
+        <div className="mx-auto flex max-w-3xl justify-around gap-1 sm:justify-center sm:gap-2">
+          {panels.map((p, i) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => changePanel(p.id)}
+              className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[10px] sm:text-xs font-semibold transition-all sm:min-w-24 sm:flex-none sm:px-4 ${
+                i === safeIndex
+                  ? 'bg-primary text-white shadow-md shadow-primary/20 dark:bg-primary dark:text-white dark:shadow-md dark:shadow-primary/30'
+                  : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
+              }`}
+            >
+              {p.icon}
+              <span className="max-w-full truncate">{p.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   )
 }

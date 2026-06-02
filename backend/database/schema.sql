@@ -134,6 +134,7 @@ ALTER TABLE "forms" ADD COLUMN IF NOT EXISTS "accepting_responses" boolean DEFAU
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "unlock_requested" boolean DEFAULT false;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "profile_picture_url" text;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "placed" boolean DEFAULT false;
+ALTER TABLE "messages" ADD COLUMN IF NOT EXISTS "parent_id" int;
 
 -- ── Foreign keys (idempotent — safe to re-run on existing DB) ─────────────────
 

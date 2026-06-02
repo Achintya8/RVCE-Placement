@@ -122,6 +122,17 @@ export function ChatPanel() {
     void repo.getAllUsersForMention().then(setUsers).catch(console.error)
   }, [])
 
+  // Clear active chat notifications from the system tray when viewing chat
+  useEffect(() => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.getNotifications({ tag: 'chat_message' }).then((notifications) => {
+          notifications.forEach((notification) => notification.close())
+        })
+      }).catch(console.error)
+    }
+  }, [messages])
+
   // Track scroll position to know if user is near the bottom
   useEffect(() => {
     const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
@@ -466,7 +477,7 @@ export function ChatPanel() {
                           )}
                           <div
                             className={cn(
-                              "flex flex-col max-w-[75%] space-y-1 mb-2",
+                              "flex flex-col max-w-[85%] sm:max-w-[75%] space-y-1 mb-2",
                               isMe ? "ml-auto items-end" : "items-start"
                             )}
                           >

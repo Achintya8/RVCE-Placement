@@ -321,12 +321,59 @@ self.addEventListener('push', (event) => {
       const hasFocusedClient = windowClients.some((client) => client.focused)
       if (hasFocusedClient) return
 
-      await self.registration.showNotification(title, {
-        body: notification.body ?? '',
-        icon: '/pwa-192x192.png',
-        badge: '/pwa-64x64.png',
-        data,
-      })
+      if (data.type === 'chat_message' || data.type === 'message_mention') {
+        const existingNotifications = await self.registration.getNotifications({ tag: 'chat_message' })
+        let chatMessages: Array<{ sender: string; body: string }> = []
+
+        if (existingNotifications.length > 0) {
+          const prevData = existingNotifications[0].data || {}
+          if (Array.isArray(prevData.chatMessages)) {
+            chatMessages = [...prevData.chatMessages]
+          }
+        }
+
+        chatMessages.push({ sender: title, body: notification.body ?? '' })
+
+        const count = chatMessages.length
+        let displayTitle = ''
+        let displayBody = ''
+
+        if (count === 1) {
+          displayTitle = title
+          displayBody = notification.body ?? ''
+        } else {
+          const firstSender = chatMessages[0].sender
+          const allSameSender = chatMessages.every((m) => m.sender === firstSender)
+
+          if (allSameSender) {
+            displayTitle = firstSender
+            displayBody = `${count} messages: ${chatMessages[count - 1].body}`
+          } else {
+            displayTitle = 'RVCE Placement Chat'
+            const latest = chatMessages[count - 1]
+            displayBody = `(${count}) ${latest.sender}: ${latest.body}`
+          }
+        }
+
+        await self.registration.showNotification(displayTitle, {
+          body: displayBody,
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-64x64.png',
+          tag: 'chat_message',
+          renotify: true,
+          data: {
+            ...data,
+            chatMessages,
+          },
+        } as any)
+      } else {
+        await self.registration.showNotification(title, {
+          body: notification.body ?? '',
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-64x64.png',
+          data,
+        })
+      }
     })(),
   )
 })
