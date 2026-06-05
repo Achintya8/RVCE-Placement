@@ -114,7 +114,17 @@ export function AdminPanel() {
   const [cStip, setCStip] = useState('')
   const [cTest, setCTest] = useState('')
   const [cInt, setCInt] = useState('')
-  const [cDeadline, setCDeadline] = useState('')
+  const [cOverallCgpa, setCOverallCgpa] = useState('')
+
+  // Company Edit Form State
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null)
+  const [eName, setEName] = useState('')
+  const [eCgpa, setECgpa] = useState('')
+  const [eOverallCgpa, setEOverallCgpa] = useState('')
+  const [ePkg, setEPkg] = useState('')
+  const [eStip, setEStip] = useState('')
+  const [eTest, setETest] = useState('')
+  const [eInt, setEInt] = useState('')
 
   // Google Forms Style Form Builder State
   interface BuilderQuestion {
@@ -252,14 +262,50 @@ export function AdminPanel() {
       await repo.createCompany({
         name: cName.trim(),
         minCgpa: Number.parseFloat(cCgpa) || 0,
+        minOverallCgpa: Number.parseFloat(cOverallCgpa) || null,
         package: cPkg.trim(),
         stipend: cStip.trim(),
         testDate: cTest.trim() || null,
         interviewDate: cInt.trim() || null,
-        deadline: cDeadline.trim() || null,
+        deadline: null,
       })
-      setCName(''); setCCgpa(''); setCPkg(''); setCStip(''); setCTest(''); setCInt(''); setCDeadline('')
+      setCName(''); setCCgpa(''); setCOverallCgpa(''); setCPkg(''); setCStip(''); setCTest(''); setCInt('')
     }, 'Company created.')
+
+  const startEditCompany = (company: Company) => {
+    setEditingCompany(company)
+    setEName(company.name)
+    setECgpa(String(company.minCgpa))
+    setEOverallCgpa(company.minOverallCgpa != null ? String(company.minOverallCgpa) : '')
+    setEPkg(company.package || '')
+    setEStip(company.stipend || '')
+    setETest(company.testDate || '')
+    setEInt(company.interviewDate || '')
+  }
+
+  const saveEditedCompany = () => {
+    if (!editingCompany || !eName.trim()) return
+    void run(async () => {
+      await repo.updateCompany(editingCompany.id, {
+        name: eName.trim(),
+        minCgpa: Number.parseFloat(eCgpa) || 0,
+        minOverallCgpa: Number.parseFloat(eOverallCgpa) || null,
+        package: ePkg.trim(),
+        stipend: eStip.trim(),
+        testDate: eTest.trim() || null,
+        interviewDate: eInt.trim() || null,
+        deadline: null,
+      })
+      setEditingCompany(null)
+    }, 'Company updated successfully.')
+  }
+
+  const handleDeleteCompany = (companyId: number) => {
+    if (!confirm('Are you sure you want to delete this company? All forms and student applications associated with this company will be deleted. This action cannot be undone.')) return
+    void run(async () => {
+      await repo.deleteCompany(companyId)
+    }, 'Company deleted successfully.')
+  }
 
   const addBuilderQuestion = () => {
     setFormQuestions(prev => [
@@ -536,7 +582,17 @@ export function AdminPanel() {
     } else {
       const company = data.companies.find(c => c.id === f.companyId);
       if (company) {
-        assignedCount = data.students.filter(s => s.ugCgpa >= company.minCgpa).length;
+        assignedCount = data.students.filter(s => {
+          const currentCgpa = s.firstSemSgpa || s.ugCgpa;
+          if (company.minCgpa && currentCgpa < company.minCgpa) return false;
+          if (company.minOverallCgpa) {
+            if (s.ugCgpa < company.minOverallCgpa) return false;
+            if (s.firstSemSgpa && s.firstSemSgpa < company.minOverallCgpa) return false;
+            if (s.tenthMarks && s.tenthMarks < company.minOverallCgpa * 10) return false;
+            if (s.twelfthMarks && s.twelfthMarks < company.minOverallCgpa * 10) return false;
+          }
+          return true;
+        }).length;
       } else {
         assignedCount = data.students.length;
       }
@@ -609,7 +665,10 @@ export function AdminPanel() {
                     {data.companies.slice(0, 5).map(c => (
                       <TableRow key={c.id} className="border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:bg-white/5">
                         <TableCell className="font-bold text-slate-900 dark:text-white">{c.name}</TableCell>
-                        <TableCell className="text-muted-foreground">{c.minCgpa.toFixed(1)}</TableCell>
+                        <TableCell className="text-muted-foreground text-xs">
+                          <div>Current: {c.minCgpa.toFixed(1)}</div>
+                          {c.minOverallCgpa != null && <div>Overall: {c.minOverallCgpa.toFixed(1)}</div>}
+                        </TableCell>
                         <TableCell className="text-muted-foreground">{c.package || 'TBD'}</TableCell>
                         <TableCell className="text-muted-foreground">{c.testDate ? formatDate(c.testDate) : 'TBD'}</TableCell>
                         <TableCell className="text-right">
@@ -640,8 +699,12 @@ export function AdminPanel() {
                   <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" placeholder="e.g. Google" value={cName} onChange={e => setCName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-text-main">Min CGPA</Label>
+                  <Label className="text-text-main">Min CGPA (Current)</Label>
                   <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" type="number" step="0.1" placeholder="e.g. 7.5" value={cCgpa} onChange={e => setCCgpa(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-text-main">Min Overall CGPA</Label>
+                  <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" type="number" step="0.1" placeholder="e.g. 6.5" value={cOverallCgpa} onChange={e => setCOverallCgpa(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-text-main">Package</Label>
@@ -658,10 +721,6 @@ export function AdminPanel() {
                 <div className="space-y-2">
                   <Label className="text-text-main">Interview Date (YYYY-MM-DD)</Label>
                   <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" placeholder="2026-06-20" value={cInt} onChange={e => setCInt(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-text-main">Deadline (YYYY-MM-DD HH:MM)</Label>
-                  <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" placeholder="2026-06-14 23:59" value={cDeadline} onChange={e => setCDeadline(e.target.value)} />
                 </div>
               </div>
             </CardContent>
@@ -680,10 +739,7 @@ export function AdminPanel() {
                   <TableHeader className="bg-slate-100 dark:bg-white/5">
                     <TableRow className="border-slate-200 dark:border-white/10 hover:bg-transparent">
                       <TableHead className="text-text-main font-bold">Company</TableHead>
-                      <TableHead className="text-text-main font-bold hidden md:table-cell">Package</TableHead>
-                      <TableHead className="text-text-main font-bold hidden md:table-cell">Stipend</TableHead>
-                      <TableHead className="text-text-main font-bold hidden md:table-cell">Min CGPA</TableHead>
-                      <TableHead className="text-text-main font-bold hidden md:table-cell">Status</TableHead>
+                      <TableHead className="text-text-main font-bold">Status</TableHead>
                       <TableHead className="text-text-main font-bold">Block Consent</TableHead>
                       <TableHead className="text-text-main font-bold">Block Tracker</TableHead>
                       <TableHead className="text-right text-text-main font-bold">Export</TableHead>
@@ -696,11 +752,11 @@ export function AdminPanel() {
                         <>
                           <TableRow key={c.id} className="border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:bg-white/5">
                             <TableCell 
-                              className="font-bold text-primary cursor-pointer hover:underline select-none md:cursor-default md:hover:no-underline"
+                              className="font-bold text-primary cursor-pointer hover:underline select-none"
                               onClick={() => toggleExpandCompany(c.id)}
                             >
                               <div className="flex items-center gap-1.5">
-                                <span className="md:hidden">
+                                <span>
                                   {isExpanded ? (
                                     <ChevronDown className="w-4 h-4 text-slate-400" />
                                   ) : (
@@ -710,10 +766,7 @@ export function AdminPanel() {
                                 {c.name}
                               </div>
                             </TableCell>
-                            <TableCell className="text-muted-foreground hidden md:table-cell">{c.package || 'TBD'}</TableCell>
-                            <TableCell className="text-muted-foreground hidden md:table-cell">{c.stipend || 'TBD'}</TableCell>
-                            <TableCell className="text-muted-foreground hidden md:table-cell">{c.minCgpa}</TableCell>
-                            <TableCell className="hidden md:table-cell">
+                            <TableCell>
                               <Badge variant={c.status === 'completed' ? 'outline' : 'default'} className={cn("cursor-pointer", c.status === 'completed' ? "text-amber-400 border-amber-400/20 bg-amber-400/10" : "bg-green-500/20 text-green-400 hover:bg-green-500/30")} onClick={() => void toggleCompanyStatus(c.id, c.status)}>
                                 {c.status === 'completed' ? 'Completed' : 'Ongoing'}
                               </Badge>
@@ -739,32 +792,43 @@ export function AdminPanel() {
                             </TableCell>
                           </TableRow>
                           {isExpanded && (
-                            <TableRow className="border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 hover:bg-transparent md:hidden">
-                              <TableCell colSpan={4} className="p-4">
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-200">
-                                  <div className="space-y-1">
-                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Package</span>
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.package || 'TBD'}</p>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Stipend</span>
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.stipend || 'TBD'}</p>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Min CGPA</span>
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.minCgpa}</p>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</span>
-                                    <div>
-                                      <Badge 
-                                        variant={c.status === 'completed' ? 'outline' : 'default'} 
-                                        className={cn("cursor-pointer mt-0.5", c.status === 'completed' ? "text-amber-400 border-amber-400/20 bg-amber-400/10" : "bg-green-500/20 text-green-400 hover:bg-green-500/30")} 
-                                        onClick={() => void toggleCompanyStatus(c.id, c.status)}
-                                      >
-                                        {c.status === 'completed' ? 'Completed' : 'Ongoing'}
-                                      </Badge>
+                            <TableRow className="border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 hover:bg-transparent">
+                              <TableCell colSpan={5} className="p-4">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-in slide-in-from-top-2 duration-200">
+                                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 flex-1">
+                                    <div className="space-y-1">
+                                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Package</span>
+                                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.package || 'TBD'}</p>
                                     </div>
+                                    <div className="space-y-1">
+                                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Stipend</span>
+                                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.stipend || 'TBD'}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Academic Requirements</span>
+                                      <p className="text-xs font-semibold text-slate-900 dark:text-white leading-relaxed">
+                                        Current: {c.minCgpa.toFixed(1)}
+                                        {c.minOverallCgpa != null && ` | Overall: ${c.minOverallCgpa.toFixed(1)}`}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3 border-t md:border-t-0 md:border-l border-slate-200 dark:border-white/10 pt-4 md:pt-0 md:pl-6">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      onClick={() => startEditCompany(c)}
+                                      className="hover:bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white border-slate-200 dark:border-white/10"
+                                    >
+                                      Edit Drive
+                                    </Button>
+                                    <Button 
+                                      variant="destructive" 
+                                      size="sm" 
+                                      onClick={() => handleDeleteCompany(c.id)}
+                                      className="bg-red-500/20 hover:bg-red-500/30 text-red-500 border border-red-500/20"
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-1.5" /> Delete
+                                    </Button>
                                   </div>
                                 </div>
                               </TableCell>
@@ -1437,6 +1501,108 @@ export function AdminPanel() {
                   </div>
                 )}
               </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+      {editingCompany && (
+        <Dialog open={true} onOpenChange={() => setEditingCompany(null)}>
+          <DialogContent className="glass-panel text-slate-900 dark:text-white w-[92vw] sm:w-full max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-0 overflow-hidden">
+            <DialogHeader className="p-6 pb-2">
+              <DialogTitle className="text-2xl text-slate-900 dark:text-white">Edit Recruitment Drive</DialogTitle>
+              <DialogDescription className="text-muted-foreground">Modify company parameters and academic eligibility constraints.</DialogDescription>
+            </DialogHeader>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Company Name */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Company Name</Label>
+                  <Input 
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. Google" 
+                    value={eName} 
+                    onChange={e => setEName(e.target.value)} 
+                  />
+                </div>
+
+                {/* Package */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Package (LPA)</Label>
+                  <Input 
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. 12 LPA or TBD" 
+                    value={ePkg} 
+                    onChange={e => setEPkg(e.target.value)} 
+                  />
+                </div>
+
+                {/* Stipend */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Stipend (PM)</Label>
+                  <Input 
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. 50k PM or TBD" 
+                    value={eStip} 
+                    onChange={e => setEStip(e.target.value)} 
+                  />
+                </div>
+
+                {/* Min CGPA (Current) */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Min CGPA (Current)</Label>
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. 7.5" 
+                    value={eCgpa} 
+                    onChange={e => setECgpa(e.target.value)} 
+                  />
+                </div>
+
+                {/* Min Overall CGPA */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Min Overall CGPA (10th/12th/UG/PG)</Label>
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. 6.5 (Optional)" 
+                    value={eOverallCgpa} 
+                    onChange={e => setEOverallCgpa(e.target.value)} 
+                  />
+                </div>
+
+                {/* Test Date */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Online Test Date</Label>
+                  <Input 
+                    type="date"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    value={eTest ? eTest.substring(0, 10) : ''} 
+                    onChange={e => setETest(e.target.value)} 
+                  />
+                </div>
+
+                {/* Interview Date */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Interview Date</Label>
+                  <Input 
+                    type="date"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    value={eInt ? eInt.substring(0, 10) : ''} 
+                    onChange={e => setEInt(e.target.value)} 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="p-6 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/10">
+              <Button variant="ghost" onClick={() => setEditingCompany(null)} className="text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-white/5">Cancel</Button>
+              <Button onClick={saveEditedCompany} className="gap-2 shadow-lg shadow-primary/20" disabled={busy}>
+                Save Changes
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

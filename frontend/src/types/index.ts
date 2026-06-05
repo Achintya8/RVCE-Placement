@@ -31,6 +31,7 @@ export type Company = {
   id: number
   name: string
   minCgpa: number
+  minOverallCgpa?: number | null
   package: string
   stipend: string
   testDate?: string | null
