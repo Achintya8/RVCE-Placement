@@ -46,7 +46,24 @@ export const useProfileStore = create<ProfileState>()(
       if (savedDraftStr) {
         try {
           const savedDraft = JSON.parse(savedDraftStr)
-          set({ draft: savedDraft })
+          // Merge server profile over draft: server wins for any field that is
+          // null / undefined / empty string / zero in the saved draft.
+          // This ensures admin-imported data always surfaces even if the student
+          // had opened their profile before the import ran.
+          const merged: Partial<AppUser> = { ...savedDraft }
+          for (const key of Object.keys(profile) as (keyof AppUser)[]) {
+            const draftVal = (savedDraft as Partial<AppUser>)[key]
+            const serverVal = profile[key]
+            const draftIsEmpty =
+              draftVal === null ||
+              draftVal === undefined ||
+              draftVal === '' ||
+              draftVal === 0
+            if (draftIsEmpty && serverVal !== null && serverVal !== undefined && serverVal !== '' && serverVal !== 0) {
+              (merged as Record<string, unknown>)[key] = serverVal
+            }
+          }
+          set({ draft: merged })
           return
         } catch (e) {
           // Ignore parse errors and fallback

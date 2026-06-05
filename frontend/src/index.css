@@ -323,3 +323,163 @@
 }
 
 /* Glass effect utilities live above so shared components can reuse them. */
+
+.newtons-cradle {
+  --uib-size: 50px;
+  --uib-speed: 1.2s;
+  --uib-color: var(--color-primary, #007aff);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--uib-size);
+  height: var(--uib-size);
+}
+
+.newtons-cradle__dot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 25%;
+  transform-origin: center top;
+}
+
+.newtons-cradle__dot::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 25%;
+  border-radius: 50%;
+  background-color: var(--uib-color);
+}
+
+.newtons-cradle__dot:first-child {
+  animation: swing var(--uib-speed) linear infinite;
+}
+
+.newtons-cradle__dot:last-child {
+  animation: swing2 var(--uib-speed) linear infinite;
+}
+
+@keyframes swing {
+  0% {
+    transform: rotate(0deg);
+    animation-timing-function: ease-out;
+  }
+
+  25% {
+    transform: rotate(70deg);
+    animation-timing-function: ease-in;
+  }
+
+  50% {
+    transform: rotate(0deg);
+    animation-timing-function: linear;
+  }
+}
+
+@keyframes swing2 {
+  0% {
+    transform: rotate(0deg);
+    animation-timing-function: linear;
+  }
+
+  50% {
+    transform: rotate(0deg);
+    animation-timing-function: ease-out;
+  }
+
+  75% {
+    transform: rotate(-70deg);
+    animation-timing-function: ease-in;
+  }
+}
+
+/* Button Diagonal Swipe Hover Animation */
+.btn-swipe {
+  position: relative !important;
+  overflow: hidden !important;
+  z-index: 1 !important;
+  background: transparent !important;
+  border-width: 2px !important;
+  transition: color 0.6s ease, border-color 0.6s ease, background-color 0.6s ease !important;
+}
+
+.btn-swipe::before {
+  content: "" !important;
+  position: absolute !important;
+  height: 100% !important;
+  width: 0% !important;
+  top: 0 !important;
+  left: -40px !important;
+  transform: skewX(45deg) !important;
+  z-index: -1 !important;
+  transition: width 0.6s ease !important;
+}
+
+.btn-swipe:hover::before {
+  width: 160% !important;
+}
+
+/* Variant Specific Styling utilizing theme variables */
+.btn-swipe-default {
+  color: hsl(var(--primary)) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+.btn-swipe-default::before {
+  background-color: hsl(var(--primary)) !important;
+}
+.btn-swipe-default:hover {
+  color: hsl(var(--primary-foreground)) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+
+.btn-swipe-destructive {
+  color: hsl(var(--destructive)) !important;
+  border-color: hsl(var(--destructive)) !important;
+}
+.btn-swipe-destructive::before {
+  background-color: hsl(var(--destructive)) !important;
+}
+.btn-swipe-destructive:hover {
+  color: hsl(var(--destructive-foreground)) !important;
+  border-color: hsl(var(--destructive)) !important;
+}
+
+.btn-swipe-outline {
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+.btn-swipe-outline::before {
+  background-color: hsl(var(--foreground)) !important;
+}
+.btn-swipe-outline:hover {
+  color: hsl(var(--background)) !important;
+  border-color: hsl(var(--foreground)) !important;
+}
+
+.btn-swipe-secondary {
+  color: hsl(var(--secondary-foreground)) !important;
+  border-color: hsl(var(--secondary)) !important;
+}
+.btn-swipe-secondary::before {
+  background-color: hsl(var(--secondary-foreground)) !important;
+}
+.btn-swipe-secondary:hover {
+  color: hsl(var(--secondary)) !important;
+  border-color: hsl(var(--secondary-foreground)) !important;
+}
+
+.btn-swipe-ghost {
+  color: hsl(var(--muted-foreground)) !important;
+  border-color: transparent !important;
+}
+.btn-swipe-ghost::before {
+  background-color: hsl(var(--muted)) !important;
+}
+.btn-swipe-ghost:hover {
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+

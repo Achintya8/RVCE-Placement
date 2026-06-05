@@ -1,0 +1,45 @@
+services:
+  # ── PostgreSQL Database ───────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: mca_placement_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: mca_placement
+    ports:
+      - "5433:5432"  # Host port 5433 (5432 already in use by local Postgres)
+    volumes:
+      # Persist data across container restarts
+      - postgres_data:/var/lib/postgresql/data
+      # Auto-run schema on first startup (only if DB is freshly created)
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d mca_placement"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Node.js Backend ───────────────────────────────────────────────────────────
+  backend:
+    build: .
+    container_name: mca_placement_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Override DB host so backend connects to the 'db' service, not localhost
+      DATABASE_URL: postgresql://admin:admin@db:5432/mca_placement
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Persist uploaded files
+      - ./uploads:/app/uploads
+
+volumes:
+  postgres_data:
+    driver: local

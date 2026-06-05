@@ -17,6 +17,7 @@ export type AppUser = {
   profilePictureUrl?: string | null
   unlockRequested?: boolean
   placed?: boolean
+  gender?: string | null
 }
 
 export type Session = {
