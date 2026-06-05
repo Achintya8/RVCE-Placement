@@ -219,6 +219,7 @@ export class PlacementRepository {
   async createCompany(payload: {
     name: string
     minCgpa: number
+    minOverallCgpa?: number | null
     package: string
     stipend: string
     testDate?: string | null
@@ -226,6 +227,27 @@ export class PlacementRepository {
     deadline?: string | null
   }): Promise<void> {
     await this.client.postJson('/companies', payload)
+  }
+
+  async updateCompany(
+    companyId: number,
+    payload: {
+      name: string
+      minCgpa: number
+      minOverallCgpa?: number | null
+      package: string
+      stipend: string
+      testDate?: string | null
+      interviewDate?: string | null
+      deadline?: string | null
+    },
+  ): Promise<Company> {
+    const json = await this.client.putJson(`/companies/${companyId}`, payload)
+    return parseCompany(json as Record<string, unknown>)
+  }
+
+  async deleteCompany(companyId: number): Promise<void> {
+    await this.client.delete(`/companies/${companyId}`)
   }
 
   async updateCompanyStatus(companyId: number, status: string): Promise<Company> {

@@ -157,7 +157,7 @@ export default function DashboardScreen() {
   const active = panels[safeIndex] ?? panels[0]
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-white">
+    <div className="min-h-screen ios-glass-screen text-slate-950 dark:text-white">
 
       {/* ── CHAT LAYOUT: hamburger button + full-height chat ────────────── */}
       {active.id === 'chat' ? (

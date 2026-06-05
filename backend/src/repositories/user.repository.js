@@ -207,7 +207,15 @@ export const listEligibleStudentIds = async (companyId) => {
     `SELECT DISTINCT u."id"
       FROM "users" u
       INNER JOIN "companies" c ON c."id" = $1
-      WHERE c."min_cgpa" IS NULL OR u."ug_cgpa" >= c."min_cgpa"
+      WHERE (c."min_cgpa" IS NULL OR COALESCE(NULLIF(u."first_sem_sgpa", 0), u."ug_cgpa") >= c."min_cgpa")
+        AND (
+          c."min_overall_cgpa" IS NULL OR (
+            u."ug_cgpa" >= c."min_overall_cgpa"
+            AND (u."first_sem_sgpa" IS NULL OR u."first_sem_sgpa" >= c."min_overall_cgpa")
+            AND (u."tenth_marks" IS NULL OR u."tenth_marks" >= c."min_overall_cgpa" * 10)
+            AND (u."twelfth_marks" IS NULL OR u."twelfth_marks" >= c."min_overall_cgpa" * 10)
+          )
+        )
       ORDER BY u."id" ASC`,
     [companyId],
   );

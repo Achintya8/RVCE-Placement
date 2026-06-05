@@ -39,29 +39,32 @@
   }
 
   .dark {
-    --background: 222 47% 7%;
+    --background: 222 35% 12%;
     --foreground: 210 40% 98%;
-    --card: 222 47% 9%;
+    --card: 222 35% 15%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 9%;
+    --popover: 222 35% 15%;
     --popover-foreground: 210 40% 98%;
     --primary: 211 100% 56%;
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 222 25% 20%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 222 25% 20%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 222 25% 20%;
     --accent-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 222 25% 20%;
+    --input: 222 25% 20%;
 
-    --color-bg-dark: 8, 13, 24;
-    --color-bg-card: 30, 41, 59;
+    --color-bg-dark: 19, 25, 36;
+    --color-bg-card: 24, 32, 46;
     --color-bg-card-opacity: 0.4;
     --color-text-main: 248, 250, 252;
     --color-text-muted: 148, 163, 184;
     --color-glass-border: 255, 255, 255;
     --color-glass-border-opacity: 0.08;
+  }
+  html {
+    scroll-behavior: smooth;
   }
   * {
     @apply border-border;
@@ -70,6 +73,11 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', sans-serif;
     min-height: 100dvh;
+    scroll-behavior: smooth;
+  }
+  /* Target all overflow scroll elements for smooth scrolling */
+  [class*="overflow-y-auto"], [class*="overflow-auto"], .overflow-y-scroll {
+    scroll-behavior: smooth;
   }
 }
 
@@ -190,30 +198,19 @@
   position: relative;
   isolation: isolate;
   overflow-x: hidden;
-  background:
-    linear-gradient(135deg, #f8fbff 0%, #edf7ff 36%, #f7f1ff 68%, #f7fff7 100%);
-}
-
-.ios-glass-screen::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(115deg, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0.26) 42%, rgba(255, 255, 255, 0.72) 100%),
-    linear-gradient(90deg, rgba(0, 122, 255, 0.1), rgba(52, 199, 89, 0.08), rgba(175, 82, 222, 0.08));
+  background-color: hsl(var(--background)) !important;
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.03) 1px, transparent 1px) !important;
+  background-size: 30px 30px !important;
 }
 
 .dark .ios-glass-screen {
-  background:
-    linear-gradient(135deg, #07111f 0%, #101827 38%, #15172d 70%, #071914 100%);
-}
-
-.dark .ios-glass-screen::before {
-  background:
-    linear-gradient(115deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 44%, rgba(255, 255, 255, 0.07) 100%),
-    linear-gradient(90deg, rgba(0, 122, 255, 0.16), rgba(52, 199, 89, 0.08), rgba(175, 82, 222, 0.12));
+  background-color: hsl(var(--background)) !important;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px) !important;
+  background-size: 30px 30px !important;
 }
 
 .ios-glass-panel,
@@ -482,4 +479,67 @@
   color: hsl(var(--foreground)) !important;
   border-color: hsl(var(--border)) !important;
 }
+
+/* iOS Segmented Control (Tabs) */
+.ios-segmented-list {
+  display: grid !important;
+  width: 100% !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  background-color: rgba(15, 23, 42, 0.05) !important;
+  backdrop-filter: blur(20px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  padding: 3px !important;
+  border-radius: 10px !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.dark .ios-segmented-list {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.ios-segmented-trigger {
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  color: #64748b !important;
+  border-radius: 8px !important;
+  padding: 8px 0 !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  cursor: pointer !important;
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  user-select: none !important;
+}
+
+.dark .ios-segmented-trigger {
+  color: #94a3b8 !important;
+}
+
+.ios-segmented-trigger:hover {
+  color: #0f172a !important;
+}
+
+.dark .ios-segmented-trigger:hover {
+  color: #f8fafc !important;
+}
+
+.ios-segmented-trigger[data-state="active"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+  border-color: rgba(0, 0, 0, 0.04) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+}
+
+.dark .ios-segmented-trigger[data-state="active"] {
+  background-color: rgba(255, 255, 255, 0.09) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
 
