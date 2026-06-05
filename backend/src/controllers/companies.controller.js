@@ -25,6 +25,7 @@ const companySchema = z.object({
   testDate: z.string().optional().nullable(),
   interviewDate: z.string().optional().nullable(),
   deadline: z.string().optional().nullable(),
+  defaultConsent: z.boolean().optional().default(false),
 });
 
 export const getCompanies = async (req, res, next) => {

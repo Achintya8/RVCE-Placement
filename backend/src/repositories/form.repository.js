@@ -94,8 +94,7 @@ export const listAssignedFormsForStudent = async (studentId) => {
             )
             AND (
               f."type" = 'consent' 
-              OR a."consent" = TRUE 
-              OR (a."consent" IS NULL AND c."deadline" <= NOW() AND FALSE) -- Defaults to false after deadline
+              OR COALESCE(a."consent", c."default_consent") = TRUE
             )
           )
         )
@@ -252,7 +251,7 @@ export const getPendingStudentsForForm = async (formId) => {
         AND (u."twelfth_marks" IS NULL OR u."twelfth_marks" >= ${(company?.min_overall_cgpa || 0) * 10})
       ))
       AND (
-        ${form.type === 'consent' ? 'TRUE' : `(a."consent" = TRUE OR (a."consent" IS NULL AND ${deadlinePassed ? 'FALSE' : 'FALSE'}))`}
+        ${form.type === 'consent' ? 'TRUE' : `(COALESCE(a."consent", c."default_consent") = TRUE)`}
       )
     `;
   }

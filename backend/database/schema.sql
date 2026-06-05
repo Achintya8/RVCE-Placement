@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS "companies" (
   "status"          VARCHAR(50) DEFAULT 'ongoing',
   "consent_blocked" BOOLEAN DEFAULT false,
   "tracker_blocked" BOOLEAN DEFAULT false,
+  "default_consent" BOOLEAN DEFAULT false,
   "created_at"      TIMESTAMP DEFAULT NOW()
 );
 

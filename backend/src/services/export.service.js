@@ -41,11 +41,11 @@ export const generateCompanyWorkbook = async (companyId, fields = null) => {
         u."ug_cgpa",
         u."resume_url",
         c."deadline"
-      FROM "applications" a
-      INNER JOIN "users" u ON u."id" = a."student_id"
-      INNER JOIN "companies" c ON c."id" = a."company_id"
-      WHERE a."company_id" = $1
-        AND a."consent" = TRUE
+      FROM "users" u
+      CROSS JOIN "companies" c
+      LEFT JOIN "applications" a ON a."student_id" = u."id" AND a."company_id" = c."id"
+      WHERE c."id" = $1
+        AND COALESCE(a."consent", c."default_consent") = TRUE
         AND (c."min_cgpa" IS NULL OR COALESCE(NULLIF(u."first_sem_sgpa", 0), u."ug_cgpa") >= c."min_cgpa")
         AND (
           c."min_overall_cgpa" IS NULL OR (
