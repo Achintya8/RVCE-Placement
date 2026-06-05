@@ -26,6 +26,7 @@ const normalizeUser = (row) => {
     verified: row.verified ?? false,
     unlockRequested: row.unlock_requested ?? false,
     placed: row.placed ?? false,
+    gender: row.gender ?? null,
     createdAt: row.created_at,
   };
 };
@@ -96,7 +97,8 @@ export const updateUserProfile = async (userId, payload) => {
           "ug_cgpa" = $10,
           "first_sem_sgpa" = $11,
           "tenth_marks" = $12,
-          "twelfth_marks" = $13
+          "twelfth_marks" = $13,
+          "gender" = $14
     WHERE "id" = $1
     RETURNING *`,
     [
@@ -113,6 +115,7 @@ export const updateUserProfile = async (userId, payload) => {
       payload.firstSemSgpa,
       payload.tenthMarks,
       payload.twelfthMarks,
+      payload.gender ?? null,
     ],
   );
 

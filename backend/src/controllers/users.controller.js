@@ -37,6 +37,7 @@ const profileSchema = z.object({
   tenthMarks: z.coerce.number().min(0).max(100),
   twelfthMarks: z.coerce.number().min(0).max(100),
   firstSemSgpa: z.coerce.number().min(0).max(10),
+  gender: z.string().optional().nullable(),
 });
 
 export const getMyProfile = async (req, res, next) => {

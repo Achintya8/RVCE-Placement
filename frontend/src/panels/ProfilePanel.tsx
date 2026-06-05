@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CheckCircle2, AlertCircle, Upload, Save, FileText, Clock, Unlock, Camera, Moon, Sun, User, LogOut } from 'lucide-react'
 import { StudentProfileSkeleton } from '@/components/modern/Skeleton'
 import { ApiClientError } from '../api/client'
@@ -324,6 +325,24 @@ export function ProfilePanel() {
             <FormField label="1st Sem SGPA" value={String(draft.firstSemSgpa ?? '')} onChange={(v) => handleFieldChange('firstSemSgpa', v)} id="pf-fs" type="number" disabled={readOnly} error={fieldErrors.firstSemSgpa} />
             <FormField label="10th Aggregate (%)" value={String(draft.tenthMarks ?? '')} onChange={(v) => handleFieldChange('tenthMarks', v)} id="pf-10" type="number" disabled={readOnly} error={fieldErrors.tenthMarks} />
             <FormField label="12th Aggregate (%)" value={String(draft.twelfthMarks ?? '')} onChange={(v) => handleFieldChange('twelfthMarks', v)} id="pf-12" type="number" disabled={readOnly} error={fieldErrors.twelfthMarks} />
+            <div className="space-y-2">
+              <Label htmlFor="pf-gender" className="text-sm font-medium text-slate-600 dark:text-muted-foreground">Gender</Label>
+              <Select
+                value={draft.gender ?? ''}
+                onValueChange={(v) => handleFieldChange('gender', v)}
+                disabled={readOnly}
+              >
+                <SelectTrigger id="pf-gender" className="border-slate-200 bg-white text-slate-950 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
         <CardFooter className="justify-end border-t border-white/45 p-4 bg-white/20 dark:border-white/10 dark:bg-white/5 sm:p-6">

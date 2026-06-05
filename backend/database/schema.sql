@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS "users" (
   "verified"            boolean,
   "unlock_requested"    boolean DEFAULT false,
   "placed"              boolean DEFAULT false,
+  "gender"              varchar,
   "created_at"          timestamp
 );
 

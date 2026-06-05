@@ -1263,6 +1263,7 @@ export function AdminPanel() {
                   <div><Label className="text-muted-foreground">Personal Email</Label><p className="text-slate-900 dark:text-white">{reviewStudent.personalEmailId || '—'}</p></div>
                   <div><Label className="text-muted-foreground">Phone</Label><p className="text-slate-900 dark:text-white">{reviewStudent.phoneNumber || '—'}</p></div>
                   <div><Label className="text-muted-foreground">Aadhar</Label><p className="text-slate-900 dark:text-white">{reviewStudent.aadhar || '—'}</p></div>
+                  <div><Label className="text-muted-foreground">Gender</Label><p className="text-slate-900 dark:text-white">{reviewStudent.gender || '—'}</p></div>
                 </div>
                 <div className="space-y-4">
                   <div><Label className="text-muted-foreground">UG CGPA</Label><p className="font-bold text-slate-900 dark:text-white">{reviewStudent.ugCgpa || '—'}</p></div>

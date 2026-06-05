@@ -51,6 +51,7 @@ export function parseAppUser(json: Record<string, unknown>): AppUser {
     profilePictureUrl: json.profilePictureUrl as string | null | undefined,
     unlockRequested: Boolean(json.unlockRequested),
     placed: Boolean(json.placed),
+    gender: json.gender as string | null | undefined,
   }
 }
 
