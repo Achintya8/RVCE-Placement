@@ -55,7 +55,8 @@ import {
   Trash2,
   Clock,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Search
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AdminPanelSkeleton } from '@/components/modern/Skeleton'
@@ -191,6 +192,8 @@ export function AdminPanel() {
   const [reviewStudent, setReviewStudent] = useState<StudentSummary | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
+  const [studentSearch, setStudentSearch] = useState('')
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null)
   const [reviewStudentProfileData, setReviewStudentProfileData] = useState<any[]>([])
 
   useEffect(() => {
@@ -418,6 +421,16 @@ export function AdminPanel() {
       await repo.toggleFormResponses(formId, checked)
     }, checked ? 'Form is now accepting student responses.' : 'Form is now closed to new responses.')
   }
+
+  const filteredStudents = (data?.students || [])
+    .filter(s => {
+      const query = studentSearch.toLowerCase().trim()
+      if (!query) return true
+      const nameMatch = s.name?.toLowerCase().includes(query)
+      const usnMatch = s.usn?.toLowerCase().includes(query)
+      return nameMatch || usnMatch
+    })
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
 
   const toggleCompanyStatus = (companyId: number, currentStatus: string | undefined) =>
     run(async () => {
@@ -1027,68 +1040,153 @@ export function AdminPanel() {
 
         <TabsContent value="students" className="space-y-6">
           <Card className="glass-panel">
-            <CardHeader>
-              <CardTitle>Student Verification</CardTitle>
-              <CardDescription className="text-muted-foreground">Verify profiles to prevent further edits before sharing data with companies.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {data.students.map(s => (
-                  <Card key={s.id} className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-none">
-                    <CardContent className="p-4 flex flex-col gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                          {s.name.charAt(0)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold truncate text-slate-900 dark:text-white">{s.name}</p>
-                            {s.placed && (
-                              <Badge className="bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/20 hover:bg-green-500/20 text-[10px] px-1.5 py-0.5 font-bold shrink-0">
-                                Placed
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate">{s.collegeEmailId}</p>
-                        </div>
-                      </div>
-                      {s.unlockRequested ? (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="w-full text-amber-400 border-amber-400/20 bg-amber-400/10 hover:bg-amber-400/20 gap-2"
-                          disabled={busy}
-                          onClick={() => void approveUnlock(s.id)}
-                        >
-                          <Unlock className="w-4 h-4" /> Approve Unlock
-                        </Button>
-                      ) : (
-                        <Button 
-                          size="sm" 
-                          variant={s.verified ? "ghost" : "default"}
-                          className={cn("w-full", s.verified ? "text-green-500 bg-green-400/10 hover:bg-green-400/20 dark:text-green-300" : "shadow-lg shadow-primary/20")}
-                          disabled={busy}
-                          onClick={() => setReviewStudent(s)}
-                        >
-                          {s.verified ? <><CheckCircle2 className="w-4 h-4 mr-2" /> View Verified Profile</> : "Review Profile"}
-                        </Button>
-                      )}
-                      <div className="flex items-center justify-between border-t border-slate-200 dark:border-white/10 pt-3 mt-1">
-                        <Label htmlFor={`placed-${s.id}`} className="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
-                          Mark Placed
-                        </Label>
-                        <Switch
-                          id={`placed-${s.id}`}
-                          checked={s.placed ?? false}
-                          onCheckedChange={(checked) => void handleTogglePlaced(s.id, checked)}
-                          disabled={busy}
-                          className="data-[state=checked]:bg-green-500"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle>Student Verification</CardTitle>
+                <CardDescription className="text-muted-foreground">Verify profiles and manage placement status for students.</CardDescription>
               </div>
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                <Input
+                  placeholder="Search name or USN..."
+                  value={studentSearch}
+                  onChange={(e) => setStudentSearch(e.target.value)}
+                  className="pl-9 bg-slate-50/50 dark:bg-slate-900 border-slate-200 dark:border-white/10"
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="p-2 sm:p-6">
+              {filteredStudents.length === 0 ? (
+                <div className="text-center py-8 text-slate-400">
+                  No students found matching your search.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-slate-200 dark:border-white/10 hover:bg-transparent">
+                        <TableHead className="p-2 sm:p-4 text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400">USN</TableHead>
+                        <TableHead className="p-2 sm:p-4 text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400">Student</TableHead>
+                        <TableHead className="w-[40px] p-2 sm:p-4 text-right font-bold text-slate-500 dark:text-slate-400"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredStudents.map((s) => (
+                        <TableRow 
+                          key={s.id} 
+                          onClick={() => setOpenDropdownId(openDropdownId === s.id ? null : s.id)}
+                          className={cn(
+                            "cursor-pointer border-slate-200 dark:border-white/10 select-none transition-colors",
+                            s.unlockRequested
+                              ? "bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-950/30 dark:hover:bg-amber-950/45"
+                              : s.verified 
+                                ? "bg-green-500/10 hover:bg-green-500/15 dark:bg-green-950/30 dark:hover:bg-green-950/45" 
+                                : "bg-red-500/10 hover:bg-red-500/15 dark:bg-red-950/30 dark:hover:bg-red-950/45"
+                          )}
+                        >
+                          <TableCell className="p-2 sm:p-4 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
+                            {s.usn || "N/A"}
+                          </TableCell>
+                          <TableCell className="p-2 sm:p-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] sm:text-xs shrink-0 overflow-hidden">
+                                {s.profilePictureUrl ? (
+                                  <img 
+                                    src={s.profilePictureUrl} 
+                                    alt={s.name} 
+                                    className="h-full w-full object-cover animate-in fade-in duration-300"
+                                  />
+                                ) : (
+                                  s.name.charAt(0)
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                                  {s.name}
+                                </p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="p-2 sm:p-4 text-right relative">
+                            {openDropdownId === s.id && (
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <div 
+                                  className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm sm:bg-transparent sm:backdrop-blur-none z-30" 
+                                  onClick={() => setOpenDropdownId(null)} 
+                                />
+                                <div className="fixed bottom-0 left-0 right-0 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-2 w-full sm:w-56 rounded-t-2xl sm:rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-1.5 shadow-2xl sm:shadow-lg shadow-slate-900/20 dark:shadow-black/50 z-40 text-left animate-in slide-in-from-bottom duration-250 sm:animate-none">
+                                  {/* Drag handler pill on mobile */}
+                                  <div className="w-12 h-1 bg-slate-200 dark:bg-white/10 rounded-full mx-auto mb-3 sm:hidden" />
+                                  
+                                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                    Status
+                                  </div>
+                                  <div className="px-3 pb-2 flex flex-wrap gap-1.5 border-b border-slate-100 dark:border-white/10">
+                                    {s.verified ? (
+                                      <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/15 border-green-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Verified</Badge>
+                                    ) : (
+                                      <Badge className="bg-red-500/10 text-red-400 hover:bg-red-500/15 border-red-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Unverified</Badge>
+                                    )}
+                                    {s.unlockRequested && (
+                                      <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/15 border-amber-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">Unlock Req</Badge>
+                                    )}
+                                    {s.placed && (
+                                      <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/15 border-emerald-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Placed</Badge>
+                                    )}
+                                  </div>
+                                  
+                                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">
+                                    Actions
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      setOpenDropdownId(null)
+                                      setReviewStudent(s)
+                                    }}
+                                    className="w-full text-left px-3 py-2.5 sm:py-2 text-xs sm:text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 flex items-center gap-2"
+                                  >
+                                    <Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-slate-400" />
+                                    {s.verified ? "View Profile" : "Review Profile"}
+                                  </button>
+                                  
+                                  {s.unlockRequested && (
+                                    <button
+                                      onClick={() => {
+                                        setOpenDropdownId(null)
+                                        void approveUnlock(s.id)
+                                      }}
+                                      className="w-full text-left px-3 py-2.5 sm:py-2 text-xs sm:text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-amber-500 dark:text-amber-400 flex items-center gap-2"
+                                    >
+                                      <Unlock className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-amber-400" />
+                                      Approve Unlock
+                                    </button>
+                                  )}
+                                  
+                                  <div className="h-px bg-slate-100 dark:bg-white/10 my-1" />
+                                  
+                                  <button
+                                    onClick={() => {
+                                      setOpenDropdownId(null)
+                                      void handleTogglePlaced(s.id, !s.placed)
+                                    }}
+                                    className={cn(
+                                      "w-full text-left px-3 py-2.5 sm:py-2 text-xs sm:text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-2",
+                                      s.placed ? "text-red-500 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"
+                                    )}
+                                  >
+                                    <CheckCircle2 className={cn("w-4 h-4 sm:w-3.5 sm:h-3.5", s.placed ? "text-red-400" : "text-emerald-400")} />
+                                    {s.placed ? "Mark Unplaced" : "Mark Placed"}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -8,11 +8,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-white shadow-[0_12px_28px_rgba(0,122,255,0.24)] hover:bg-primary/90",
-        destructive: "bg-red-500 text-white shadow-[0_12px_28px_rgba(239,68,68,0.24)] hover:bg-red-600",
-        outline: "ios-glass-control text-slate-900 hover:bg-white/75 dark:text-white dark:hover:bg-white/10",
-        secondary: "ios-glass-control text-slate-900 hover:bg-white/75 dark:text-white dark:hover:bg-white/10",
-        ghost: "text-slate-800 hover:bg-white/55 dark:text-white dark:hover:bg-white/10",
+        default: "btn-swipe btn-swipe-default shadow-[0_12px_28px_rgba(0,122,255,0.12)]",
+        destructive: "btn-swipe btn-swipe-destructive shadow-[0_12px_28px_rgba(239,68,68,0.12)]",
+        outline: "btn-swipe btn-swipe-outline",
+        secondary: "btn-swipe btn-swipe-secondary",
+        ghost: "btn-swipe btn-swipe-ghost",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
