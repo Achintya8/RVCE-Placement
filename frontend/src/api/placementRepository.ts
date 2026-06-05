@@ -109,6 +109,11 @@ export class PlacementRepository {
     return list.map((item) => parseFormSummary(item as Record<string, unknown>))
   }
 
+  async getProfileDataForms(): Promise<PlacementFormDetail[]> {
+    const list = await this.client.getList('/forms/profile-data')
+    return list.map((item) => parseFormDetail(item as Record<string, unknown>))
+  }
+
   async getAllForms(): Promise<PlacementFormSummary[]> {
     const list = await this.client.getList('/forms')
     return list.map((item) => parseFormSummary(item as Record<string, unknown>))
@@ -243,6 +248,11 @@ export class PlacementRepository {
   async getStudents(): Promise<StudentSummary[]> {
     const list = await this.client.getList('/users/students')
     return list.map((item) => parseStudent(item as Record<string, unknown>))
+  }
+
+  async getStudentProfileData(studentId: number): Promise<PlacementFormDetail[]> {
+    const list = await this.client.getList(`/users/students/${studentId}/profile-data`)
+    return list.map((item) => parseFormDetail(item as Record<string, unknown>))
   }
 
   async verifyStudent(studentId: number): Promise<void> {

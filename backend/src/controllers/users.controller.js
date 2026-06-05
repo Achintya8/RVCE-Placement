@@ -2,6 +2,7 @@ import multer from 'multer';
 import { z } from 'zod';
 
 import { findUserById, listStudents, updateUserProfile, updateUserProfilePicture, updateUserResume, updateUserVerification, requestProfileUnlock, approveProfileUnlock, updateUserPlacedStatus } from '../repositories/user.repository.js';
+import { listProfileDataFormsForStudent, getFormQuestions } from '../repositories/form.repository.js';
 import { sendToUsers } from '../services/notification.service.js';
 import { uploadProfilePicture, uploadResume } from '../services/storage.service.js';
 import { ApiError } from '../utils/apiError.js';
@@ -266,6 +267,24 @@ export const markPlaced = async (req, res, next) => {
     });
 
     res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getStudentProfileData = async (req, res, next) => {
+  try {
+    const studentId = Number(req.params.id);
+    const forms = await listProfileDataFormsForStudent(studentId);
+    const result = [];
+    for (const f of forms) {
+      const questions = await getFormQuestions(f.id, studentId);
+      result.push({
+        ...f,
+        questions,
+      });
+    }
+    res.json(result);
   } catch (error) {
     next(error);
   }

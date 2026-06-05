@@ -74,6 +74,7 @@ export const listAssignedFormsForStudent = async (studentId) => {
         ON a."company_id" = f."company_id" AND a."student_id" = $1
       INNER JOIN "users" u ON u."id" = $1
       WHERE u."verified" = TRUE
+        AND f."type" != 'profile_data'
         AND (c."status" IS NULL OR c."status" = 'ongoing')
         AND (
           f."company_id" IS NULL
@@ -91,6 +92,25 @@ export const listAssignedFormsForStudent = async (studentId) => {
           )
         )
       GROUP BY f."id", c."name"
+      ORDER BY f."created_at" DESC NULLS LAST, f."id" DESC`,
+    [studentId],
+  );
+
+  return rows.map(normalizeForm);
+};
+
+export const listProfileDataFormsForStudent = async (studentId) => {
+  const { rows } = await query(
+    `SELECT f.*,
+        COUNT(DISTINCT fqm."id") AS question_count,
+        COUNT(DISTINCT fr."id") AS response_count
+      FROM "forms" f
+      LEFT JOIN "form_question_map" fqm ON fqm."form_id" = f."id"
+      LEFT JOIN "form_responses" fr
+        ON fr."form_id" = f."id" AND fr."student_id" = $1
+      WHERE f."type" = 'profile_data'
+        AND (f."accepting_responses" = true OR fr."id" IS NOT NULL)
+      GROUP BY f."id"
       ORDER BY f."created_at" DESC NULLS LAST, f."id" DESC`,
     [studentId],
   );

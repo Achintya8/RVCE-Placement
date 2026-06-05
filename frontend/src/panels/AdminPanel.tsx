@@ -126,7 +126,7 @@ export function AdminPanel() {
   }
 
   const [fTitle, setFTitle] = useState('')
-  const [fFormType, setFFormType] = useState<'general' | 'company'>('general')
+  const [fFormType, setFFormType] = useState<'general' | 'company' | 'profile'>('general')
   const [fCompanyId, setFCompanyId] = useState<string>('')
   const [formQuestions, setFormQuestions] = useState<BuilderQuestion[]>([
     { id: 'q-1', questionText: '', fieldType: 'text', options: '', folderLink: '', isRequired: false }
@@ -191,6 +191,17 @@ export function AdminPanel() {
   const [reviewStudent, setReviewStudent] = useState<StudentSummary | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
+  const [reviewStudentProfileData, setReviewStudentProfileData] = useState<any[]>([])
+
+  useEffect(() => {
+    if (reviewStudent) {
+      repo.getStudentProfileData(reviewStudent.id)
+        .then(setReviewStudentProfileData)
+        .catch((e) => console.error('Failed to load student profile responses:', e))
+    } else {
+      setReviewStudentProfileData([])
+    }
+  }, [reviewStudent])
 
   // Forms view toggle
   const [showAllForms, setShowAllForms] = useState(false)
@@ -304,8 +315,8 @@ export function AdminPanel() {
       // 1. Create the Form
       const createdForm = await repo.createForm({
         title: fTitle.trim(),
-        type: 'custom', // Default type is 'custom' for general forms
-        companyId: fFormType === 'general' ? null : Number(fCompanyId),
+        type: fFormType === 'profile' ? 'profile_data' : 'custom',
+        companyId: fFormType === 'company' ? Number(fCompanyId) : null,
       })
 
       const formId = (createdForm as any)?.id
@@ -789,8 +800,8 @@ export function AdminPanel() {
                     <Select
                       value={fFormType}
                       onValueChange={(v) => {
-                        setFFormType(v as 'general' | 'company');
-                        if (v === 'general') setFCompanyId('');
+                        setFFormType(v as 'general' | 'company' | 'profile');
+                        if (v !== 'company') setFCompanyId('');
                       }}
                     >
                       <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11">
@@ -799,6 +810,7 @@ export function AdminPanel() {
                       <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
                         <SelectItem value="general">General (All Students)</SelectItem>
                         <SelectItem value="company">Company Specific</SelectItem>
+                        <SelectItem value="profile">Profile Collection Fields</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -968,6 +980,9 @@ export function AdminPanel() {
                       <div className="min-w-0">
                         <p className="font-bold text-slate-900 dark:text-white truncate flex items-center gap-2">
                           {f.title}
+                          <Badge variant="secondary" className="text-[10px] border-primary/20 bg-primary/10 text-primary font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                            {f.type === 'profile_data' ? 'profile fields' : f.type}
+                          </Badge>
                           {f.acceptingResponses === false && (
                             <Badge variant="outline" className="text-[10px] border-red-500/20 bg-red-500/10 text-red-400 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                               Closed
@@ -1290,9 +1305,24 @@ export function AdminPanel() {
                       {reviewStudent.placed ? <span className="text-green-500">Placed (Consent Frozen)</span> : <span className="text-muted-foreground">Not Placed</span>}
                     </p>
                   </div>
+                  {reviewStudentProfileData.flatMap((form) =>
+                    form.questions.map((q: any) => (
+                      <div key={q.id}>
+                        <Label className="text-muted-foreground">{form.summary.title}</Label>
+                        <p className="font-bold text-slate-900 dark:text-white mt-0.5">
+                          {q.fieldType === 'file' && q.answer ? (
+                            <a href={q.answer} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold truncate block">
+                              View Uploaded File
+                            </a>
+                          ) : (
+                            q.answer || '—'
+                          )}
+                        </p>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
-
             </div>
             <DialogFooter className="p-6 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex flex-col gap-4">
               {!reviewStudent.verified && (

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { useProfileStore } from '../store/useProfileStore'
-import { useAuthStore } from '../store/useAuthStore'
+import { useAuthStore, repo } from '../store/useAuthStore'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -59,6 +59,43 @@ export function ProfilePanel() {
       })
     }
   }
+
+  const [profileDataForms, setProfileDataForms] = useState<any[]>([])
+  const [dynamicValues, setDynamicValues] = useState<Record<number, Record<number, string>>>({})
+
+  const loadProfileDataForms = async () => {
+    try {
+      const forms = await repo.getProfileDataForms()
+      setProfileDataForms(forms)
+      
+      const valuesMap: Record<number, Record<number, string>> = {}
+      for (const form of forms) {
+        const formValues: Record<number, string> = {}
+        for (const q of form.questions) {
+          formValues[q.id] = q.answer ?? ''
+        }
+        valuesMap[form.summary.id] = formValues
+      }
+      setDynamicValues(valuesMap)
+    } catch (e) {
+      console.error('Failed to load dynamic profile forms:', e)
+    }
+  }
+
+  useEffect(() => {
+    void loadProfileDataForms()
+  }, [])
+
+  const handleDynamicFieldChange = (formId: number, questionId: number, value: string) => {
+    setDynamicValues((prev) => ({
+      ...prev,
+      [formId]: {
+        ...(prev[formId] ?? {}),
+        [questionId]: value,
+      },
+    }))
+  }
+
   const { 
     profile: user, 
     draft, 
@@ -82,8 +119,41 @@ export function ProfilePanel() {
   const onSave = async () => {
     setFieldErrors({})
     try {
+      // 1. Validate dynamic fields first
+      const validatedDynamicPayloads: Record<number, Record<number, string | number | boolean>> = {}
+      for (const form of profileDataForms) {
+        const answers: Record<number, string | number | boolean> = {}
+        const formVals = dynamicValues[form.summary.id] ?? {}
+        for (const q of form.questions) {
+          const raw = formVals[q.id] ?? ''
+          if (q.isRequired && !raw.trim()) {
+            toast.error(`Please fill in "${q.questionText}"`)
+            return
+          }
+          if (q.fieldType === 'number') {
+            const n = Number.parseFloat(raw)
+            answers[q.id] = Number.isNaN(n) ? raw : n
+          } else if (q.fieldType === 'boolean') {
+            answers[q.id] = raw === 'true'
+          } else {
+            answers[q.id] = raw
+          }
+        }
+        validatedDynamicPayloads[form.summary.id] = answers
+      }
+
+      // 2. Save standard profile
       await saveProfile()
-      toast.success('Profile updated.')
+
+      // 3. Save dynamic forms
+      for (const form of profileDataForms) {
+        const payload = validatedDynamicPayloads[form.summary.id]
+        await repo.submitFormResponses(form.summary.id, payload)
+      }
+
+      toast.success('Profile updated successfully.')
+      void loadProfileDataForms()
+      void fetchProfile()
     } catch (e) {
       if (e instanceof ApiClientError && e.details && Array.isArray(e.details)) {
         const errors: Record<string, string> = {}
@@ -343,6 +413,87 @@ export function ProfilePanel() {
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Dynamic Fields */}
+            {profileDataForms.flatMap((form) => 
+              form.questions.map((q: any) => {
+                const value = dynamicValues[form.summary.id]?.[q.id] ?? ''
+                const isClosed = form.summary.acceptingResponses === false
+                return (
+                  <div key={q.id} className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-600 dark:text-muted-foreground">
+                      {form.summary.title}
+                    </Label>
+                    {q.fieldType === 'text' || q.fieldType === 'number' ? (
+                      <Input
+                        type={q.fieldType === 'number' ? 'number' : 'text'}
+                        value={value}
+                        onChange={(e) => handleDynamicFieldChange(form.summary.id, q.id, e.target.value)}
+                        placeholder={`Enter ${form.summary.title.toLowerCase()}...`}
+                        disabled={isClosed || readOnly || saving}
+                        className="bg-white border-slate-200 text-slate-950 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-primary/50"
+                      />
+                    ) : q.fieldType === 'boolean' ? (
+                      <Select
+                        value={value}
+                        disabled={isClosed || readOnly || saving}
+                        onValueChange={(v) => handleDynamicFieldChange(form.summary.id, q.id, v)}
+                      >
+                        <SelectTrigger className="bg-white border-slate-200 text-slate-950 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                          <SelectValue placeholder="Select an option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">Yes</SelectItem>
+                          <SelectItem value="false">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : q.fieldType === 'dropdown' ? (
+                      <Select
+                        value={value}
+                        disabled={isClosed || readOnly || saving}
+                        onValueChange={(v) => handleDynamicFieldChange(form.summary.id, q.id, v)}
+                      >
+                        <SelectTrigger className="bg-white border-slate-200 text-slate-950 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                          <SelectValue placeholder="Choose one..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {q.options?.map((o: string) => (
+                            <SelectItem key={o} value={o}>
+                              {o}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : q.fieldType === 'file' ? (
+                      <div className="space-y-2">
+                        <Input
+                          type="file"
+                          disabled={isClosed || readOnly || saving}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            const toastId = toast.loading(`Uploading "${file.name}"...`)
+                            try {
+                              const res = await repo.uploadResponseFile(file, q.folderLink)
+                              handleDynamicFieldChange(form.summary.id, q.id, res.fileUrl)
+                              toast.success(`Uploaded "${file.name}" successfully!`, { id: toastId })
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : String(err), { id: toastId })
+                            }
+                          }}
+                          className="bg-white border-slate-200 text-slate-950 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-primary/50 cursor-pointer w-full"
+                        />
+                        {value && (
+                          <p className="text-xs text-green-600 dark:text-green-400 font-medium truncate flex items-center gap-1.5 bg-green-50 dark:bg-green-950/20 p-2.5 rounded-lg border border-green-100 dark:border-green-900/20">
+                            Uploaded! <a href={value} target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-green-700">View File</a>
+                          </p>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                )
+              })
+            )}
           </div>
         </CardContent>
         <CardFooter className="justify-end border-t border-white/45 p-4 bg-white/20 dark:border-white/10 dark:bg-white/5 sm:p-6">
