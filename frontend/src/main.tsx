@@ -9,7 +9,21 @@ import './index.css'
 import { registerSW } from 'virtual:pwa-register'
 import { toast } from 'sonner'
 
-registerSW({ immediate: true })
+const updateSW = registerSW({
+  immediate: true,
+  onNeedRefresh() {
+    toast.info('Updating to the latest version...', {
+      description: 'Refreshing to apply the new changes.',
+      duration: 3000,
+    })
+    setTimeout(() => {
+      updateSW(true)
+    }, 1500)
+  },
+  onOfflineReady() {
+    console.log('App is ready for offline use.')
+  }
+})
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', (event) => {
