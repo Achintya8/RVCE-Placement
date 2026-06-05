@@ -9,7 +9,7 @@ import type {
 import { repo } from '../store/useAuthStore'
 import { toast } from 'sonner'
 import { downloadBlob, formatDate } from '../lib/format'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -551,15 +551,14 @@ export function AdminPanel() {
     <div className="space-y-8 pb-20 animate-in fade-in duration-700">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">SPC Dashboard</h1>
-        <p className="text-muted-foreground text-sm">Manage recruitment drives, student profiles, and placement forms.</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-8 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 rounded-xl">
-          <TabsTrigger value="overview" className="rounded-lg">Overview</TabsTrigger>
-          <TabsTrigger value="companies" className="rounded-lg">Companies</TabsTrigger>
-          <TabsTrigger value="forms" className="rounded-lg">Forms</TabsTrigger>
-          <TabsTrigger value="students" className="rounded-lg">Students</TabsTrigger>
+        <TabsList className="ios-segmented-list mb-8">
+          <TabsTrigger value="overview" className="ios-segmented-trigger">Overview</TabsTrigger>
+          <TabsTrigger value="companies" className="ios-segmented-trigger">Companies</TabsTrigger>
+          <TabsTrigger value="forms" className="ios-segmented-trigger">Forms</TabsTrigger>
+          <TabsTrigger value="students" className="ios-segmented-trigger">Students</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -593,7 +592,6 @@ export function AdminPanel() {
           <Card className="glass-panel">
             <CardHeader>
               <CardTitle>Recent Companies</CardTitle>
-              <CardDescription className="text-muted-foreground">Latest placement opportunities added to the portal.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
@@ -634,7 +632,6 @@ export function AdminPanel() {
               <CardTitle className="flex items-center gap-2">
                 <Plus className="w-5 h-5 text-primary" /> Create Drive
               </CardTitle>
-              <CardDescription className="text-muted-foreground">Add a new company recruitment drive details.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -790,9 +787,6 @@ export function AdminPanel() {
                 <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white">
                   <FileText className="w-6 h-6 text-primary" /> Create Custom Form
                 </CardTitle>
-                <CardDescription className="text-slate-500 dark:text-slate-400 mt-1">
-                  Design a new form, add custom questions, and assign it to students in a single flow.
-                </CardDescription>
               </div>
             </CardHeader>
             <CardContent className="space-y-8 pt-8">
@@ -979,7 +973,6 @@ export function AdminPanel() {
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>View Submissions & Pending</CardTitle>
-                <CardDescription className="text-muted-foreground">Monitor student participation and download data.</CardDescription>
               </div>
               <Button variant="outline" onClick={() => setShowAllForms(!showAllForms)} className="border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-white/5">
                 {showAllForms ? 'Show Recent Only' : 'View All Forms'}
@@ -1043,7 +1036,6 @@ export function AdminPanel() {
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle>Student Verification</CardTitle>
-                <CardDescription className="text-muted-foreground">Verify profiles and manage placement status for students.</CardDescription>
               </div>
               <div className="relative w-full sm:w-72">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
