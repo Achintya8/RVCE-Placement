@@ -80,6 +80,7 @@ export function parseCompany(json: Record<string, unknown>): Company {
     status: json.status as string | undefined,
     consentBlocked: Boolean(json.consentBlocked),
     trackerBlocked: Boolean(json.trackerBlocked),
+    defaultConsent: Boolean(json.defaultConsent),
   }
 }
 

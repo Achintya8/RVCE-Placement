@@ -17,6 +17,7 @@ const normalizeCompany = (row) => ({
   tracker: row.application_tracker,
   consentBlocked: row.consent_blocked ?? false,
   trackerBlocked: row.tracker_blocked ?? false,
+  defaultConsent: row.default_consent ?? false,
 });
 
 export const createCompany = async (payload) => {
@@ -30,9 +31,10 @@ export const createCompany = async (payload) => {
       "test_date",
       "interview_date",
       "deadline",
+      "default_consent",
       "created_by",
       "created_at"
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
     RETURNING *`,
     [
       payload.name,
@@ -43,6 +45,7 @@ export const createCompany = async (payload) => {
       payload.testDate,
       payload.interviewDate,
       payload.deadline,
+      payload.defaultConsent ?? false,
       payload.createdBy,
     ],
   );
@@ -62,7 +65,7 @@ export const listCompanies = async (studentId) => {
 
   const { rows } = await query(
     `SELECT c.*,
-        ${studentId ? 'a."consent" AS application_consent, a."tracker" AS application_tracker' : 'NULL AS application_consent, NULL AS application_tracker'}
+        ${studentId ? 'COALESCE(a."consent", c."default_consent") AS application_consent, a."tracker" AS application_tracker' : 'NULL AS application_consent, NULL AS application_tracker'}
       FROM "companies" c
       ${joins}
       ORDER BY c."created_at" DESC NULLS LAST, c."id" DESC`,
@@ -84,7 +87,7 @@ export const findCompanyById = async (companyId, studentId = null) => {
 
   const { rows } = await query(
     `SELECT c.*,
-      ${studentId ? 'a."consent" AS application_consent, a."tracker" AS application_tracker' : 'NULL AS application_consent, NULL AS application_tracker'}
+      ${studentId ? 'COALESCE(a."consent", c."default_consent") AS application_consent, a."tracker" AS application_tracker' : 'NULL AS application_consent, NULL AS application_tracker'}
       FROM "companies" c
       ${joins}
       WHERE c."id" = $1
@@ -103,13 +106,13 @@ export const listEligibleStudentsForCompany = async (companyId) => {
         u."personal_email_id",
         u."ug_cgpa",
         u."resume_url",
-        a."consent",
+        COALESCE(a."consent", c."default_consent") AS "consent",
         a."tracker"
-      FROM "applications" a
-      INNER JOIN "users" u ON u."id" = a."student_id"
-      INNER JOIN "companies" c ON c."id" = a."company_id"
-      WHERE a."company_id" = $1
-        AND a."consent" = TRUE
+      FROM "users" u
+      CROSS JOIN "companies" c
+      LEFT JOIN "applications" a ON a."student_id" = u."id" AND a."company_id" = c."id"
+      WHERE c."id" = $1
+        AND COALESCE(a."consent", c."default_consent") = TRUE
         AND (c."min_cgpa" IS NULL OR COALESCE(NULLIF(u."first_sem_sgpa", 0), u."ug_cgpa") >= c."min_cgpa")
         AND (
           c."min_overall_cgpa" IS NULL OR (
@@ -168,7 +171,8 @@ export const updateCompany = async (companyId, payload) => {
           "stipend" = $6,
           "test_date" = $7,
           "interview_date" = $8,
-          "deadline" = $9
+          "deadline" = $9,
+          "default_consent" = $10
       WHERE "id" = $1
       RETURNING *`,
     [
@@ -181,6 +185,7 @@ export const updateCompany = async (companyId, payload) => {
       payload.testDate,
       payload.interviewDate,
       payload.deadline,
+      payload.defaultConsent ?? false,
     ]
   );
   return rows[0] ? normalizeCompany(rows[0]) : null;

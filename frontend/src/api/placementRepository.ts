@@ -225,6 +225,7 @@ export class PlacementRepository {
     testDate?: string | null
     interviewDate?: string | null
     deadline?: string | null
+    defaultConsent?: boolean
   }): Promise<void> {
     await this.client.postJson('/companies', payload)
   }
@@ -240,6 +241,7 @@ export class PlacementRepository {
       testDate?: string | null
       interviewDate?: string | null
       deadline?: string | null
+      defaultConsent?: boolean
     },
   ): Promise<Company> {
     const json = await this.client.putJson(`/companies/${companyId}`, payload)

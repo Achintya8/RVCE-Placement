@@ -115,6 +115,7 @@ export function AdminPanel() {
   const [cTest, setCTest] = useState('')
   const [cInt, setCInt] = useState('')
   const [cOverallCgpa, setCOverallCgpa] = useState('')
+  const [cDefaultConsent, setCDefaultConsent] = useState(false)
 
   // Company Edit Form State
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
@@ -125,6 +126,7 @@ export function AdminPanel() {
   const [eStip, setEStip] = useState('')
   const [eTest, setETest] = useState('')
   const [eInt, setEInt] = useState('')
+  const [eDefaultConsent, setEDefaultConsent] = useState(false)
 
   // Google Forms Style Form Builder State
   interface BuilderQuestion {
@@ -268,8 +270,9 @@ export function AdminPanel() {
         testDate: cTest.trim() || null,
         interviewDate: cInt.trim() || null,
         deadline: null,
+        defaultConsent: cDefaultConsent,
       })
-      setCName(''); setCCgpa(''); setCOverallCgpa(''); setCPkg(''); setCStip(''); setCTest(''); setCInt('')
+      setCName(''); setCCgpa(''); setCOverallCgpa(''); setCPkg(''); setCStip(''); setCTest(''); setCInt(''); setCDefaultConsent(false)
     }, 'Company created.')
 
   const startEditCompany = (company: Company) => {
@@ -281,6 +284,7 @@ export function AdminPanel() {
     setEStip(company.stipend || '')
     setETest(company.testDate || '')
     setEInt(company.interviewDate || '')
+    setEDefaultConsent(company.defaultConsent ?? false)
   }
 
   const saveEditedCompany = () => {
@@ -295,6 +299,7 @@ export function AdminPanel() {
         testDate: eTest.trim() || null,
         interviewDate: eInt.trim() || null,
         deadline: null,
+        defaultConsent: eDefaultConsent,
       })
       setEditingCompany(null)
     }, 'Company updated successfully.')
@@ -723,6 +728,21 @@ export function AdminPanel() {
                   <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" placeholder="2026-06-20" value={cInt} onChange={e => setCInt(e.target.value)} />
                 </div>
               </div>
+              <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                <Switch
+                  id="cDefaultConsent"
+                  checked={cDefaultConsent}
+                  onCheckedChange={setCDefaultConsent}
+                />
+                <div>
+                  <Label htmlFor="cDefaultConsent" className="text-sm font-semibold text-slate-900 dark:text-white cursor-pointer">Default Consent: ON</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {cDefaultConsent
+                      ? 'All eligible students will be auto-consented. They can opt out individually.'
+                      : 'Students must explicitly provide consent to participate in this drive.'}
+                  </p>
+                </div>
+              </div>
             </CardContent>
             <CardFooter className="justify-end p-6 border-t border-slate-200 dark:border-white/10">
               <Button onClick={createCompany} disabled={busy || !cName}>Add Company</Button>
@@ -1111,7 +1131,7 @@ export function AdminPanel() {
                 />
               </div>
             </CardHeader>
-            <CardContent className="p-2 sm:p-6">
+            <CardContent className="p-3 sm:p-6">
               {filteredStudents.length === 0 ? (
                 <div className="text-center py-8 text-slate-400">
                   No students found matching your search.
@@ -1128,15 +1148,15 @@ export function AdminPanel() {
                     </TableHeader>
                     <TableBody>
                       {filteredStudents.map((s) => (
-                        <TableRow 
-                          key={s.id} 
+                        <TableRow
+                          key={s.id}
                           onClick={() => setOpenDropdownId(openDropdownId === s.id ? null : s.id)}
                           className={cn(
                             "cursor-pointer border-slate-200 dark:border-white/10 select-none transition-colors",
                             s.unlockRequested
                               ? "bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-950/30 dark:hover:bg-amber-950/45"
-                              : s.verified 
-                                ? "bg-green-500/10 hover:bg-green-500/15 dark:bg-green-950/30 dark:hover:bg-green-950/45" 
+                              : s.verified
+                                ? "bg-green-500/10 hover:bg-green-500/15 dark:bg-green-950/30 dark:hover:bg-green-950/45"
                                 : "bg-red-500/10 hover:bg-red-500/15 dark:bg-red-950/30 dark:hover:bg-red-950/45"
                           )}
                         >
@@ -1147,9 +1167,9 @@ export function AdminPanel() {
                             <div className="flex items-center gap-2 sm:gap-3">
                               <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] sm:text-xs shrink-0 overflow-hidden">
                                 {s.profilePictureUrl ? (
-                                  <img 
-                                    src={s.profilePictureUrl} 
-                                    alt={s.name} 
+                                  <img
+                                    src={s.profilePictureUrl}
+                                    alt={s.name}
                                     className="h-full w-full object-cover animate-in fade-in duration-300"
                                   />
                                 ) : (
@@ -1166,17 +1186,13 @@ export function AdminPanel() {
                           <TableCell className="p-2 sm:p-4 text-right relative">
                             {openDropdownId === s.id && (
                               <div onClick={(e) => e.stopPropagation()}>
-                                <div 
-                                  className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm sm:bg-transparent sm:backdrop-blur-none z-30" 
-                                  onClick={() => setOpenDropdownId(null)} 
+                                <div
+                                  className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm sm:bg-transparent sm:backdrop-blur-none z-30"
+                                  onClick={() => setOpenDropdownId(null)}
                                 />
                                 <div className="fixed bottom-0 left-0 right-0 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-2 w-full sm:w-56 rounded-t-2xl sm:rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-1.5 shadow-2xl sm:shadow-lg shadow-slate-900/20 dark:shadow-black/50 z-40 text-left animate-in slide-in-from-bottom duration-250 sm:animate-none">
-                                  {/* Drag handler pill on mobile */}
                                   <div className="w-12 h-1 bg-slate-200 dark:bg-white/10 rounded-full mx-auto mb-3 sm:hidden" />
-                                  
-                                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                    Status
-                                  </div>
+                                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</div>
                                   <div className="px-3 pb-2 flex flex-wrap gap-1.5 border-b border-slate-100 dark:border-white/10">
                                     {s.verified ? (
                                       <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/15 border-green-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Verified</Badge>
@@ -1190,43 +1206,28 @@ export function AdminPanel() {
                                       <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/15 border-emerald-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Placed</Badge>
                                     )}
                                   </div>
-                                  
-                                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">
-                                    Actions
-                                  </div>
+                                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">Actions</div>
                                   <button
-                                    onClick={() => {
-                                      setOpenDropdownId(null)
-                                      setReviewStudent(s)
-                                    }}
-                                    className="w-full text-left px-3 py-2.5 sm:py-2 text-xs sm:text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 flex items-center gap-2"
+                                    onClick={() => { setOpenDropdownId(null); setReviewStudent(s) }}
+                                    className="w-full text-left px-3 py-2.5 sm:py-2 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 flex items-center gap-2"
                                   >
                                     <Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-slate-400" />
                                     {s.verified ? "View Profile" : "Review Profile"}
                                   </button>
-                                  
                                   {s.unlockRequested && (
                                     <button
-                                      onClick={() => {
-                                        setOpenDropdownId(null)
-                                        void approveUnlock(s.id)
-                                      }}
-                                      className="w-full text-left px-3 py-2.5 sm:py-2 text-xs sm:text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-amber-500 dark:text-amber-400 flex items-center gap-2"
+                                      onClick={() => { setOpenDropdownId(null); void approveUnlock(s.id) }}
+                                      className="w-full text-left px-3 py-2.5 sm:py-2 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-amber-500 dark:text-amber-400 flex items-center gap-2"
                                     >
                                       <Unlock className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-amber-400" />
                                       Approve Unlock
                                     </button>
                                   )}
-                                  
                                   <div className="h-px bg-slate-100 dark:bg-white/10 my-1" />
-                                  
                                   <button
-                                    onClick={() => {
-                                      setOpenDropdownId(null)
-                                      void handleTogglePlaced(s.id, !s.placed)
-                                    }}
+                                    onClick={() => { setOpenDropdownId(null); void handleTogglePlaced(s.id, !s.placed) }}
                                     className={cn(
-                                      "w-full text-left px-3 py-2.5 sm:py-2 text-xs sm:text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-2",
+                                      "w-full text-left px-3 py-2.5 sm:py-2 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-2",
                                       s.placed ? "text-red-500 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"
                                     )}
                                   >
@@ -1594,6 +1595,23 @@ export function AdminPanel() {
                     value={eInt ? eInt.substring(0, 10) : ''} 
                     onChange={e => setEInt(e.target.value)} 
                   />
+                </div>
+              </div>
+
+              {/* Default Consent */}
+              <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                <Switch
+                  id="eDefaultConsent"
+                  checked={eDefaultConsent}
+                  onCheckedChange={setEDefaultConsent}
+                />
+                <div>
+                  <Label htmlFor="eDefaultConsent" className="text-sm font-semibold text-slate-900 dark:text-white cursor-pointer">Default Consent: ON</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {eDefaultConsent
+                      ? 'All eligible students will be auto-consented. They can opt out individually.'
+                      : 'Students must explicitly provide consent to participate in this drive.'}
+                  </p>
                 </div>
               </div>
             </div>
