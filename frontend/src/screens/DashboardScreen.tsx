@@ -184,17 +184,19 @@ export default function DashboardScreen() {
 
       {/* ── CHAT LAYOUT: bottom nav + full-height chat ────────────── */}
       {active.id === 'chat' ? (
-        <div className="flex flex-col h-screen w-full overflow-hidden pb-20">
+        <div className="flex flex-col h-screen w-full overflow-hidden pb-0 md:pb-20">
           {/* Chat fills remaining space */}
           <div className="flex-1 min-h-0 w-full overflow-hidden">
             <ChatPanel />
           </div>
 
-          {/* Floating Dock for Chat */}
+          {/* Floating Dock for Chat (Top-left Menu button on Mobile) */}
           <FloatingDock
             items={dockItems}
-            desktopClassName="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
-            mobileClassName="fixed bottom-6 right-6 z-50"
+            desktopClassName="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden md:flex gap-8 px-10 pb-3"
+            mobileClassName="fixed top-6 left-6 z-50 block md:hidden"
+            mobileExpandDirection="down"
+            mobileAlign="left"
           />
         </div>
       ) : (
@@ -226,11 +228,11 @@ export default function DashboardScreen() {
             {active.element}
           </main>
 
-          {/* Floating Dock for Default Layout */}
+          {/* Floating Dock for Default Layout (Keep Dock only on Mobile) */}
           <FloatingDock
             items={dockItems}
-            desktopClassName="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
-            mobileClassName="fixed bottom-6 right-6 z-50"
+            desktopClassName="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-3 sm:gap-6 md:gap-8 px-4 sm:px-6 md:px-10 pb-3"
+            mobileClassName="hidden"
           />
         </>
       )}

@@ -14,15 +14,24 @@ export function FloatingDock({
   items,
   desktopClassName,
   mobileClassName,
+  mobileExpandDirection = 'up',
+  mobileAlign = 'right',
 }: {
   items: FloatingDockItem[]
   desktopClassName?: string
   mobileClassName?: string
+  mobileExpandDirection?: 'up' | 'down'
+  mobileAlign?: 'left' | 'right'
 }) {
   return (
     <>
       <FloatingDockDesktop items={items} className={desktopClassName} />
-      <FloatingDockMobile items={items} className={mobileClassName} />
+      <FloatingDockMobile
+        items={items}
+        className={mobileClassName}
+        expandDirection={mobileExpandDirection}
+        align={mobileAlign}
+      />
     </>
   )
 }
@@ -35,18 +44,66 @@ function FloatingDockDesktop({
   className?: string
 }) {
   const mouseX = useMotionValue(Infinity)
+  const [activeTouchTitle, setActiveTouchTitle] = useState<string | null>(null)
+
+  const updateTouchActiveItem = (clientX: number, clientY: number) => {
+    const element = document.elementFromPoint(clientX, clientY)
+    if (!element) return
+    const container = element.closest('[data-dock-title]')
+    if (container) {
+      const title = container.getAttribute('data-dock-title')
+      setActiveTouchTitle(title)
+    } else {
+      setActiveTouchTitle(null)
+    }
+  }
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length > 0) {
+      const touch = e.touches[0]
+      mouseX.set(touch.pageX)
+      updateTouchActiveItem(touch.clientX, touch.clientY)
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length > 0) {
+      const touch = e.touches[0]
+      mouseX.set(touch.pageX)
+      updateTouchActiveItem(touch.clientX, touch.clientY)
+    }
+  }
+
+  const handleTouchEnd = () => {
+    mouseX.set(Infinity)
+    if (activeTouchTitle) {
+      const item = items.find((i) => i.title === activeTouchTitle)
+      if (item && item.onClick) {
+        item.onClick()
+      }
+    }
+    setActiveTouchTitle(null)
+  }
 
   return (
     <motion.div
       onMouseMove={(e: React.MouseEvent) => mouseX.set(e.pageX)}
       onMouseLeave={() => mouseX.set(Infinity)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       className={cn(
-        'mx-auto hidden md:flex h-16 gap-8 items-end rounded-2xl bg-white/90 dark:bg-slate-900/90 px-10 pb-3 shadow-[0_12px_32px_rgba(15,23,42,0.12)] border border-slate-200 dark:border-white/10 backdrop-blur-xl',
+        'mx-auto flex h-16 items-end rounded-2xl bg-white/90 dark:bg-slate-900/90 shadow-[0_12px_32px_rgba(15,23,42,0.12)] border border-slate-200 dark:border-white/10 backdrop-blur-xl touch-none',
         className
       )}
     >
       {items.map((item) => (
-        <IconContainer mouseX={mouseX} key={item.title} {...item} />
+        <IconContainer
+          mouseX={mouseX}
+          key={item.title}
+          {...item}
+          isTouchHovered={activeTouchTitle === item.title}
+        />
       ))}
     </motion.div>
   )
@@ -59,7 +116,8 @@ function IconContainer({
   href,
   onClick,
   active,
-}: FloatingDockItem & { mouseX: any }) {
+  isTouchHovered = false,
+}: FloatingDockItem & { mouseX: any; isTouchHovered?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
 
   const distance = useTransform(mouseX, (val: number) => {
@@ -100,6 +158,7 @@ function IconContainer({
   const content = (
     <motion.div
       ref={ref}
+      data-dock-title={title}
       style={{ width, height }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -107,12 +166,14 @@ function IconContainer({
         'relative rounded-full flex items-center justify-center transition-colors cursor-pointer',
         active
           ? 'bg-primary text-white shadow-md shadow-primary/30'
-          : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+          : (hovered || isTouchHovered)
+            ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white'
+            : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
       )}
       onClick={onClick}
     >
       <AnimatePresence>
-        {hovered && (
+        {(hovered || isTouchHovered) && (
           <motion.div
             initial={{ opacity: 0, y: 10, x: '-50%' }}
             animate={{ opacity: 1, y: 0, x: '-50%' }}
@@ -144,19 +205,27 @@ function IconContainer({
 function FloatingDockMobile({
   items,
   className,
+  expandDirection = 'up',
+  align = 'right',
 }: {
   items: FloatingDockItem[]
   className?: string
+  expandDirection?: 'up' | 'down'
+  align?: 'left' | 'right'
 }) {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className={cn('relative block md:hidden', className)}>
+    <div className={className}>
       <AnimatePresence>
         {open && (
           <motion.div
             layoutId="nav"
-            className="absolute bottom-full mb-3 right-0 flex flex-col gap-2 items-end z-50"
+            className={cn(
+              "absolute z-50 flex flex-col gap-2",
+              expandDirection === 'up' ? "bottom-full mb-3" : "top-full mt-3",
+              align === 'left' ? "left-0 items-start" : "right-0 items-end"
+            )}
           >
             {items.map((item, idx) => (
               <motion.div
@@ -213,3 +282,4 @@ function FloatingDockMobile({
     </div>
   )
 }
+
