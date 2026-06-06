@@ -194,7 +194,7 @@ export default function DashboardScreen() {
           <FloatingDock
             items={dockItems}
             desktopClassName="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden md:flex gap-8 px-10 pb-3"
-            mobileClassName="fixed top-6 left-6 z-50 block md:hidden"
+            mobileClassName="fixed left-3 z-50 block md:hidden top-safe-mobile-menu"
             mobileExpandDirection="down"
             mobileAlign="left"
           />

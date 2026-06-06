@@ -214,6 +214,56 @@ function FloatingDockMobile({
   align?: 'left' | 'right'
 }) {
   const [open, setOpen] = useState(false)
+  const [activeTouchTitle, setActiveTouchTitle] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const touchStartPos = useRef({ x: 0, y: 0 })
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0]
+    touchStartPos.current = { x: touch.clientX, y: touch.clientY }
+    setIsDragging(false)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0]
+    const dx = touch.clientX - touchStartPos.current.x
+    const dy = touch.clientY - touchStartPos.current.y
+    const distance = Math.sqrt(dx * dx + dy * dy)
+
+    if (distance > 10) {
+      if (!isDragging) {
+        setIsDragging(true)
+        setOpen(true)
+      }
+      e.preventDefault()
+
+      const element = document.elementFromPoint(touch.clientX, touch.clientY)
+      if (element) {
+        const container = element.closest('[data-mobile-dock-title]')
+        if (container) {
+          const title = container.getAttribute('data-mobile-dock-title')
+          setActiveTouchTitle(title)
+        } else {
+          setActiveTouchTitle(null)
+        }
+      }
+    }
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (isDragging) {
+      e.preventDefault()
+      if (activeTouchTitle) {
+        const item = items.find((i) => i.title === activeTouchTitle)
+        if (item && item.onClick) {
+          item.onClick()
+        }
+      }
+      setOpen(false)
+    }
+    setActiveTouchTitle(null)
+    setIsDragging(false)
+  }
 
   return (
     <div className={className}>
@@ -252,15 +302,18 @@ function FloatingDockMobile({
                 </div>
                 <button
                   type="button"
+                  data-mobile-dock-title={item.title}
                   onClick={() => {
                     item.onClick?.()
                     setOpen(false)
                   }}
                   className={cn(
-                    'h-11 w-11 rounded-full flex items-center justify-center border shadow-lg cursor-pointer transition-colors',
+                    'h-11 w-11 rounded-full flex items-center justify-center border shadow-lg cursor-pointer transition-all duration-150',
                     item.active
                       ? 'bg-primary text-white border-primary/20 shadow-primary/20'
-                      : 'bg-white border-slate-200 dark:bg-slate-900 dark:border-white/10 text-slate-600 dark:text-slate-300'
+                      : activeTouchTitle === item.title
+                        ? 'bg-slate-200 border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white scale-110 shadow-md shadow-slate-300/30'
+                        : 'bg-white border-slate-200 dark:bg-slate-900 dark:border-white/10 text-slate-600 dark:text-slate-300'
                   )}
                 >
                   <div className="h-5 w-5 flex items-center justify-center [&>svg]:h-full [&>svg]:w-full [&>img]:h-full [&>img]:w-full [&>img]:object-cover [&>img]:rounded-full">
@@ -274,12 +327,20 @@ function FloatingDockMobile({
       </AnimatePresence>
       <button
         type="button"
-        onClick={() => setOpen(!open)}
-        className="h-12 w-12 rounded-full bg-primary hover:bg-primary-hover text-white flex items-center justify-center shadow-lg cursor-pointer border border-primary/10 transition-transform active:scale-95"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onClick={() => {
+          if (!isDragging) {
+            setOpen((prev) => !prev)
+          }
+        }}
+        className="h-10 w-10 rounded-full bg-primary hover:bg-primary-hover text-white flex items-center justify-center shadow-md cursor-pointer border border-primary/10 transition-transform active:scale-95"
       >
-        <span className="text-xl font-bold">{open ? '✕' : '☰'}</span>
+        <span className="text-lg font-bold">{open ? '✕' : '☰'}</span>
       </button>
     </div>
   )
 }
+
 

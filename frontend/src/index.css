@@ -283,6 +283,16 @@
   .rv-skeleton-static::after {
     display: none;
   }
+
+  .top-safe-mobile-menu {
+    top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+  }
+  .top-safe-chat-header {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+  }
+  .top-safe-chat-search {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
