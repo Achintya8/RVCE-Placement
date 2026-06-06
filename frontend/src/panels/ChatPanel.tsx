@@ -122,6 +122,18 @@ export function ChatPanel() {
     void repo.getAllUsersForMention().then(setUsers).catch(console.error)
   }, [])
 
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((registration) => {
+        if ('getNotifications' in registration) {
+          void registration.getNotifications({ tag: 'chat_notification' }).then((notifications) => {
+            notifications.forEach((n) => n.close())
+          })
+        }
+      }).catch(console.error)
+    }
+  }, [])
+
   // Track scroll position to know if user is near the bottom
   useEffect(() => {
     const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
@@ -260,7 +272,7 @@ export function ChatPanel() {
   const renderMessageText = (msg: ChatMessage, isMe: boolean) => {
     const md = prepareMarkdown(msg)
     return (
-      <div className="break-words">
+      <div className="break-words [word-break:break-word] [overflow-wrap:anywhere] w-full">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
@@ -324,6 +336,30 @@ export function ChatPanel() {
             </div>
           ) : (
             <>
+              {/* Chat Header (visible when not searching) */}
+              {!searchActive && (
+                <div className="flex items-center justify-between bg-white dark:bg-slate-900 px-4 py-3 border-b border-slate-200 dark:border-white/10 shadow-sm z-40 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col text-left">
+                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Placement Discussion Group</span>
+                      <span className="text-[11px] text-emerald-500 font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Online
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => setSearchActive(true)}
+                    variant="ghost"
+                    size="icon"
+                    className="w-9 h-9 rounded-full text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    title="Search messages"
+                  >
+                    <Search className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+
               {/* Animated Search Bar */}
               {searchActive && (
                 <div className="flex items-center justify-between bg-white dark:bg-slate-900 px-4 py-2.5 border-b border-slate-200 dark:border-white/10 shadow-sm animate-in slide-in-from-top duration-200 z-50">
@@ -382,19 +418,6 @@ export function ChatPanel() {
                     </Button>
                   </div>
                 </div>
-              )}
-
-              {/* Floating Search Toggle Button */}
-              {!searchActive && (
-                <Button
-                  onClick={() => setSearchActive(true)}
-                  variant="secondary"
-                  size="icon"
-                  className="absolute top-4 right-4 z-40 rounded-full w-10 h-10 shadow-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-300 backdrop-blur-md opacity-90 hover:opacity-100 scale-100 active:scale-95"
-                  title="Search messages"
-                >
-                  <Search className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-                </Button>
               )}
 
               {/* WhatsApp-style scroll to bottom button */}

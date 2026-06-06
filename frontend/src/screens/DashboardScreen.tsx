@@ -12,8 +12,6 @@ import {
   FileText, 
   MessageSquare, 
   Settings,
-  Menu,
-  X,
 } from 'lucide-react'
 import { CollegeLogo } from '@/components/modern/CollegeLogo'
 import { cn } from '@/lib/utils'
@@ -48,7 +46,6 @@ export default function DashboardScreen() {
     return localStorage.getItem('dashboard_active_panel') || 'companies'
   })
   const [showHeader, setShowHeader] = useState(true)
-  const [menuOpen, setMenuOpen] = useState(false)
 
   const changePanel = (id: string) => {
     setSelectedPanelId(id)
@@ -147,6 +144,18 @@ export default function DashboardScreen() {
     }
   }, [session])
 
+  useEffect(() => {
+    if (selectedPanelId === 'chat' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((registration) => {
+        if ('getNotifications' in registration) {
+          void registration.getNotifications({ tag: 'chat_notification' }).then((notifications) => {
+            notifications.forEach((n) => n.close())
+          })
+        }
+      }).catch(console.error)
+    }
+  }, [selectedPanelId])
+
   if (!session) return null
 
   const safeIndex = useMemo(() => {
@@ -159,57 +168,35 @@ export default function DashboardScreen() {
   return (
     <div className="min-h-screen ios-glass-screen text-slate-950 dark:text-white">
 
-      {/* ── CHAT LAYOUT: hamburger button + full-height chat ────────────── */}
+      {/* ── CHAT LAYOUT: bottom nav + full-height chat ────────────── */}
       {active.id === 'chat' ? (
-        <div className="relative h-screen w-full overflow-hidden">
-
-          {/* Hamburger button — top-left corner */}
-          <button
-            type="button"
-            onClick={() => setMenuOpen((o) => !o)}
-            className="absolute top-3 left-3 z-[60] flex items-center justify-center w-9 h-9 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-md backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95"
-            aria-label="Navigation menu"
-          >
-            {menuOpen ? <X className="w-4 h-4 text-slate-700 dark:text-slate-200" /> : <Menu className="w-4 h-4 text-slate-700 dark:text-slate-200" />}
-          </button>
-
-          {/* Dropdown menu */}
-          {menuOpen && (
-            <>
-              {/* Backdrop */}
-              <div
-                className="absolute inset-0 z-[55]"
-                onClick={() => setMenuOpen(false)}
-              />
-              {/* Menu panel */}
-              <div className="absolute top-14 left-3 z-[60] min-w-[170px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 origin-top-left">
-                {panels.map((p, i) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => { changePanel(p.id); setMenuOpen(false) }}
-                    className={cn(
-                      "flex items-center gap-3 w-full px-4 py-3 text-sm font-medium transition-colors text-left",
-                      i === safeIndex
-                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
-                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                    )}
-                  >
-                    {p.icon}
-                    {p.label}
-                    {i === safeIndex && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* Chat fills full space */}
-          <div className="h-full w-full overflow-hidden">
+        <div className="flex flex-col h-screen w-full overflow-hidden">
+          {/* Chat fills remaining space */}
+          <div className="flex-1 min-h-0 w-full overflow-hidden">
             <ChatPanel />
           </div>
-        </div>
 
+          {/* Bottom navigation bar visible in chat */}
+          <nav className="z-50 border-t border-slate-200 bg-white/90 px-2 py-2 shadow-[0_-12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
+            <div className="mx-auto flex max-w-3xl justify-around gap-1 sm:justify-center sm:gap-2">
+            {panels.map((p, i) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => changePanel(p.id)}
+                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[10px] sm:text-xs font-semibold transition-all sm:min-w-24 sm:flex-none sm:px-4 ${
+                  i === safeIndex
+                    ? 'bg-primary text-white shadow-md shadow-primary/20 dark:bg-primary dark:text-white dark:shadow-md dark:shadow-primary/30'
+                    : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
+                }`}
+              >
+                {p.icon}
+                <span className="max-w-full truncate">{p.label}</span>
+              </button>
+            ))}
+            </div>
+          </nav>
+        </div>
       ) : (
         /* ── DEFAULT LAYOUT: top header + bottom nav ──────────────────────── */
         <>
