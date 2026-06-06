@@ -16,6 +16,8 @@ import {
 import { CollegeLogo } from '@/components/modern/CollegeLogo'
 import { cn } from '@/lib/utils'
 import { registerNotificationsSafely } from '../notifications/registerNotifications'
+import { FloatingDock } from '@/components/ui/floating-dock'
+
 
 type Panel = {
   id: string
@@ -165,37 +167,35 @@ export default function DashboardScreen() {
 
   const active = panels[safeIndex] ?? panels[0]
 
+  const dockItems = useMemo(
+    () =>
+      panels.map((p, i) => ({
+        title: p.label,
+        icon: p.icon,
+        onClick: () => changePanel(p.id),
+        active: i === safeIndex,
+      })),
+    [panels, safeIndex]
+  )
+
+
   return (
     <div className="min-h-screen ios-glass-screen text-slate-950 dark:text-white">
 
       {/* ── CHAT LAYOUT: bottom nav + full-height chat ────────────── */}
       {active.id === 'chat' ? (
-        <div className="flex flex-col h-screen w-full overflow-hidden">
+        <div className="flex flex-col h-screen w-full overflow-hidden pb-20">
           {/* Chat fills remaining space */}
           <div className="flex-1 min-h-0 w-full overflow-hidden">
             <ChatPanel />
           </div>
 
-          {/* Bottom navigation bar visible in chat */}
-          <nav className="z-50 border-t border-slate-200 bg-white/90 px-2 py-2 shadow-[0_-12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
-            <div className="mx-auto flex max-w-3xl justify-around gap-1 sm:justify-center sm:gap-2">
-            {panels.map((p, i) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => changePanel(p.id)}
-                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[10px] sm:text-xs font-semibold transition-all sm:min-w-24 sm:flex-none sm:px-4 ${
-                  i === safeIndex
-                    ? 'bg-primary text-white shadow-md shadow-primary/20 dark:bg-primary dark:text-white dark:shadow-md dark:shadow-primary/30'
-                    : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
-                }`}
-              >
-                {p.icon}
-                <span className="max-w-full truncate">{p.label}</span>
-              </button>
-            ))}
-            </div>
-          </nav>
+          {/* Floating Dock for Chat */}
+          <FloatingDock
+            items={dockItems}
+            desktopClassName="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+            mobileClassName="fixed bottom-6 right-6 z-50"
+          />
         </div>
       ) : (
         /* ── DEFAULT LAYOUT: top header + bottom nav ──────────────────────── */
@@ -226,25 +226,12 @@ export default function DashboardScreen() {
             {active.element}
           </main>
 
-          <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/90 px-2 py-2 shadow-[0_-12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
-            <div className="mx-auto flex max-w-3xl justify-around gap-1 sm:justify-center sm:gap-2">
-            {panels.map((p, i) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => changePanel(p.id)}
-                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[10px] sm:text-xs font-semibold transition-all sm:min-w-24 sm:flex-none sm:px-4 ${
-                  i === safeIndex
-                    ? 'bg-primary text-white shadow-md shadow-primary/20 dark:bg-primary dark:text-white dark:shadow-md dark:shadow-primary/30'
-                    : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
-                }`}
-              >
-                {p.icon}
-                <span className="max-w-full truncate">{p.label}</span>
-              </button>
-            ))}
-            </div>
-          </nav>
+          {/* Floating Dock for Default Layout */}
+          <FloatingDock
+            items={dockItems}
+            desktopClassName="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+            mobileClassName="fixed bottom-6 right-6 z-50"
+          />
         </>
       )}
     </div>
