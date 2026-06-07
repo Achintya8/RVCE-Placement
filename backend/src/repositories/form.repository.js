@@ -231,7 +231,10 @@ export const getPendingStudentsForForm = async (formId) => {
 
   if (form.companyId) {
     params.push(form.companyId);
-    joinApplications = `LEFT JOIN "applications" a ON a."student_id" = u."id" AND a."company_id" = $2`;
+    joinApplications = `
+      LEFT JOIN "applications" a ON a."student_id" = u."id" AND a."company_id" = $2
+      LEFT JOIN "companies" c ON c."id" = $2
+    `;
     
     // Fetch company to get criteria and deadline
     const { rows: companyRows } = await query(
