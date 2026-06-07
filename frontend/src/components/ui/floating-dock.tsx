@@ -87,7 +87,11 @@ function FloatingDockDesktop({
 
   return (
     <motion.div
-      onMouseMove={(e: React.MouseEvent) => mouseX.set(e.pageX)}
+      onMouseMove={(e: React.MouseEvent) => {
+        if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+          mouseX.set(e.pageX)
+        }
+      }}
       onMouseLeave={() => mouseX.set(Infinity)}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -160,7 +164,11 @@ function IconContainer({
       ref={ref}
       data-dock-title={title}
       style={{ width, height }}
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={() => {
+        if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+          setHovered(true)
+        }
+      }}
       onMouseLeave={() => setHovered(false)}
       className={cn(
         'relative rounded-full flex items-center justify-center transition-colors cursor-pointer',

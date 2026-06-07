@@ -18,6 +18,10 @@ export type AppUser = {
   unlockRequested?: boolean
   placed?: boolean
   gender?: string | null
+  rejected?: boolean
+  rejectionReason?: string | null
+  rejectedFields?: string[] | null
+  lastVerifiedProfile?: Record<string, any> | null
 }
 
 export type Session = {

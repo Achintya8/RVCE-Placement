@@ -52,6 +52,12 @@ export function parseAppUser(json: Record<string, unknown>): AppUser {
     unlockRequested: Boolean(json.unlockRequested),
     placed: Boolean(json.placed),
     gender: json.gender as string | null | undefined,
+    rejected: Boolean(json.rejected),
+    rejectionReason: json.rejectionReason as string | null | undefined,
+    rejectedFields: Array.isArray(json.rejectedFields) ? json.rejectedFields.map(String) : null,
+    lastVerifiedProfile: typeof json.lastVerifiedProfile === 'string'
+      ? (JSON.parse(json.lastVerifiedProfile) as Record<string, any>)
+      : (json.lastVerifiedProfile as Record<string, any> | null | undefined),
   }
 }
 

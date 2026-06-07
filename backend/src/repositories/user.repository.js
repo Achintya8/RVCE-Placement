@@ -27,6 +27,12 @@ const normalizeUser = (row) => {
     unlockRequested: row.unlock_requested ?? false,
     placed: row.placed ?? false,
     gender: row.gender ?? null,
+    rejected: row.rejected ?? false,
+    rejectionReason: row.rejection_reason ?? null,
+    rejectedFields: row.rejected_fields ?? null,
+    lastVerifiedProfile: typeof row.last_verified_profile === 'string'
+      ? JSON.parse(row.last_verified_profile)
+      : (row.last_verified_profile ?? null),
     createdAt: row.created_at,
   };
 };
@@ -98,7 +104,11 @@ export const updateUserProfile = async (userId, payload) => {
           "first_sem_sgpa" = $11,
           "tenth_marks" = $12,
           "twelfth_marks" = $13,
-          "gender" = $14
+          "gender" = $14,
+          "verified" = false,
+          "rejected" = false,
+          "rejection_reason" = null,
+          "rejected_fields" = null
     WHERE "id" = $1
     RETURNING *`,
     [
@@ -124,7 +134,7 @@ export const updateUserProfile = async (userId, payload) => {
 
 export const updateUserResume = async (userId, resumeUrl) => {
   const { rows } = await query(
-    'UPDATE "users" SET "resume_url" = $2 WHERE "id" = $1 RETURNING *',
+    'UPDATE "users" SET "resume_url" = $2, "verified" = false, "rejected" = false, "rejection_reason" = null, "rejected_fields" = null WHERE "id" = $1 RETURNING *',
     [userId, resumeUrl],
   );
 
@@ -133,7 +143,7 @@ export const updateUserResume = async (userId, resumeUrl) => {
 
 export const updateUserProfilePicture = async (userId, profilePictureUrl) => {
   const { rows } = await query(
-    'UPDATE "users" SET "profile_picture_url" = $2 WHERE "id" = $1 RETURNING *',
+    'UPDATE "users" SET "profile_picture_url" = $2, "verified" = false, "rejected" = false, "rejection_reason" = null, "rejected_fields" = null WHERE "id" = $1 RETURNING *',
     [userId, profilePictureUrl],
   );
 
@@ -153,12 +163,46 @@ export const updateUserGoogleProfilePicture = async (userId, profilePictureUrl) 
 };
 
 export const updateUserVerification = async (userId, verified) => {
-  const { rows } = await query(
-    'UPDATE "users" SET "verified" = $2 WHERE "id" = $1 RETURNING *',
-    [userId, verified],
-  );
+  if (verified) {
+    const { rows: currentRows } = await query('SELECT * FROM "users" WHERE "id" = $1', [userId]);
+    const row = currentRows[0];
+    const snapshot = row ? {
+      name: row.name,
+      usn: row.usn,
+      collegeEmailId: row.college_email_id,
+      personalEmailId: row.personal_email_id,
+      phoneNumber: row.phone_number ? row.phone_number.toString() : '',
+      aadhar: row.aadhar,
+      gender: row.gender,
+      ugCgpa: row.ug_cgpa,
+      firstSemSgpa: row.first_sem_sgpa,
+      tenthMarks: row.tenth_marks,
+      twelfthMarks: row.twelfth_marks,
+      linkedIn: row.linkedIn,
+      gitHub: row.gitHub,
+      resumeUrl: row.resume_url,
+      profilePictureUrl: row.profile_picture_url
+    } : null;
 
-  return normalizeUser(rows[0]);
+    const { rows } = await query(
+      `UPDATE "users"
+       SET "verified" = $2,
+           "rejected" = false,
+           "rejection_reason" = null,
+           "rejected_fields" = null,
+           "last_verified_profile" = $3
+       WHERE "id" = $1
+       RETURNING *`,
+      [userId, verified, snapshot ? JSON.stringify(snapshot) : null],
+    );
+    return normalizeUser(rows[0]);
+  } else {
+    const { rows } = await query(
+      'UPDATE "users" SET "verified" = $2 WHERE "id" = $1 RETURNING *',
+      [userId, verified],
+    );
+    return normalizeUser(rows[0]);
+  }
 };
 
 export const requestProfileUnlock = async (userId) => {
@@ -227,6 +271,20 @@ export const updateUserPlacedStatus = async (userId, placed) => {
   const { rows } = await query(
     'UPDATE "users" SET "placed" = $2 WHERE "id" = $1 RETURNING *',
     [userId, placed],
+  );
+  return normalizeUser(rows[0]);
+};
+
+export const rejectStudentProfile = async (userId, reason, rejectedFields) => {
+  const { rows } = await query(
+    `UPDATE "users"
+     SET "verified" = false,
+         "rejected" = true,
+         "rejection_reason" = $2,
+         "rejected_fields" = $3
+     WHERE "id" = $1
+     RETURNING *`,
+    [userId, reason, JSON.stringify(rejectedFields)],
   );
   return normalizeUser(rows[0]);
 };
