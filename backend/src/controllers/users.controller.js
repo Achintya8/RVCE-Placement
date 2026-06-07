@@ -1,7 +1,7 @@
 import multer from 'multer';
 import { z } from 'zod';
 
-import { findUserById, listStudents, updateUserProfile, updateUserProfilePicture, updateUserResume, updateUserVerification, requestProfileUnlock, approveProfileUnlock, updateUserPlacedStatus } from '../repositories/user.repository.js';
+import { findUserById, listStudents, updateUserProfile, updateUserProfilePicture, updateUserResume, updateUserVerification, requestProfileUnlock, approveProfileUnlock, updateUserPlacedStatus, rejectStudentProfile } from '../repositories/user.repository.js';
 import { listProfileDataFormsForStudent, getFormQuestions } from '../repositories/form.repository.js';
 import { sendToUsers } from '../services/notification.service.js';
 import { uploadProfilePicture, uploadResume } from '../services/storage.service.js';
@@ -136,7 +136,7 @@ export const uploadMyProfilePicture = async (req, res, next) => {
 export const rejectStudent = async (req, res, next) => {
   try {
     const studentId = Number(req.params.id);
-    const { reason } = req.body;
+    const { reason, rejectedFields } = req.body;
     const student = await findUserById(studentId);
 
     if (!student) {
@@ -147,16 +147,45 @@ export const rejectStudent = async (req, res, next) => {
       throw new ApiError(400, 'Rejection reason is required.');
     }
 
+    const fields = Array.isArray(rejectedFields) ? rejectedFields : [];
+    
+    // Update rejection details in DB
+    const updatedUser = await rejectStudentProfile(studentId, reason.trim(), fields);
+
+    // Map keys to human readable labels for push notifications
+    const FIELD_LABELS = {
+      name: 'Full Name',
+      usn: 'USN',
+      collegeEmailId: 'College Email ID',
+      personalEmailId: 'Personal Email ID',
+      phoneNumber: 'Phone Number',
+      aadhar: 'Aadhar Number',
+      gender: 'Gender',
+      ugCgpa: 'UG CGPA',
+      firstSemSgpa: '1st Sem SGPA',
+      tenthMarks: '10th Aggregate (%)',
+      twelfthMarks: '12th Aggregate (%)',
+      linkedIn: 'LinkedIn URL',
+      gitHub: 'GitHub URL',
+      resumeUrl: 'Resume',
+      profilePictureUrl: 'Profile Picture'
+    };
+    
+    const fieldNames = fields.map(f => FIELD_LABELS[f] || f).join(', ');
+    const notificationBody = fields.length > 0
+      ? `Rejection reason: ${reason}. Please correct fields: ${fieldNames} ⚠️`
+      : `Rejection reason: ${reason}. Please update your profile ⚠️`;
+
     await sendToUsers({
       userIds: [studentId],
       title: 'Verification Rejected',
-      body: `Reason: ${reason}. Please update your profile ⚠️`,
+      body: notificationBody,
       data: {
         type: 'profile_verification_rejected',
       },
     });
 
-    res.json({ success: true });
+    res.json(updatedUser);
   } catch (error) {
     next(error);
   }

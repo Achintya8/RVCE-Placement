@@ -283,8 +283,8 @@ export class PlacementRepository {
     await this.client.postJson(`/users/students/${studentId}/verify`, {})
   }
 
-  async rejectStudent(studentId: number, reason: string): Promise<void> {
-    await this.client.postJson(`/users/students/${studentId}/reject`, { reason })
+  async rejectStudent(studentId: number, reason: string, rejectedFields?: string[]): Promise<void> {
+    await this.client.postJson(`/users/students/${studentId}/reject`, { reason, rejectedFields })
   }
 
   async approveProfileUnlock(studentId: number): Promise<void> {

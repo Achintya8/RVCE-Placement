@@ -25,6 +25,10 @@ CREATE TABLE IF NOT EXISTS "users" (
   "unlock_requested"    BOOLEAN DEFAULT false,
   "placed"              BOOLEAN DEFAULT false,
   "gender"              VARCHAR(50),
+  "rejected"            BOOLEAN DEFAULT false,
+  "rejection_reason"    TEXT,
+  "rejected_fields"     JSONB,
+  "last_verified_profile" JSONB,
   "created_at"          TIMESTAMP DEFAULT NOW()
 );
 
