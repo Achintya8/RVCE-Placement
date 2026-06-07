@@ -1234,13 +1234,15 @@ export function AdminPanel() {
                           onClick={() => setOpenDropdownId(openDropdownId === s.id ? null : s.id)}
                           className={cn(
                             "cursor-pointer border-slate-200 dark:border-white/10 select-none transition-colors",
-                            s.unlockRequested
-                              ? "bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-950/30 dark:hover:bg-amber-950/45"
-                              : s.verified
-                                ? "bg-green-500/10 hover:bg-green-500/15 dark:bg-green-950/30 dark:hover:bg-green-950/45"
-                                : s.rejected
-                                  ? "bg-red-500/10 hover:bg-red-500/15 dark:bg-red-950/30 dark:hover:bg-red-950/45"
-                                  : "hover:bg-slate-100/50 dark:hover:bg-white/5"
+                            openDropdownId === s.id
+                              ? "bg-slate-200/60 dark:bg-white/15 hover:bg-slate-200/70 dark:hover:bg-white/20"
+                              : s.unlockRequested
+                                ? "bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-950/30 dark:hover:bg-amber-950/45"
+                                : s.verified
+                                  ? "bg-green-500/10 hover:bg-green-500/15 dark:bg-green-950/30 dark:hover:bg-green-950/45"
+                                  : s.rejected
+                                    ? "bg-red-500/10 hover:bg-red-500/15 dark:bg-red-950/30 dark:hover:bg-red-950/45"
+                                    : "hover:bg-slate-100/50 dark:hover:bg-white/5"
                           )}
                         >
                           <TableCell className="p-2 sm:p-4 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -1270,12 +1272,15 @@ export function AdminPanel() {
                             {openDropdownId === s.id && (
                               <div onClick={(e) => e.stopPropagation()}>
                                 <div
-                                  className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm sm:bg-transparent sm:backdrop-blur-none z-30"
+                                  className="fixed inset-0 bg-transparent z-30"
                                   onClick={() => setOpenDropdownId(null)}
                                 />
-                                <div className="fixed bottom-0 left-0 right-0 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-2 w-full sm:w-56 rounded-t-2xl sm:rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-1.5 shadow-2xl sm:shadow-lg shadow-slate-900/20 dark:shadow-black/50 z-40 text-left animate-in slide-in-from-bottom duration-250 sm:animate-none">
-                                  <div className="w-12 h-1 bg-slate-200 dark:bg-white/10 rounded-full mx-auto mb-3 sm:hidden" />
-                                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</div>
+                                <div className="absolute right-0 top-full mt-1 w-56 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-1.5 shadow-xl shadow-slate-900/20 dark:shadow-black/50 z-40 text-left animate-in fade-in duration-200">
+                                  <div className="px-3 py-2 border-b border-slate-100 dark:border-white/10">
+                                    <div className="font-bold text-xs text-slate-900 dark:text-white truncate">{s.name}</div>
+                                    <div className="text-[10px] text-slate-400 font-semibold mt-0.5 truncate">{s.usn || "No USN"}</div>
+                                  </div>
+                                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Status</div>
                                   <div className="px-3 pb-2 flex flex-wrap gap-1.5 border-b border-slate-100 dark:border-white/10">
                                     {s.verified ? (
                                       <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/15 border-green-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Verified</Badge>
@@ -1291,10 +1296,10 @@ export function AdminPanel() {
                                       <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/15 border-emerald-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Placed</Badge>
                                     )}
                                   </div>
-                                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">Actions</div>
+                                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Actions</div>
                                   <button
                                     onClick={() => { setOpenDropdownId(null); setReviewStudent(s) }}
-                                    className="w-full text-left px-3 py-2.5 sm:py-2 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 flex items-center gap-2"
+                                    className="w-full text-left px-3 py-2 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 flex items-center gap-2"
                                   >
                                     <Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-slate-400" />
                                     {s.verified ? "View Profile" : "Review Profile"}
@@ -1302,7 +1307,7 @@ export function AdminPanel() {
                                   {s.unlockRequested && (
                                     <button
                                       onClick={() => { setOpenDropdownId(null); void approveUnlock(s.id) }}
-                                      className="w-full text-left px-3 py-2.5 sm:py-2 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-amber-500 dark:text-amber-400 flex items-center gap-2"
+                                      className="w-full text-left px-3 py-2 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-amber-500 dark:text-amber-400 flex items-center gap-2"
                                     >
                                       <Unlock className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-amber-400" />
                                       Approve Unlock
@@ -1312,7 +1317,7 @@ export function AdminPanel() {
                                   <button
                                     onClick={() => { setOpenDropdownId(null); void handleTogglePlaced(s.id, !s.placed) }}
                                     className={cn(
-                                      "w-full text-left px-3 py-2.5 sm:py-2 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-2",
+                                      "w-full text-left px-3 py-2 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-2",
                                       s.placed ? "text-red-500 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"
                                     )}
                                   >
