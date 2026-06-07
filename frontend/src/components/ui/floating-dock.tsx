@@ -160,7 +160,11 @@ function IconContainer({
       ref={ref}
       data-dock-title={title}
       style={{ width, height }}
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={() => {
+        if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+          setHovered(true)
+        }
+      }}
       onMouseLeave={() => setHovered(false)}
       className={cn(
         'relative rounded-full flex items-center justify-center transition-colors cursor-pointer',
