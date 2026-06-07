@@ -40,13 +40,13 @@ export const runMigrations = async () => {
         'usn', "usn",
         'ugCgpa', "ug_cgpa",
         'firstSemSgpa', "first_sem_sgpa",
-        'tenth_marks', "tenth_marks",
-        'twelfth_marks', "twelfth_marks",
+        'tenthMarks', "tenth_marks",
+        'twelfthMarks', "twelfth_marks",
         'gender', "gender",
         'resumeUrl', "resume_url",
         'profilePictureUrl', "profile_picture_url"
       )
-      WHERE "verified" = true AND "last_verified_profile" IS NULL;
+      WHERE "last_verified_profile" IS NULL;
     `);
 
     if (rowCount > 0) {
