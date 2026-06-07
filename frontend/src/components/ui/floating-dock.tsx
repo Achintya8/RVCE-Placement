@@ -87,7 +87,11 @@ function FloatingDockDesktop({
 
   return (
     <motion.div
-      onMouseMove={(e: React.MouseEvent) => mouseX.set(e.pageX)}
+      onMouseMove={(e: React.MouseEvent) => {
+        if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+          mouseX.set(e.pageX)
+        }
+      }}
       onMouseLeave={() => mouseX.set(Infinity)}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
