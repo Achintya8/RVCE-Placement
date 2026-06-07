@@ -12,10 +12,17 @@ import {
   FileText, 
   MessageSquare, 
   Settings,
+  Bell,
 } from 'lucide-react'
 import { CollegeLogo } from '@/components/modern/CollegeLogo'
 import { cn } from '@/lib/utils'
-import { registerNotificationsSafely } from '../notifications/registerNotifications'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+import { 
+  registerNotificationsSafely,
+  allowNotifications,
+  getNotificationPreference,
+} from '../notifications/registerNotifications'
 import { FloatingDock } from '@/components/ui/floating-dock'
 
 
@@ -48,6 +55,37 @@ export default function DashboardScreen() {
     return localStorage.getItem('dashboard_active_panel') || 'companies'
   })
   const [showHeader, setShowHeader] = useState(true)
+
+  const [notificationPreference, setNotificationPreference] = useState(() =>
+    getNotificationPreference(),
+  )
+
+  const refreshNotificationPreference = () => {
+    setNotificationPreference(getNotificationPreference())
+  }
+
+  useEffect(() => {
+    const handleFocus = () => refreshNotificationPreference()
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
+
+  const enableNotifications = async () => {
+    if (!notificationPreference.supported) {
+      toast.error('Notifications are not supported in this browser.')
+      return
+    }
+
+    const permission = await allowNotifications()
+    refreshNotificationPreference()
+
+    if (permission === 'granted') {
+      toast.success('Notifications enabled! Subscribing for placement alerts...')
+      await registerNotificationsSafely(repo)
+    } else {
+      toast.error('Notifications are blocked in your browser settings.')
+    }
+  }
 
   const changePanel = (id: string) => {
     setSelectedPanelId(id)
@@ -218,6 +256,20 @@ export default function DashboardScreen() {
                   {session.isSpc ? 'Student + SPC' : 'Student Access'}
                 </p>
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {notificationPreference.supported && notificationPreference.permission !== 'granted' && (
+                <Button
+                  onClick={() => void enableNotifications()}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1.5 rounded-full border-amber-500/35 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-600 dark:border-amber-500/20 dark:bg-amber-500/5 dark:text-amber-400 hover:bg-amber-500/20 shadow-sm"
+                >
+                  <Bell className="h-3.5 w-3.5 animate-bounce shrink-0" />
+                  <span>Enable Alerts</span>
+                </Button>
+              )}
             </div>
           </header>
 
