@@ -60,6 +60,15 @@ export default function DashboardScreen() {
     getNotificationPreference(),
   )
 
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    return localStorage.getItem('dismissed_notification_banner') === 'true'
+  })
+
+  const dismissBanner = () => {
+    localStorage.setItem('dismissed_notification_banner', 'true')
+    setBannerDismissed(true)
+  }
+
   const refreshNotificationPreference = () => {
     setNotificationPreference(getNotificationPreference())
   }
@@ -277,6 +286,57 @@ export default function DashboardScreen() {
             "mx-auto min-h-[calc(100vh-4rem)] w-full transition-all duration-500 ease-in-out",
             cn("max-w-7xl px-3 sm:px-5 lg:px-8 pb-28", showHeader ? "pt-6 sm:pt-8" : "pt-12 sm:pt-16")
           )}>
+            {/* iOS PWA Installation Banner */}
+            {notificationPreference.isIOS && !notificationPreference.isStandalone && !bannerDismissed && (
+              <div className="mb-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 backdrop-blur-xl dark:bg-amber-500/5 text-amber-800 dark:text-amber-300 relative overflow-hidden shadow-sm flex items-start justify-between gap-3 animate-in fade-in slide-in-from-top duration-300">
+                <div className="flex items-start gap-3">
+                  <Bell className="h-5 w-5 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400 animate-pulse" />
+                  <div>
+                    <h3 className="font-semibold text-sm">iOS Placement Alerts Setup</h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-350 mt-1 leading-relaxed">
+                      To receive real-time placement alerts on iOS, tap the Safari <strong>Share</strong> button (usually a square with an up arrow at the bottom of the screen) and select <strong>'Add to Home Screen'</strong>.
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={dismissBanner}
+                  className="text-amber-800/60 hover:text-amber-900 dark:text-amber-400/60 dark:hover:text-amber-300 text-xs font-semibold shrink-0"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
+            {/* General Push Notification Prompt Banner */}
+            {notificationPreference.supported && notificationPreference.permission !== 'granted' && !bannerDismissed && (
+              <div className="mb-6 rounded-2xl border border-indigo-500/20 bg-indigo-500/10 p-4 backdrop-blur-xl dark:bg-indigo-500/5 text-indigo-900 dark:text-indigo-300 relative overflow-hidden shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-top duration-300">
+                <div className="flex items-start gap-3">
+                  <Bell className="h-5 w-5 mt-0.5 sm:mt-0 shrink-0 text-indigo-600 dark:text-indigo-400 animate-bounce" />
+                  <div>
+                    <h3 className="font-semibold text-sm">Enable Real-Time Placement Alerts</h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-350 mt-0.5 leading-relaxed">
+                      Authorize push notifications to get instantly notified about company postings, registration deadlines, and SPC chat updates.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 w-full sm:w-auto shrink-0 justify-end">
+                  <button 
+                    onClick={dismissBanner}
+                    className="text-indigo-800/60 hover:text-indigo-900 dark:text-indigo-400/60 dark:hover:text-indigo-300 text-xs font-semibold px-2"
+                  >
+                    Maybe Later
+                  </button>
+                  <Button
+                    onClick={() => void enableNotifications()}
+                    size="sm"
+                    className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm text-xs px-4 py-1.5 h-8 w-full sm:w-auto"
+                  >
+                    Enable
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {active.element}
           </main>
 

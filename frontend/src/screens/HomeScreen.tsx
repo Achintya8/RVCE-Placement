@@ -87,6 +87,18 @@ export default function HomeScreen() {
               </p>
             </div>
 
+            {notificationPreference.isIOS && !notificationPreference.isStandalone && (
+              <div className="mb-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 backdrop-blur-xl dark:bg-amber-500/5 text-amber-800 dark:text-amber-300">
+                <p className="font-semibold text-sm flex items-center gap-1.5 justify-center">
+                  <Bell className="w-4 h-4 animate-pulse shrink-0 text-amber-600 dark:text-amber-400" />
+                  iOS PWA Setup Required
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-350 mt-1.5 leading-relaxed text-center">
+                  To receive real-time placement alerts, tap the Safari <strong>Share</strong> button and select <strong>'Add to Home Screen'</strong>, then launch the app from your Home Screen.
+                </p>
+              </div>
+            )}
+
             {notificationPreference.supported && (
               notificationsGranted ? (
                 <div className="mb-4 flex items-center justify-center gap-2 rounded-2xl border border-green-500/20 bg-green-500/15 px-4 py-2.5 backdrop-blur-xl">
@@ -105,6 +117,7 @@ export default function HomeScreen() {
                 </Button>
               )
             )}
+
 
             <div className="flex justify-center rounded-[1.35rem] bg-primary px-3 py-3 shadow-[0_14px_30px_rgba(0,122,255,0.22)] transition-colors hover:bg-primary/90">
               <GoogleLogin
