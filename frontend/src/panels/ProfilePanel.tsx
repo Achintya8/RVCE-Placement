@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CheckCircle2, AlertCircle, Upload, Save, FileText, Clock, Unlock, Camera, Moon, Sun, User, LogOut, Bell } from 'lucide-react'
 import { StudentProfileSkeleton } from '@/components/modern/Skeleton'
 import { ApiClientError } from '../api/client'
+import { resolveBackendUrl } from '../config'
 import type { AppUser } from '@/types'
 import {
   allowNotifications,
@@ -286,7 +287,7 @@ export function ProfilePanel() {
             <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/10">
               {user.profilePictureUrl ? (
                 <img
-                  src={user.profilePictureUrl}
+                  src={resolveBackendUrl(user.profilePictureUrl)}
                   alt={user.name}
                   className="h-full w-full object-cover"
                 />
@@ -391,7 +392,7 @@ export function ProfilePanel() {
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider dark:text-muted-foreground">Current Resume</p>
                 <a
-                  href={user.resumeUrl}
+                  href={resolveBackendUrl(user.resumeUrl)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-sm font-medium text-primary hover:underline truncate block"

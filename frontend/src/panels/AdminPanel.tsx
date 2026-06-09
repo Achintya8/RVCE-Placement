@@ -7,6 +7,7 @@ import type {
   StudentSummary,
 } from '@/types'
 import { repo } from '../store/useAuthStore'
+import { resolveBackendUrl } from '../config'
 import { toast } from 'sonner'
 import { downloadBlob, formatDate } from '../lib/format'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -1253,7 +1254,7 @@ export function AdminPanel() {
                               <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] sm:text-xs shrink-0 overflow-hidden">
                                 {s.profilePictureUrl ? (
                                   <img
-                                    src={s.profilePictureUrl}
+                                    src={resolveBackendUrl(s.profilePictureUrl)}
                                     alt={s.name}
                                     className="h-full w-full object-cover animate-in fade-in duration-300"
                                   />
@@ -1582,7 +1583,7 @@ export function AdminPanel() {
                       ) : <span className="text-muted-foreground">No GitHub</span>}
                       {reviewStudent.resumeUrl ? (
                         <div className={getFieldStatus('resumeUrl').isRejected ? 'text-red-500 border border-red-500/20 px-2 py-0.5 rounded bg-red-500/5' : getFieldStatus('resumeUrl').isEdited ? 'text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded bg-amber-500/5' : ''}>
-                          <a href={reviewStudent.resumeUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline font-bold">View Resume</a>
+                           <a href={resolveBackendUrl(reviewStudent.resumeUrl)} target="_blank" rel="noreferrer" className="text-primary hover:underline font-bold">View Resume</a>
                         </div>
                       ) : <span className="text-muted-foreground">No Resume</span>}
                     </div>

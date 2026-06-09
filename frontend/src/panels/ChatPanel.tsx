@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChatMessage, ChatUser } from '@/types'
 import { useAuthStore, repo } from '../store/useAuthStore'
+import { resolveBackendUrl } from '../config'
 import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
@@ -598,7 +599,7 @@ export function ChatPanel() {
                                 </div>
                               )}
                               {m.messageText && renderMessageText(m, isMe)}
-                              {m.attachmentUrl && m.attachmentName && renderAttachment(m.attachmentUrl, m.attachmentName)}
+                              {m.attachmentUrl && m.attachmentName && renderAttachment(resolveBackendUrl(m.attachmentUrl), m.attachmentName)}
                             </div>
                           </div>
                         </div>

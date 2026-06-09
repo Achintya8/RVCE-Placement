@@ -24,6 +24,7 @@ import {
   getNotificationPreference,
 } from '../notifications/registerNotifications'
 import { FloatingDock } from '@/components/ui/floating-dock'
+import { resolveBackendUrl } from '../config'
 
 
 type Panel = {
@@ -135,7 +136,7 @@ export default function DashboardScreen() {
           label: 'Profile',
           icon: session.user.profilePictureUrl ? (
             <img
-              src={session.user.profilePictureUrl}
+              src={resolveBackendUrl(session.user.profilePictureUrl)}
               alt=""
               className="h-5 w-5 rounded-full object-cover"
             />
