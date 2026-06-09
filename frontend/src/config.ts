@@ -42,7 +42,8 @@ export function resolveBackendUrl(url: string | null | undefined): string {
       if ((parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1') && apiOrigin) {
         const targetOrigin = new URL(apiOrigin)
         parsedUrl.protocol = targetOrigin.protocol
-        parsedUrl.host = targetOrigin.host // This updates both hostname and port to the resolved API origin!
+        parsedUrl.hostname = targetOrigin.hostname
+        parsedUrl.port = targetOrigin.port // Explicitly copy port (clears :4000 if target has no port)
         return parsedUrl.toString()
       }
     } catch {
