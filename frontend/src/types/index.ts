@@ -93,17 +93,19 @@ export type ChatUser = {
 export type ChatMessage = {
   id: number
   sender: ChatUser
-  messageText: string
+  messageText?: string | null
   attachmentUrl?: string | null
   attachmentName?: string | null
   createdAt: string
-  mentionedUsers: ChatUser[]
+  mentionedUsers?: ChatUser[]
   parentId?: number | null
   parentMessage?: {
     id: number
     senderName: string
-    messageText: string
+    messageText?: string | null
   } | null
+  isOptimistic?: boolean
+  hasFailed?: boolean
 }
 
 export type ChatMessagesResponse = {

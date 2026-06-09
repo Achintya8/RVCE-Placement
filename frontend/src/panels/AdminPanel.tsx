@@ -224,7 +224,7 @@ export function AdminPanel() {
   const [rejecting, setRejecting] = useState(false)
   const [selectedRejectedFields, setSelectedRejectedFields] = useState<string[]>([])
   const [studentSearch, setStudentSearch] = useState('')
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null)
+  const [selectedStudentActions, setSelectedStudentActions] = useState<StudentSummary | null>(null)
   const [reviewStudentProfileData, setReviewStudentProfileData] = useState<any[]>([])
 
   const closeReview = () => {
@@ -278,7 +278,7 @@ export function AdminPanel() {
           <div className="mt-1">{value}</div>
         ) : (
           <p className={cn(
-            "font-bold text-sm sm:text-base mt-0.5",
+            "font-bold text-sm sm:text-base mt-0.5 break-all sm:break-words",
             isRejected ? "text-red-500" : isEdited ? "text-amber-500" : "text-slate-900 dark:text-white"
           )}>
             {value || '—'}
@@ -1231,10 +1231,10 @@ export function AdminPanel() {
                       {filteredStudents.map((s) => (
                         <TableRow
                           key={s.id}
-                          onClick={() => setOpenDropdownId(openDropdownId === s.id ? null : s.id)}
+                          onClick={() => setSelectedStudentActions(s)}
                           className={cn(
                             "cursor-pointer border-slate-200 dark:border-white/10 select-none transition-colors",
-                            openDropdownId === s.id
+                            selectedStudentActions?.id === s.id
                               ? "bg-slate-200/60 dark:bg-white/15 hover:bg-slate-200/70 dark:hover:bg-white/20"
                               : s.unlockRequested
                                 ? "bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-950/30 dark:hover:bg-amber-950/45"
@@ -1268,65 +1268,8 @@ export function AdminPanel() {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="p-2 sm:p-4 text-right relative">
-                            {openDropdownId === s.id && (
-                              <div onClick={(e) => e.stopPropagation()}>
-                                <div
-                                  className="fixed inset-0 bg-transparent z-30"
-                                  onClick={() => setOpenDropdownId(null)}
-                                />
-                                <div className="absolute right-0 top-full mt-1 w-56 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-1.5 shadow-xl shadow-slate-900/20 dark:shadow-black/50 z-40 text-left animate-in fade-in duration-200">
-                                  <div className="px-3 py-2 border-b border-slate-100 dark:border-white/10">
-                                    <div className="font-bold text-xs text-slate-900 dark:text-white truncate">{s.name}</div>
-                                    <div className="text-[10px] text-slate-400 font-semibold mt-0.5 truncate">{s.usn || "No USN"}</div>
-                                  </div>
-                                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Status</div>
-                                  <div className="px-3 pb-2 flex flex-wrap gap-1.5 border-b border-slate-100 dark:border-white/10">
-                                    {s.verified ? (
-                                      <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/15 border-green-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Verified</Badge>
-                                    ) : s.rejected ? (
-                                      <Badge className="bg-red-500/10 text-red-500 hover:bg-red-500/15 border-red-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Rejected</Badge>
-                                    ) : (
-                                      <Badge className="bg-slate-500/10 text-slate-500 dark:text-slate-400 hover:bg-slate-500/15 border-slate-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Unverified</Badge>
-                                    )}
-                                    {s.unlockRequested && (
-                                      <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/15 border-amber-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">Unlock Req</Badge>
-                                    )}
-                                    {s.placed && (
-                                      <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/15 border-emerald-500/20 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Placed</Badge>
-                                    )}
-                                  </div>
-                                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Actions</div>
-                                  <button
-                                    onClick={() => { setOpenDropdownId(null); setReviewStudent(s) }}
-                                    className="w-full text-left px-3 py-2 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 flex items-center gap-2"
-                                  >
-                                    <Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-slate-400" />
-                                    {s.verified ? "View Profile" : "Review Profile"}
-                                  </button>
-                                  {s.unlockRequested && (
-                                    <button
-                                      onClick={() => { setOpenDropdownId(null); void approveUnlock(s.id) }}
-                                      className="w-full text-left px-3 py-2 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-amber-500 dark:text-amber-400 flex items-center gap-2"
-                                    >
-                                      <Unlock className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-amber-400" />
-                                      Approve Unlock
-                                    </button>
-                                  )}
-                                  <div className="h-px bg-slate-100 dark:bg-white/10 my-1" />
-                                  <button
-                                    onClick={() => { setOpenDropdownId(null); void handleTogglePlaced(s.id, !s.placed) }}
-                                    className={cn(
-                                      "w-full text-left px-3 py-2 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-2",
-                                      s.placed ? "text-red-500 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"
-                                    )}
-                                  >
-                                    <CheckCircle2 className={cn("w-4 h-4 sm:w-3.5 sm:h-3.5", s.placed ? "text-red-400" : "text-emerald-400")} />
-                                    {s.placed ? "Mark Unplaced" : "Mark Placed"}
-                                  </button>
-                                </div>
-                              </div>
-                            )}
+                          <TableCell className="p-2 sm:p-4 text-right">
+                            <ChevronRight className="w-4 h-4 text-slate-400 inline-block" />
                           </TableCell>
                         </TableRow>
                       ))}
@@ -1408,7 +1351,7 @@ export function AdminPanel() {
       {responsesModal && (
         <Dialog open={true} onOpenChange={() => setResponsesModal(null)}>
           <DialogContent className="glass-panel text-slate-900 dark:text-white w-[92vw] sm:w-full max-w-5xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-0 overflow-hidden">
-            <DialogHeader className="p-6 pb-2">
+            <DialogHeader className="p-6 pb-2 pr-14">
               <DialogTitle className="text-2xl text-slate-900 dark:text-white">{responsesModal.title}</DialogTitle>
               <DialogDescription className="text-muted-foreground">Viewing raw student submissions for this form.</DialogDescription>
             </DialogHeader>
@@ -1477,7 +1420,7 @@ export function AdminPanel() {
       {pendingModal && (
         <Dialog open={true} onOpenChange={() => setPendingModal(null)}>
           <DialogContent className="glass-panel text-slate-900 dark:text-white w-[92vw] sm:w-full max-w-2xl max-h-[80vh] sm:max-h-[80vh] flex flex-col p-0 overflow-hidden">
-            <DialogHeader className="p-6 pb-2">
+            <DialogHeader className="p-6 pb-2 pr-14">
               <DialogTitle className="text-2xl text-slate-900 dark:text-white">Pending Submissions</DialogTitle>
               <DialogDescription className="text-muted-foreground">Students who have not yet submitted "{pendingModal.title}".</DialogDescription>
             </DialogHeader>
@@ -1507,10 +1450,96 @@ export function AdminPanel() {
           </DialogContent>
         </Dialog>
       )}
+      {selectedStudentActions && (
+        <Dialog open={true} onOpenChange={() => setSelectedStudentActions(null)}>
+          <DialogContent className="glass-panel text-slate-900 dark:text-white max-w-sm p-6 rounded-2xl">
+            <DialogHeader className="text-center pb-4 border-b border-slate-100 dark:border-white/10">
+              <DialogTitle className="text-lg font-bold truncate">
+                {selectedStudentActions.name}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground truncate">
+                {selectedStudentActions.usn || "No USN"}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-5 pt-4">
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Verification & Status</span>
+                <div className="flex flex-wrap gap-2">
+                  {selectedStudentActions.verified ? (
+                    <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/15 border-green-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Verified</Badge>
+                  ) : selectedStudentActions.rejected ? (
+                    <Badge className="bg-red-500/10 text-red-500 hover:bg-red-500/15 border-red-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Rejected</Badge>
+                  ) : (
+                    <Badge className="bg-slate-500/10 text-slate-500 dark:text-slate-400 hover:bg-slate-500/15 border-slate-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Unverified</Badge>
+                  )}
+                  {selectedStudentActions.unlockRequested && (
+                    <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/15 border-amber-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse">Unlock Requested</Badge>
+                  )}
+                  {selectedStudentActions.placed && (
+                    <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/15 border-emerald-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Placed</Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Available Actions</span>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={() => {
+                      const s = selectedStudentActions
+                      setSelectedStudentActions(null)
+                      setReviewStudent(s)
+                    }}
+                    variant="outline"
+                    className="w-full justify-start text-xs font-semibold h-10 rounded-xl gap-2 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10"
+                  >
+                    <Eye className="w-4 h-4 text-slate-400" />
+                    {selectedStudentActions.verified ? "View Profile" : "Review Profile"}
+                  </Button>
+
+                  {selectedStudentActions.unlockRequested && (
+                    <Button
+                      onClick={() => {
+                        const s = selectedStudentActions
+                        setSelectedStudentActions(null)
+                        void approveUnlock(s.id)
+                      }}
+                      variant="outline"
+                      className="w-full justify-start text-xs font-semibold h-10 rounded-xl gap-2 border-amber-500/20 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10"
+                    >
+                      <Unlock className="w-4 h-4 text-amber-500" />
+                      Approve Unlock Request
+                    </Button>
+                  )}
+
+                  <Button
+                    onClick={() => {
+                      const s = selectedStudentActions
+                      setSelectedStudentActions(null)
+                      void handleTogglePlaced(s.id, !s.placed)
+                    }}
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-xs font-semibold h-10 rounded-xl gap-2",
+                      selectedStudentActions.placed 
+                        ? "border-red-500/20 bg-red-500/5 text-red-500 hover:bg-red-500/10" 
+                        : "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                    )}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    {selectedStudentActions.placed ? "Mark as Unplaced" : "Mark as Placed"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
       {reviewStudent && (
         <Dialog open={true} onOpenChange={closeReview}>
           <DialogContent className="glass-panel text-slate-900 dark:text-white w-[92vw] sm:w-full max-w-3xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-0 overflow-hidden">
-            <DialogHeader className="p-6 pb-2">
+            <DialogHeader className="p-6 pb-2 pr-14">
               <DialogTitle className="text-2xl text-slate-900 dark:text-white">Profile Review: {reviewStudent.name}</DialogTitle>
               <DialogDescription className="text-muted-foreground">Review the student's details before verifying.</DialogDescription>
             </DialogHeader>
@@ -1627,12 +1656,12 @@ export function AdminPanel() {
               )}
             </div>
 
-            <div className="p-6 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-4 w-full">
-              <Button onClick={closeReview} className="text-slate-900 dark:text-white hover:bg-slate-200 dark:bg-white/10" variant="ghost">Close</Button>
+            <div className="p-4 sm:p-6 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4 w-full">
+              <Button onClick={closeReview} className="w-full sm:w-auto text-slate-900 dark:text-white hover:bg-slate-200 dark:bg-white/10" variant="ghost">Close</Button>
               {!reviewStudent.verified && (
-                <div className="flex gap-3">
-                  <Button variant="destructive" onClick={handleRejectStudent} disabled={rejecting || !rejectReason.trim()}>Reject Profile</Button>
-                  <Button onClick={handleVerifyStudent} disabled={rejecting} className="gap-2 shadow-lg shadow-primary/20">
+                <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
+                  <Button variant="destructive" onClick={handleRejectStudent} disabled={rejecting || !rejectReason.trim()} className="w-full sm:w-auto">Reject Profile</Button>
+                  <Button onClick={handleVerifyStudent} disabled={rejecting} className="w-full sm:w-auto gap-2 shadow-lg shadow-primary/20">
                     <CheckCircle2 className="w-4 h-4" /> Approve & Lock
                   </Button>
                 </div>
@@ -1644,7 +1673,7 @@ export function AdminPanel() {
       {editingCompany && (
         <Dialog open={true} onOpenChange={() => setEditingCompany(null)}>
           <DialogContent className="glass-panel text-slate-900 dark:text-white w-[92vw] sm:w-full max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-0 overflow-hidden">
-            <DialogHeader className="p-6 pb-2">
+            <DialogHeader className="p-6 pb-2 pr-14">
               <DialogTitle className="text-2xl text-slate-900 dark:text-white">Edit Recruitment Drive</DialogTitle>
               <DialogDescription className="text-muted-foreground">Modify company parameters and academic eligibility constraints.</DialogDescription>
             </DialogHeader>

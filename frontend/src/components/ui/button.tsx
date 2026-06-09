@@ -38,9 +38,31 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    let computedClassName = cn(buttonVariants({ variant, size, className }))
+    
+    // If it's an icon button or explicitly fully rounded, remove swipe animation classes
+    if (size === "icon" || className?.includes("rounded-full")) {
+      computedClassName = computedClassName
+        .replace(/\bbtn-swipe\S*\b/g, "")
+        .trim()
+      
+      // Restore standard Shadcn theme values that were overriden by btn-swipe classes
+      if (variant === "default" || !variant) {
+        computedClassName = cn(computedClassName, "bg-primary text-primary-foreground hover:bg-primary/90")
+      } else if (variant === "destructive") {
+        computedClassName = cn(computedClassName, "bg-destructive text-destructive-foreground hover:bg-destructive/90")
+      } else if (variant === "outline") {
+        computedClassName = cn(computedClassName, "border border-input bg-background hover:bg-accent hover:text-accent-foreground")
+      } else if (variant === "secondary") {
+        computedClassName = cn(computedClassName, "bg-secondary text-secondary-foreground hover:bg-secondary/80")
+      } else if (variant === "ghost") {
+        computedClassName = cn(computedClassName, "hover:bg-accent hover:text-accent-foreground")
+      }
+    }
+
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={computedClassName}
         ref={ref}
         {...props}
       />

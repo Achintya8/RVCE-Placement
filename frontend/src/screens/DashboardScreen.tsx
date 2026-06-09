@@ -231,7 +231,7 @@ export default function DashboardScreen() {
 
       {/* ── CHAT LAYOUT: bottom nav + full-height chat ────────────── */}
       {active.id === 'chat' ? (
-        <div className="flex flex-col h-screen w-full overflow-hidden pb-0 md:pb-20">
+        <div className="fixed inset-0 flex flex-col h-[100dvh] w-full overflow-hidden pb-0 md:pb-20">
           {/* Chat fills remaining space */}
           <div className="flex-1 min-h-0 w-full overflow-hidden">
             <ChatPanel />

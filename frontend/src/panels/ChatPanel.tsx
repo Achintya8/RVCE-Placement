@@ -170,17 +170,49 @@ export function ChatPanel() {
   const send = async () => {
     const t = text.trim()
     if (!t && !attachment) return
+
+    // Store replying state and reset inputs immediately to feel instant
+    const replyCopy = replyingTo
+    setText('')
+    localStorage.removeItem('chat_draft_msg')
+    setAttachment(null)
+    setMentionSearch(null)
+    setReplyingTo(null)
     setSending(true)
+
+    // Generate unique temporary negative ID for the optimistic message
+    const optimisticId = -Date.now()
+    const optimisticMsg: ChatMessage = {
+      id: optimisticId,
+      messageText: t || null,
+      attachmentUrl: attachment ? URL.createObjectURL(attachment) : null,
+      attachmentName: attachment ? attachment.name : null,
+      createdAt: new Date().toISOString(),
+      sender: {
+        id: session?.user.id || 0,
+        name: session?.user.name || 'You',
+        email: session?.user.collegeEmailId
+      },
+      parentMessage: replyCopy ? {
+        id: replyCopy.id,
+        senderName: replyCopy.sender.name,
+        messageText: replyCopy.messageText
+      } : null,
+      mentionedUsers: [],
+      isOptimistic: true
+    }
+
+    // Append optimistically to local UI state
+    setMessages((m) => [...m, optimisticMsg])
+
     try {
-      const msg = await repo.sendMessage(t, attachment || undefined, replyingTo?.id || undefined)
-      setMessages((m) => [...m, msg])
-      setText('')
-      localStorage.removeItem('chat_draft_msg')
-      setAttachment(null)
-      setMentionSearch(null)
-      setReplyingTo(null)
+      const msg = await repo.sendMessage(t, attachment || undefined, replyCopy?.id || undefined)
+      // Replace optimistic message with actual server message
+      setMessages((m) => m.map(item => item.id === optimisticId ? msg : item))
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e))
+      // Mark as failed so user knows it failed
+      setMessages((m) => m.map(item => item.id === optimisticId ? { ...item, hasFailed: true, isOptimistic: false } : item))
     } finally {
       setSending(false)
     }
@@ -341,11 +373,8 @@ export function ChatPanel() {
                 <div className="flex items-center justify-between bg-white dark:bg-slate-900 pl-14 pr-4 py-3 md:px-4 border-b border-slate-200 dark:border-white/10 shadow-sm z-40 shrink-0 top-safe-chat-header">
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col text-left">
-                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Placement Discussion Group</span>
-                      <span className="text-[11px] text-emerald-500 font-medium flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Online
-                      </span>
+                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Placement Related messages Only</span>
+
                     </div>
                   </div>
                   <Button
@@ -450,7 +479,7 @@ export function ChatPanel() {
                     messages.map((m, idx) => {
                       const isMe = m.sender.id === session?.user.id
                       const isAdmin = session?.isSpc
-                      const canDelete = isMe || isAdmin
+                      const canDelete = (isMe || isAdmin) && !m.isOptimistic && !m.hasFailed
 
                       const prevMsg = idx > 0 ? messages[idx - 1] : null
                       const isNewDay = !prevMsg ||
@@ -470,6 +499,7 @@ export function ChatPanel() {
                             startY = e.touches[0].clientY
                           }}
                           onTouchEnd={(e) => {
+                            if (m.isOptimistic) return
                             const diffX = e.changedTouches[0].clientX - startX
                             const diffY = e.changedTouches[0].clientY - startY
                             if (diffX > 60 && Math.abs(diffY) < 30) {
@@ -500,13 +530,23 @@ export function ChatPanel() {
                               <span className="text-[11px] text-slate-400 dark:text-white/30">
                                 {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
-                              <button
-                                onClick={() => setReplyingTo(m)}
-                                className="opacity-0 max-md:opacity-75 group-hover/msg:opacity-100 transition-opacity p-1.5 text-slate-400 hover:text-primary hover:bg-slate-200 dark:hover:bg-white/10 rounded-md"
-                                title="Reply to message"
-                              >
-                                <CornerUpLeft className="w-4 h-4" />
-                              </button>
+                              {m.isOptimistic && (
+                                <Clock className="w-3 h-3 text-slate-450 dark:text-white/40 animate-pulse shrink-0" />
+                              )}
+                              {m.hasFailed && (
+                                <span title="Failed to send">
+                                  <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                                </span>
+                              )}
+                              {!m.isOptimistic && !m.hasFailed && (
+                                <button
+                                  onClick={() => setReplyingTo(m)}
+                                  className="opacity-0 max-md:opacity-75 group-hover/msg:opacity-100 transition-opacity p-1.5 text-slate-400 hover:text-primary hover:bg-slate-200 dark:hover:bg-white/10 rounded-md"
+                                  title="Reply to message"
+                                >
+                                  <CornerUpLeft className="w-4 h-4" />
+                                </button>
+                              )}
                               {canDelete && (
                                 <button
                                   onClick={() => void deleteMessage(m.id)}
@@ -568,7 +608,7 @@ export function ChatPanel() {
                 </div>
               </ScrollArea>
 
-              <div className="relative p-4 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 flex flex-col gap-2">
+              <div className="relative px-3 py-2 sm:p-4 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 flex flex-col gap-2 pb-[calc(env(safe-area-inset-bottom,0px)+8px)] sm:pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">
                 {mentionSearch !== null && filteredUsers.length > 0 && (
                   <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden z-50">
                     {filteredUsers.map(u => (
@@ -640,7 +680,7 @@ export function ChatPanel() {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="shrink-0 bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:bg-white/10 h-10 w-10"
+                    className="shrink-0 bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:bg-white/10 h-9 w-9 sm:h-10 sm:w-10"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={sending || !!err}
                   >
@@ -764,13 +804,13 @@ export function ChatPanel() {
                         }
                       }
                     }}
-                    className="min-h-[40px] max-h-[150px] bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-primary/50 resize-none py-2"
+                    className="min-h-[36px] max-h-[120px] bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-primary/50 resize-none py-1.5 text-sm"
                   />
                   <Button
                     type="submit"
                     size="icon"
                     disabled={sending || !!err || (!text.trim() && !attachment)}
-                    className="shrink-0 shadow-lg shadow-primary/20 h-10 w-10"
+                    className="shrink-0 shadow-lg shadow-primary/20 h-9 w-9 sm:h-10 sm:w-10"
                   >
                     <Send className="w-4 h-4" />
                   </Button>
