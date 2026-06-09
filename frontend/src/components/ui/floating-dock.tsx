@@ -277,60 +277,70 @@ function FloatingDockMobile({
     <div className={className}>
       <AnimatePresence>
         {open && (
-          <motion.div
-            layoutId="nav"
-            className={cn(
-              "absolute z-50 flex flex-col gap-2",
-              expandDirection === 'up' ? "bottom-full mb-3" : "top-full mt-3",
-              align === 'left' ? "left-0 items-start" : "right-0 items-end"
-            )}
-          >
-            {items.map((item, idx) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  scale: 1,
-                }}
-                exit={{
-                  opacity: 0,
-                  y: 10,
-                  scale: 0.8,
-                  transition: {
-                    delay: idx * 0.03,
-                  },
-                }}
-                transition={{ delay: (items.length - 1 - idx) * 0.03 }}
-                className="flex items-center gap-2"
-              >
-                <div className="rounded-md bg-slate-900/90 border border-slate-700 px-2 py-1 text-[10px] font-semibold text-white shadow-md">
-                  {item.title}
-                </div>
-                <button
-                  type="button"
-                  data-mobile-dock-title={item.title}
-                  onClick={() => {
-                    item.onClick?.()
-                    setOpen(false)
+          <>
+            {/* Backdrop Blur Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-md cursor-pointer"
+            />
+            <motion.div
+              layoutId="nav"
+              className={cn(
+                "absolute z-50 flex flex-col gap-2",
+                expandDirection === 'up' ? "bottom-full mb-3" : "top-full mt-3",
+                align === 'left' ? "left-0 items-start" : "right-0 items-end"
+              )}
+            >
+              {items.map((item, idx) => (
+                <motion.div
+                  key={item.title}
+                  initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
                   }}
-                  className={cn(
-                    'h-11 w-11 rounded-full flex items-center justify-center border shadow-lg cursor-pointer transition-all duration-150',
-                    item.active
-                      ? 'bg-primary text-white border-primary/20 shadow-primary/20'
-                      : activeTouchTitle === item.title
-                        ? 'bg-slate-200 border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white scale-110 shadow-md shadow-slate-300/30'
-                        : 'bg-white border-slate-200 dark:bg-slate-900 dark:border-white/10 text-slate-600 dark:text-slate-300'
-                  )}
+                  exit={{
+                    opacity: 0,
+                    y: 10,
+                    scale: 0.8,
+                    transition: {
+                      delay: idx * 0.03,
+                    },
+                  }}
+                  transition={{ delay: (items.length - 1 - idx) * 0.03 }}
+                  className="flex items-center gap-2"
                 >
-                  <div className="h-5 w-5 flex items-center justify-center [&>svg]:h-full [&>svg]:w-full [&>img]:h-full [&>img]:w-full [&>img]:object-cover [&>img]:rounded-full">
-                    {item.icon}
+                  <div className="rounded-md bg-slate-900/90 border border-slate-700 px-2 py-1 text-[10px] font-semibold text-white shadow-md">
+                    {item.title}
                   </div>
-                </button>
-              </motion.div>
-            ))}
-          </motion.div>
+                  <button
+                    type="button"
+                    data-mobile-dock-title={item.title}
+                    onClick={() => {
+                      item.onClick?.()
+                      setOpen(false)
+                    }}
+                    className={cn(
+                      'h-11 w-11 rounded-full flex items-center justify-center border shadow-lg cursor-pointer transition-all duration-150',
+                      item.active
+                        ? 'bg-primary text-white border-primary/20 shadow-primary/20'
+                        : activeTouchTitle === item.title
+                          ? 'bg-slate-200 border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white scale-110 shadow-md shadow-slate-300/30'
+                          : 'bg-white border-slate-200 dark:bg-slate-900 dark:border-white/10 text-slate-600 dark:text-slate-300'
+                    )}
+                  >
+                    <div className="h-5 w-5 flex items-center justify-center [&>svg]:h-full [&>svg]:w-full [&>img]:h-full [&>img]:w-full [&>img]:object-cover [&>img]:rounded-full">
+                      {item.icon}
+                    </div>
+                  </button>
+                </motion.div>
+              ))}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
       <button
@@ -343,7 +353,7 @@ function FloatingDockMobile({
             setOpen((prev) => !prev)
           }
         }}
-        className="h-10 w-10 rounded-full bg-primary hover:bg-primary-hover text-white flex items-center justify-center shadow-md cursor-pointer border border-primary/10 transition-transform active:scale-95"
+        className="relative z-50 h-10 w-10 rounded-full bg-primary hover:bg-primary-hover text-white flex items-center justify-center shadow-md cursor-pointer border border-primary/10 transition-transform active:scale-95"
       >
         <span className="text-lg font-bold">{open ? '✕' : '☰'}</span>
       </button>

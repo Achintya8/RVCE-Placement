@@ -402,7 +402,7 @@ export function ChatPanel() {
                         setSearchQuery(e.target.value)
                         setCurrentMatchIdx(0)
                       }}
-                      className="bg-transparent text-sm border-0 focus:ring-0 focus:outline-none w-full text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                      className="bg-transparent text-[16px] md:text-sm border-0 focus:ring-0 focus:outline-none w-full text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
                       autoFocus
                     />
                   </div>
@@ -804,7 +804,7 @@ export function ChatPanel() {
                         }
                       }
                     }}
-                    className="min-h-[36px] max-h-[120px] bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-primary/50 resize-none py-1.5 text-sm"
+                    className="min-h-[36px] max-h-[120px] bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-primary/50 resize-none py-1.5 text-[16px] md:text-sm"
                   />
                   <Button
                     type="submit"
