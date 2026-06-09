@@ -9,10 +9,16 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { CheckCircle2, AlertCircle, Upload, Save, FileText, Clock, Unlock, Camera, Moon, Sun, User, LogOut } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Upload, Save, FileText, Clock, Unlock, Camera, Moon, Sun, User, LogOut, Bell } from 'lucide-react'
 import { StudentProfileSkeleton } from '@/components/modern/Skeleton'
 import { ApiClientError } from '../api/client'
 import type { AppUser } from '@/types'
+import {
+  allowNotifications,
+  getNotificationPreference,
+  registerNotificationsSafely,
+} from '../notifications/registerNotifications'
+
 
 const FormField = ({ label, value, onChange, id, type = 'text', disabled = false, error }: {
   label: string
@@ -47,6 +53,31 @@ export function ProfilePanel() {
   const { theme, setTheme } = useTheme()
   const logout = useAuthStore((state) => state.logout)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [notificationPreference, setNotificationPreference] = useState(() =>
+    getNotificationPreference(),
+  )
+
+  const refreshNotificationPreference = () => {
+    setNotificationPreference(getNotificationPreference())
+  }
+
+  const enableNotifications = async () => {
+    if (!notificationPreference.supported) {
+      toast.error('Notifications are not supported in this browser.')
+      return
+    }
+
+    const permission = await allowNotifications()
+    refreshNotificationPreference()
+
+    if (permission === 'granted') {
+      toast.success('Notifications enabled! Subscribing for placement alerts...')
+      await registerNotificationsSafely(repo)
+    } else {
+      toast.error('Notifications are blocked in your browser settings.')
+    }
+  }
+
 
 
   const handleFieldChange = (field: keyof AppUser, value: any) => {
@@ -373,6 +404,8 @@ export function ProfilePanel() {
         )}
       </Card>
 
+
+
       {/* Main Profile Form */}
       <Card className="glass-panel">
         <CardHeader>
@@ -502,6 +535,67 @@ export function ProfilePanel() {
             {saving ? 'Saving...' : 'Save Profile'}
           </Button>
         </CardFooter>
+      </Card>
+
+      {/* Push Notifications Card */}
+      <Card className="glass-panel">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-slate-950 dark:text-white">
+            <Bell className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            Push Notifications
+          </CardTitle>
+          <CardDescription className="text-slate-600 dark:text-muted-foreground">
+            Receive real-time placement alerts, deadlines, and messages directly on your device.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!notificationPreference.supported ? (
+            notificationPreference.isIOS && !notificationPreference.isStandalone ? (
+              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 dark:bg-amber-500/5 text-amber-800 dark:text-amber-300">
+                <p className="font-semibold text-sm">iOS PWA Installation Required</p>
+                <p className="text-xs mt-1 leading-relaxed text-slate-600 dark:text-slate-350">
+                  To receive push notifications on iOS, you must first add this web app to your Home Screen. 
+                  Tap the Safari <strong>Share</strong> button (usually a square with an up arrow at the bottom of the screen) and select <strong>'Add to Home Screen'</strong>. 
+                  Once installed, open the app from your Home Screen and enable notifications here.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-4 dark:bg-destructive/5 text-destructive-foreground">
+                <p className="font-semibold text-sm">Unsupported Browser or Environment</p>
+                <p className="text-xs mt-1 leading-relaxed text-slate-600 dark:text-slate-350">
+                  Push notifications are not supported in this browser or over an insecure connection. 
+                  Ensure you are using a secure connection (HTTPS) and a modern mobile or desktop browser (Safari, Chrome, Firefox, Edge).
+                </p>
+              </div>
+            )
+          ) : notificationPreference.permission === 'granted' ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-green-500/20 bg-green-500/10 p-4 dark:bg-green-500/5 text-green-700 dark:text-green-305">
+              <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0" />
+              <div>
+                <p className="font-semibold text-sm">Notifications Enabled</p>
+                <p className="text-xs mt-0.5 text-slate-600 dark:text-slate-350">
+                  You are successfully subscribed to real-time placement alerts on this device.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-205 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+              <div className="space-y-0.5">
+                <p className="font-semibold text-sm text-slate-905 dark:text-white">Alerts Disabled</p>
+                <p className="text-xs text-slate-600 dark:text-slate-350">
+                  You haven't authorized notifications on this browser yet.
+                </p>
+              </div>
+              <Button
+                onClick={() => void enableNotifications()}
+                className="w-full sm:w-auto gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+              >
+                <Bell className="w-4 h-4" />
+                Enable Alerts
+              </Button>
+            </div>
+          )}
+        </CardContent>
       </Card>
     </div>
   )
