@@ -25,6 +25,18 @@ type PushNotificationPayload = {
 clientsClaim()
 self.skipWaiting()
 
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    Promise.all([
+      caches.delete('api-file-cache'),
+      caches.delete('api-cache'),
+      caches.delete('api-resume-cache'),
+    ]).then(() => {
+      console.log('Cleared old caches to resolve broken assets')
+    })
+  )
+})
+
 precacheAndRoute(self.__WB_MANIFEST)
 
 // Register a navigation route to serve index.html for all offline navigation requests (SPAs)
@@ -55,7 +67,7 @@ registerRoute(
     networkTimeoutSeconds: 5,
     plugins: [
       new CacheableResponsePlugin({
-        statuses: [0, 200],
+        statuses: [200],
       }),
       new ExpirationPlugin({
         maxEntries: 100,
@@ -65,11 +77,31 @@ registerRoute(
   })
 )
 
-// Cache file storage (resumes, profile pictures, attachments) with Cache-First strategy
+// Cache resumes with Network-First strategy
+registerRoute(
+  ({ url }) => {
+    const isResume = url.pathname.includes('/resumes/');
+    return isResume;
+  },
+  new NetworkFirst({
+    cacheName: 'api-resume-cache',
+    networkTimeoutSeconds: 5,
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [200],
+      }),
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      }),
+    ],
+  })
+)
+
+// Cache file storage (profile pictures, attachments) with Cache-First strategy
 registerRoute(
   ({ url }) => {
     const isStorage = 
-      url.pathname.includes('/resumes/') || 
       url.pathname.includes('/attachments/') || 
       url.pathname.includes('/profile-pictures/');
     return isStorage;
@@ -78,7 +110,7 @@ registerRoute(
     cacheName: 'api-file-cache',
     plugins: [
       new CacheableResponsePlugin({
-        statuses: [0, 200],
+        statuses: [200],
       }),
       new ExpirationPlugin({
         maxEntries: 50,

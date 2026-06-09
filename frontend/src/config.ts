@@ -16,12 +16,33 @@ export function resolveBackendUrl(url: string | null | undefined): string {
     return url
   }
 
-  // Rewrite absolute localhost/127.0.0.1 URLs to use the current client hostname (preserving the port)
+  // 1. Determine the API Origin from API_BASE_URL
+  let apiOrigin = ''
+  if (API_BASE_URL.startsWith('http')) {
+    try {
+      const parsedApi = new URL(API_BASE_URL)
+      // If API_BASE_URL is localhost/127.0.0.1, but the user is accessing via an IP address (e.g. on mobile),
+      // we dynamically swap the API hostname to match the current location hostname.
+      if (parsedApi.hostname === 'localhost' || parsedApi.hostname === '127.0.0.1') {
+        parsedApi.hostname = window.location.hostname
+      }
+      apiOrigin = parsedApi.origin
+    } catch {
+      apiOrigin = ''
+    }
+  } else {
+    // Relative, same origin as frontend
+    apiOrigin = window.location.origin
+  }
+
+  // 2. Rewrite localhost/127.0.0.1 in the URL to the resolved apiOrigin
   if (url.startsWith('http')) {
     try {
       const parsedUrl = new URL(url)
-      if (parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1') {
-        parsedUrl.hostname = window.location.hostname
+      if ((parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1') && apiOrigin) {
+        const targetOrigin = new URL(apiOrigin)
+        parsedUrl.protocol = targetOrigin.protocol
+        parsedUrl.host = targetOrigin.host // This updates both hostname and port to the resolved API origin!
         return parsedUrl.toString()
       }
     } catch {
@@ -29,22 +50,8 @@ export function resolveBackendUrl(url: string | null | undefined): string {
     }
   }
 
-  // Prepend correct backend host for relative URLs
+  // 3. Prepend backend origin to relative URLs
   if (url.startsWith('/')) {
-    let apiOrigin = ''
-    if (API_BASE_URL.startsWith('http')) {
-      try {
-        const parsed = new URL(API_BASE_URL)
-        if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
-          parsed.hostname = window.location.hostname
-        }
-        apiOrigin = parsed.origin
-      } catch {
-        apiOrigin = ''
-      }
-    } else {
-      apiOrigin = window.location.origin
-    }
     return `${apiOrigin}${url}`
   }
 
