@@ -1,6 +1,6 @@
 /** Same defaults as Flutter `app_config.dart` (web → localhost API). */
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api'
+  import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.PROD ? 'https://rvce-placement.onrender.com/api' : 'http://localhost:4000/api')
 
 /** Google OAuth Web Client ID — override with `VITE_GOOGLE_CLIENT_ID` in `.env`. */
 export const GOOGLE_CLIENT_ID =
