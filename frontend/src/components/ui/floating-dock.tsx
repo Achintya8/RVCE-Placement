@@ -97,7 +97,7 @@ function FloatingDockDesktop({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       className={cn(
-        'mx-auto flex h-16 items-end rounded-2xl bg-white/90 dark:bg-slate-900/90 shadow-[0_12px_32px_rgba(15,23,42,0.12)] border border-slate-200 dark:border-white/10 backdrop-blur-xl touch-none',
+        'mx-auto flex h-16 items-end rounded-2xl bg-white/90 dark:bg-[#121212]/90 shadow-[0_12px_32px_rgba(15,23,42,0.12)] border border-slate-200 dark:border-white/10 backdrop-blur-xl touch-none',
         className
       )}
     >
@@ -175,8 +175,8 @@ function IconContainer({
         active
           ? 'bg-primary text-white shadow-md shadow-primary/30'
           : (hovered || isTouchHovered)
-            ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white'
-            : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+            ? 'bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white'
+            : 'bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
       )}
       onClick={onClick}
     >
@@ -314,7 +314,7 @@ function FloatingDockMobile({
                   transition={{ delay: (items.length - 1 - idx) * 0.03 }}
                   className="flex items-center gap-2"
                 >
-                  <div className="rounded-md bg-slate-900/90 border border-slate-700 px-2 py-1 text-[10px] font-semibold text-white shadow-md">
+                  <div className="rounded-md bg-slate-900/90 dark:bg-black/80 border border-slate-700 dark:border-white/20 px-2 py-1 text-[10px] font-semibold text-white shadow-md">
                     {item.title}
                   </div>
                   <button
@@ -329,8 +329,8 @@ function FloatingDockMobile({
                       item.active
                         ? 'bg-primary text-white border-primary/20 shadow-primary/20'
                         : activeTouchTitle === item.title
-                          ? 'bg-slate-200 border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white scale-110 shadow-md shadow-slate-300/30'
-                          : 'bg-white border-slate-200 dark:bg-slate-900 dark:border-white/10 text-slate-600 dark:text-slate-300'
+                          ? 'bg-slate-200 border-slate-300 dark:bg-white/10 dark:border-white/20 text-slate-900 dark:text-white scale-110 shadow-md shadow-slate-300/30 dark:shadow-black/50'
+                          : 'bg-white border-slate-200 dark:bg-[#121212]/90 dark:border-white/10 text-slate-600 dark:text-slate-300'
                     )}
                   >
                     <div className="h-5 w-5 flex items-center justify-center [&>svg]:h-full [&>svg]:w-full [&>img]:h-full [&>img]:w-full [&>img]:object-cover [&>img]:rounded-full">

@@ -39,24 +39,24 @@
   }
 
   .dark {
-    --background: 222 35% 12%;
+    --background: 0 0% 7.1%;
     --foreground: 210 40% 98%;
-    --card: 222 35% 15%;
+    --card: 0 0% 15%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 35% 15%;
+    --popover: 0 0% 15%;
     --popover-foreground: 210 40% 98%;
     --primary: 211 100% 56%;
-    --secondary: 222 25% 20%;
+    --secondary: 0 0% 20%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 222 25% 20%;
+    --muted: 0 0% 20%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 222 25% 20%;
+    --accent: 0 0% 20%;
     --accent-foreground: 210 40% 98%;
-    --border: 222 25% 20%;
-    --input: 222 25% 20%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
 
-    --color-bg-dark: 19, 25, 36;
-    --color-bg-card: 24, 32, 46;
+    --color-bg-dark: 18, 18, 18;
+    --color-bg-card: 36, 36, 36;
     --color-bg-card-opacity: 0.4;
     --color-text-main: 248, 250, 252;
     --color-text-muted: 148, 163, 184;
@@ -226,7 +226,7 @@
 
 .dark .ios-glass-panel,
 .dark .glass-panel {
-  background: rgba(15, 23, 42, 0.58);
+  background: rgba(24, 24, 24, 0.58);
   border-color: rgba(255, 255, 255, 0.14);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
@@ -242,7 +242,7 @@
 }
 
 .dark .ios-glass-nav {
-  background: rgba(8, 13, 24, 0.68);
+  background: rgba(12, 12, 12, 0.68);
   border-color: rgba(255, 255, 255, 0.12);
   box-shadow: 0 16px 42px rgba(0, 0, 0, 0.36);
 }

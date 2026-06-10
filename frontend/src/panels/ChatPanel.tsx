@@ -371,7 +371,7 @@ export function ChatPanel() {
             <>
               {/* Chat Header (visible when not searching) */}
               {!searchActive && (
-                <div className="flex items-center justify-between bg-white dark:bg-slate-900 pl-14 pr-4 py-3 md:px-4 border-b border-slate-200 dark:border-white/10 shadow-sm z-40 shrink-0 top-safe-chat-header">
+                <div className="flex items-center justify-between bg-white dark:bg-[#121212] pl-14 pr-4 py-3 md:px-4 border-b border-slate-200 dark:border-white/10 shadow-sm z-40 shrink-0 top-safe-chat-header">
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col text-left">
                       <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Placement Related messages Only</span>
@@ -392,7 +392,7 @@ export function ChatPanel() {
 
               {/* Animated Search Bar */}
               {searchActive && (
-                <div className="flex items-center justify-between bg-white dark:bg-slate-900 pl-14 pr-4 py-2.5 md:px-4 border-b border-slate-200 dark:border-white/10 shadow-sm animate-in slide-in-from-top duration-200 z-50 top-safe-chat-search">
+                <div className="flex items-center justify-between bg-white dark:bg-[#121212] pl-14 pr-4 py-2.5 md:px-4 border-b border-slate-200 dark:border-white/10 shadow-sm animate-in slide-in-from-top duration-200 z-50 top-safe-chat-search">
                   <div className="flex items-center gap-2 flex-1 max-w-md">
                     <Search className="w-4 h-4 text-slate-400" />
                     <input
@@ -454,7 +454,7 @@ export function ChatPanel() {
               {showScrollBtn && (
                 <button
                   onClick={scrollToBottom}
-                  className="absolute bottom-[90px] right-5 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 animate-in fade-in zoom-in-95"
+                  className="absolute bottom-[90px] right-5 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 animate-in fade-in zoom-in-95"
                   title="Scroll to latest messages"
                 >
                   <ChevronDown className="w-5 h-5 text-slate-600 dark:text-slate-300" />
@@ -563,8 +563,8 @@ export function ChatPanel() {
                               className={cn(
                                 "px-4 py-2 rounded-[16px] text-base transition-all duration-300 border shadow-sm",
                                 isMe
-                                  ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 border-indigo-100 dark:border-indigo-900/50 rounded-tr-none shadow-indigo-100/30"
-                                  : "bg-slate-100 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 border-slate-200/50 dark:border-slate-800/50 rounded-tl-none",
+                                  ? "bg-indigo-50 dark:bg-white/10 text-indigo-950 dark:text-white border-indigo-100 dark:border-white/20 rounded-tr-none shadow-indigo-100/30 dark:shadow-none"
+                                  : "bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-slate-200 border-slate-200/50 dark:border-white/10 rounded-tl-none",
                                 isCurrentMatch && "ring-2 ring-yellow-400 dark:ring-yellow-500 scale-[1.01] shadow-[0_0_15px_rgba(234,179,8,0.4)]"
                               )}
                             >
@@ -611,7 +611,7 @@ export function ChatPanel() {
 
               <div className="relative px-3 py-2 sm:p-4 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 flex flex-col gap-2 pb-[calc(env(safe-area-inset-bottom,0px)+8px)] sm:pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">
                 {mentionSearch !== null && filteredUsers.length > 0 && (
-                  <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden z-50">
+                  <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
                     {filteredUsers.map(u => (
                       <button
                         key={u.id}
@@ -639,7 +639,7 @@ export function ChatPanel() {
                 )}
 
                 {replyingTo && (
-                  <div className="flex items-center justify-between bg-white dark:bg-slate-900 px-3 py-2 rounded-lg border-l-4 border-primary border border-slate-200 dark:border-slate-800 shadow-sm animate-in slide-in-from-bottom-2 duration-200">
+                  <div className="flex items-center justify-between bg-white dark:bg-[#1a1a1a] px-3 py-2 rounded-lg border-l-4 border-primary border border-slate-200 dark:border-white/10 shadow-sm animate-in slide-in-from-bottom-2 duration-200">
                     <div className="flex flex-col text-left overflow-hidden">
                       <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
                         Replying to {replyingTo.sender.id === session?.user.id ? 'You' : replyingTo.sender.name}
