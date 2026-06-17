@@ -218,8 +218,9 @@ export class PlacementRepository {
 
   async createCompany(payload: {
     name: string
-    minCgpa: number
+    minCgpa?: number | null
     minOverallCgpa?: number | null
+    minUgCgpa?: number | null
     package: string
     stipend: string
     testDate?: string | null
@@ -234,8 +235,9 @@ export class PlacementRepository {
     companyId: number,
     payload: {
       name: string
-      minCgpa: number
+      minCgpa?: number | null
       minOverallCgpa?: number | null
+      minUgCgpa?: number | null
       package: string
       stipend: string
       testDate?: string | null

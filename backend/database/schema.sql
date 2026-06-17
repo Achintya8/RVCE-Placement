@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS "companies" (
   "name"            VARCHAR(255),
   "min_cgpa"          DOUBLE PRECISION,
   "min_overall_cgpa"  DOUBLE PRECISION,
+  "min_ug_cgpa"       DOUBLE PRECISION,
   "stipend"           VARCHAR(255),
   "package"         VARCHAR(255),
   "test_date"       DATE,
@@ -144,3 +145,6 @@ CREATE INDEX IF NOT EXISTS "idx_mentions_message_id"  ON "mentions" ("message_id
 CREATE INDEX IF NOT EXISTS "idx_notification_subscriptions_user_id" ON "notification_subscriptions" ("user_id");
 CREATE INDEX IF NOT EXISTS "idx_users_usn" ON "users" ("usn");
 CREATE INDEX IF NOT EXISTS "idx_users_college_email" ON "users" ("college_email_id");
+
+-- ── Alterations for Schema Evolution ─────────────────────────────────────────────
+ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "min_ug_cgpa" DOUBLE PRECISION;

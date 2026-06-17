@@ -260,6 +260,7 @@ export const listEligibleStudentIds = async (companyId) => {
             AND (u."twelfth_marks" IS NULL OR u."twelfth_marks" >= c."min_overall_cgpa" * 10)
           )
         )
+        AND (c."min_ug_cgpa" IS NULL OR u."ug_cgpa" >= c."min_ug_cgpa")
       ORDER BY u."id" ASC`,
     [companyId],
   );

@@ -1,9 +1,7 @@
-import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import { z } from 'zod';
 
 import { env } from '../config/env.js';
-import { findSpcAccountForUser, findSpcAccountByUsername } from '../repositories/spc.repository.js';
 import {
   attachGoogleIdentity,
   createGoogleUser,
@@ -21,14 +19,12 @@ const googleSchema = z.object({
   idToken: z.string().min(1),
 });
 
-const spcLoginSchema = z.object({
-  username: z.string().min(1),
-  password: z.string().min(1),
-});
-
 const buildSessionPayload = async (user) => {
-  const spcAccount = await findSpcAccountForUser(user.id);
-  const isSpc = Boolean(spcAccount) || env.spcEmails.includes(user.collegeEmailId.toLowerCase());
+  const userEmails = [user.collegeEmailId, user.personalEmailId]
+    .filter(Boolean)
+    .map(email => email.toLowerCase());
+
+  const isSpc = userEmails.some(email => env.spcEmails.includes(email));
 
   return {
     token: signAccessToken({ userId: user.id, isSpc }),
@@ -86,37 +82,7 @@ export const googleLogin = async (req, res, next) => {
   }
 };
 
-export const spcLogin = async (req, res, next) => {
-  try {
-    const { username, password } = spcLoginSchema.parse(req.body);
-    const account = await findSpcAccountByUsername(username);
 
-    if (!account) {
-      throw new ApiError(401, 'Invalid SPC username or password.');
-    }
-
-    const passwordMatches = await bcrypt.compare(password, account.password);
-
-    if (!passwordMatches) {
-      throw new ApiError(401, 'Invalid SPC username or password.');
-    }
-
-    const user = await findUserById(account.user_id);
-
-    if (!user) {
-      throw new ApiError(404, 'SPC user is not linked to a valid user record.');
-    }
-
-    res.json({
-      token: signAccessToken({ userId: user.id, isSpc: true }),
-      isSpc: true,
-      notificationTopic: '',
-      user,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
 
 export const getSession = async (req, res, next) => {
   try {
