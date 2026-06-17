@@ -20,6 +20,7 @@ const companySchema = z.object({
   name: z.string().min(1),
   minCgpa: z.coerce.number().min(0).max(10).optional().nullable(),
   minOverallCgpa: z.coerce.number().min(0).max(10).optional().nullable(),
+  minUgCgpa: z.coerce.number().min(0).max(10).optional().nullable(),
   stipend: z.string().optional().nullable(),
   package: z.string().optional().nullable(),
   testDate: z.string().optional().nullable(),

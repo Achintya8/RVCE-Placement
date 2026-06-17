@@ -88,6 +88,7 @@ export const listAssignedFormsForStudent = async (studentId) => {
                 AND (u."twelfth_marks" IS NULL OR u."twelfth_marks" >= c."min_overall_cgpa" * 10)
               )
             )
+            AND (c."min_ug_cgpa" IS NULL OR u."ug_cgpa" >= c."min_ug_cgpa")
             AND (
                (f."type" NOT IN ('consent', 'tracker'))
                OR (c."deadline" IS NULL OR c."deadline" > NOW() OR fr."id" IS NOT NULL)
@@ -238,7 +239,7 @@ export const getPendingStudentsForForm = async (formId) => {
     
     // Fetch company to get criteria and deadline
     const { rows: companyRows } = await query(
-      `SELECT min_cgpa, min_overall_cgpa, deadline FROM "companies" WHERE id = $1`,
+      `SELECT min_cgpa, min_overall_cgpa, min_ug_cgpa, deadline FROM "companies" WHERE id = $1`,
       [form.companyId]
     );
     const company = companyRows[0];
@@ -253,6 +254,7 @@ export const getPendingStudentsForForm = async (formId) => {
         AND (u."tenth_marks" IS NULL OR u."tenth_marks" >= ${(company?.min_overall_cgpa || 0) * 10})
         AND (u."twelfth_marks" IS NULL OR u."twelfth_marks" >= ${(company?.min_overall_cgpa || 0) * 10})
       ))
+      AND (${company?.min_ug_cgpa === null || company?.min_ug_cgpa === undefined} OR u."ug_cgpa" >= ${company?.min_ug_cgpa || 0})
       AND (
         ${form.type === 'consent' ? 'TRUE' : `(COALESCE(a."consent", c."default_consent") = TRUE)`}
       )

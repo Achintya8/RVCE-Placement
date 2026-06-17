@@ -134,6 +134,7 @@ export function AdminPanel() {
   const [cTest, setCTest] = useState('')
   const [cInt, setCInt] = useState('')
   const [cOverallCgpa, setCOverallCgpa] = useState('')
+  const [cUgCgpa, setCUgCgpa] = useState('')
   const [cDefaultConsent, setCDefaultConsent] = useState(false)
 
   // Company Edit Form State
@@ -141,6 +142,7 @@ export function AdminPanel() {
   const [eName, setEName] = useState('')
   const [eCgpa, setECgpa] = useState('')
   const [eOverallCgpa, setEOverallCgpa] = useState('')
+  const [eUgCgpa, setEUgCgpa] = useState('')
   const [ePkg, setEPkg] = useState('')
   const [eStip, setEStip] = useState('')
   const [eTest, setETest] = useState('')
@@ -344,8 +346,9 @@ export function AdminPanel() {
     run(async () => {
       await repo.createCompany({
         name: cName.trim(),
-        minCgpa: Number.parseFloat(cCgpa) || 0,
-        minOverallCgpa: Number.parseFloat(cOverallCgpa) || null,
+        minCgpa: cCgpa ? Number.parseFloat(cCgpa) : null,
+        minOverallCgpa: cOverallCgpa ? Number.parseFloat(cOverallCgpa) : null,
+        minUgCgpa: cUgCgpa ? Number.parseFloat(cUgCgpa) : null,
         package: cPkg.trim(),
         stipend: cStip.trim(),
         testDate: cTest.trim() || null,
@@ -353,14 +356,15 @@ export function AdminPanel() {
         deadline: null,
         defaultConsent: cDefaultConsent,
       })
-      setCName(''); setCCgpa(''); setCOverallCgpa(''); setCPkg(''); setCStip(''); setCTest(''); setCInt(''); setCDefaultConsent(false)
+      setCName(''); setCCgpa(''); setCOverallCgpa(''); setCUgCgpa(''); setCPkg(''); setCStip(''); setCTest(''); setCInt(''); setCDefaultConsent(false)
     }, 'Company created.')
 
   const startEditCompany = (company: Company) => {
     setEditingCompany(company)
     setEName(company.name)
-    setECgpa(String(company.minCgpa))
+    setECgpa(company.minCgpa != null ? String(company.minCgpa) : '')
     setEOverallCgpa(company.minOverallCgpa != null ? String(company.minOverallCgpa) : '')
+    setEUgCgpa(company.minUgCgpa != null ? String(company.minUgCgpa) : '')
     setEPkg(company.package || '')
     setEStip(company.stipend || '')
     setETest(company.testDate || '')
@@ -373,8 +377,9 @@ export function AdminPanel() {
     void run(async () => {
       await repo.updateCompany(editingCompany.id, {
         name: eName.trim(),
-        minCgpa: Number.parseFloat(eCgpa) || 0,
-        minOverallCgpa: Number.parseFloat(eOverallCgpa) || null,
+        minCgpa: eCgpa ? Number.parseFloat(eCgpa) : null,
+        minOverallCgpa: eOverallCgpa ? Number.parseFloat(eOverallCgpa) : null,
+        minUgCgpa: eUgCgpa ? Number.parseFloat(eUgCgpa) : null,
         package: ePkg.trim(),
         stipend: eStip.trim(),
         testDate: eTest.trim() || null,
@@ -678,6 +683,7 @@ export function AdminPanel() {
             if (s.tenthMarks && s.tenthMarks < company.minOverallCgpa * 10) return false;
             if (s.twelfthMarks && s.twelfthMarks < company.minOverallCgpa * 10) return false;
           }
+          if (company.minUgCgpa && s.ugCgpa < company.minUgCgpa) return false;
           return true;
         }).length;
       } else {
@@ -753,8 +759,10 @@ export function AdminPanel() {
                       <TableRow key={c.id} className="border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:bg-white/5">
                         <TableCell className="font-bold text-slate-900 dark:text-white">{c.name}</TableCell>
                         <TableCell className="text-muted-foreground text-xs">
-                          <div>Current: {c.minCgpa.toFixed(1)}</div>
+                          {c.minCgpa != null && <div>Current: {c.minCgpa.toFixed(1)}</div>}
                           {c.minOverallCgpa != null && <div>Overall: {c.minOverallCgpa.toFixed(1)}</div>}
+                          {c.minUgCgpa != null && <div>UG: {c.minUgCgpa.toFixed(1)}</div>}
+                          {c.minCgpa == null && c.minOverallCgpa == null && c.minUgCgpa == null && <div>All Eligible</div>}
                         </TableCell>
                         <TableCell className="text-muted-foreground">{c.package || 'TBD'}</TableCell>
                         <TableCell className="text-muted-foreground">{c.testDate ? formatDate(c.testDate) : 'TBD'}</TableCell>
@@ -792,6 +800,10 @@ export function AdminPanel() {
                 <div className="space-y-2">
                   <Label className="text-text-main">Min Overall CGPA</Label>
                   <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" type="number" step="0.1" placeholder="e.g. 6.5" value={cOverallCgpa} onChange={e => setCOverallCgpa(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-text-main">Min UG CGPA</Label>
+                  <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" type="number" step="0.1" placeholder="e.g. 6.0" value={cUgCgpa} onChange={e => setCUgCgpa(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-text-main">Package</Label>
@@ -909,8 +921,11 @@ export function AdminPanel() {
                                     <div className="space-y-1">
                                       <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Academic Requirements</span>
                                       <p className="text-xs font-semibold text-slate-900 dark:text-white leading-relaxed">
-                                        Current: {c.minCgpa.toFixed(1)}
-                                        {c.minOverallCgpa != null && ` | Overall: ${c.minOverallCgpa.toFixed(1)}`}
+                                        {[
+                                          c.minCgpa != null ? `Current: ${c.minCgpa.toFixed(1)}` : null,
+                                          c.minOverallCgpa != null ? `Overall: ${c.minOverallCgpa.toFixed(1)}` : null,
+                                          c.minUgCgpa != null ? `UG: ${c.minUgCgpa.toFixed(1)}` : null,
+                                        ].filter(Boolean).join(' | ') || 'All Eligible'}
                                       </p>
                                     </div>
                                   </div>
@@ -1737,6 +1752,19 @@ export function AdminPanel() {
                     placeholder="e.g. 6.5 (Optional)" 
                     value={eOverallCgpa} 
                     onChange={e => setEOverallCgpa(e.target.value)} 
+                  />
+                </div>
+
+                {/* Min UG CGPA */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Min UG CGPA</Label>
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. 6.0 (Optional)" 
+                    value={eUgCgpa} 
+                    onChange={e => setEUgCgpa(e.target.value)} 
                   />
                 </div>
 

@@ -1,0 +1,55 @@
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: placement-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-mca_placement}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+
+  mongodb:
+    image: mongo:6-alpine
+    container_name: placement-mongo
+    restart: always
+    volumes:
+      - mongodata:/data/db
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: placement-backend
+    restart: always
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD}@database:5432/${DB_NAME:-mca_placement}
+      - MONGODB_URI=mongodb://mongodb:27017/${MONGO_DB_NAME:-mca_placement}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_DRIVE_FOLDER_ID=${GOOGLE_DRIVE_FOLDER_ID}
+      - GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL=${GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL}
+      - GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=${GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY}
+      - WEB_PUSH_PUBLIC_KEY=${WEB_PUSH_PUBLIC_KEY}
+      - WEB_PUSH_PRIVATE_KEY=${WEB_PUSH_PRIVATE_KEY}
+      - WEB_PUSH_SUBJECT=${WEB_PUSH_SUBJECT}
+      - SPC_EMAILS=${SPC_EMAILS}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - BACKEND_URL=${BACKEND_URL}
+    depends_on:
+      - database
+      - mongodb
+    ports:
+      - "127.0.0.1:4000:4000"
+    volumes:
+      - uploads:/app/uploads
+
+volumes:
+  pgdata:
+  mongodata:
+  uploads:

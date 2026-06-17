@@ -74,8 +74,9 @@ export function parseCompany(json: Record<string, unknown>): Company {
   return {
     id: num(json.id),
     name: String(json.name ?? ''),
-    minCgpa: num(json.minCgpa),
+    minCgpa: json.minCgpa != null ? num(json.minCgpa) : null,
     minOverallCgpa: json.minOverallCgpa != null ? num(json.minOverallCgpa) : null,
+    minUgCgpa: json.minUgCgpa != null ? num(json.minUgCgpa) : null,
     package: String(json.package ?? ''),
     stipend: String(json.stipend ?? ''),
     testDate: json.testDate as string | null | undefined,

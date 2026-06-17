@@ -5,6 +5,7 @@ const normalizeCompany = (row) => ({
   name: row.name,
   minCgpa: row.min_cgpa,
   minOverallCgpa: row.min_overall_cgpa,
+  minUgCgpa: row.min_ug_cgpa,
   stipend: row.stipend,
   package: row.package,
   testDate: row.test_date,
@@ -26,6 +27,7 @@ export const createCompany = async (payload) => {
       "name",
       "min_cgpa",
       "min_overall_cgpa",
+      "min_ug_cgpa",
       "stipend",
       "package",
       "test_date",
@@ -34,12 +36,13 @@ export const createCompany = async (payload) => {
       "default_consent",
       "created_by",
       "created_at"
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
     RETURNING *`,
     [
       payload.name,
       payload.minCgpa,
       payload.minOverallCgpa || null,
+      payload.minUgCgpa || null,
       payload.stipend,
       payload.package,
       payload.testDate,
@@ -122,6 +125,7 @@ export const listEligibleStudentsForCompany = async (companyId) => {
             AND (u."twelfth_marks" IS NULL OR u."twelfth_marks" >= c."min_overall_cgpa" * 10)
           )
         )
+        AND (c."min_ug_cgpa" IS NULL OR u."ug_cgpa" >= c."min_ug_cgpa")
       ORDER BY u."name" ASC NULLS LAST`,
     [companyId],
   );
@@ -167,6 +171,7 @@ export const updateCompany = async (companyId, payload) => {
       SET "name" = $2,
           "min_cgpa" = $3,
           "min_overall_cgpa" = $4,
+          "min_ug_cgpa" = $11,
           "package" = $5,
           "stipend" = $6,
           "test_date" = $7,
@@ -186,6 +191,7 @@ export const updateCompany = async (companyId, payload) => {
       payload.interviewDate,
       payload.deadline,
       payload.defaultConsent ?? false,
+      payload.minUgCgpa,
     ]
   );
   return rows[0] ? normalizeCompany(rows[0]) : null;

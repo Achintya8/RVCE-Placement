@@ -111,13 +111,12 @@ export function CompaniesPanel() {
                     <CardDescription className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-muted-foreground animate-in fade-in duration-200 text-xs mt-1">
                       <span className="flex items-center gap-1">
                         <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                        Min Current CGPA: {c.minCgpa.toFixed(1)}
+                        {[
+                          c.minCgpa != null ? `Current: ${c.minCgpa.toFixed(1)}` : null,
+                          c.minOverallCgpa != null ? `Overall: ${c.minOverallCgpa.toFixed(1)}` : null,
+                          c.minUgCgpa != null ? `UG: ${c.minUgCgpa.toFixed(1)}` : null,
+                        ].filter(Boolean).join(' | ') || 'All Eligible'}
                       </span>
-                      {c.minOverallCgpa != null && (
-                        <span className="flex items-center gap-1 border-l border-slate-200 dark:border-white/10 pl-3">
-                          Min Overall CGPA: {c.minOverallCgpa.toFixed(1)}
-                        </span>
-                      )}
                     </CardDescription>
                   )}
                 </div>

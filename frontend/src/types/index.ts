@@ -34,8 +34,9 @@ export type Session = {
 export type Company = {
   id: number
   name: string
-  minCgpa: number
+  minCgpa?: number | null
   minOverallCgpa?: number | null
+  minUgCgpa?: number | null
   package: string
   stipend: string
   testDate?: string | null

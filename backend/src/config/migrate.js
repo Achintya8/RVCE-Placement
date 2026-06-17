@@ -18,6 +18,9 @@ export const runMigrations = async () => {
     // 3. Companies table: default_consent column
     await query('ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "default_consent" BOOLEAN DEFAULT false;');
 
+    // 3.5 Companies table: min_ug_cgpa column
+    await query('ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "min_ug_cgpa" DOUBLE PRECISION;');
+
     // 4. Users table: rejection and profile snapshot columns
     await query(`
       ALTER TABLE "users" 
