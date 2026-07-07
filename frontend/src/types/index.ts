@@ -17,6 +17,11 @@ export type AppUser = {
   profilePictureUrl?: string | null
   unlockRequested?: boolean
   placed?: boolean
+  gender?: string | null
+  rejected?: boolean
+  rejectionReason?: string | null
+  rejectedFields?: string[] | null
+  lastVerifiedProfile?: Record<string, any> | null
 }
 
 export type Session = {
@@ -29,7 +34,9 @@ export type Session = {
 export type Company = {
   id: number
   name: string
-  minCgpa: number
+  minCgpa?: number | null
+  minOverallCgpa?: number | null
+  minUgCgpa?: number | null
   package: string
   stipend: string
   testDate?: string | null
@@ -40,6 +47,7 @@ export type Company = {
   status?: string
   consentBlocked?: boolean
   trackerBlocked?: boolean
+  defaultConsent?: boolean
 }
 
 export type PlacementFormSummary = {
@@ -86,17 +94,19 @@ export type ChatUser = {
 export type ChatMessage = {
   id: number
   sender: ChatUser
-  messageText: string
+  messageText?: string | null
   attachmentUrl?: string | null
   attachmentName?: string | null
   createdAt: string
-  mentionedUsers: ChatUser[]
+  mentionedUsers?: ChatUser[]
   parentId?: number | null
   parentMessage?: {
     id: number
     senderName: string
-    messageText: string
+    messageText?: string | null
   } | null
+  isOptimistic?: boolean
+  hasFailed?: boolean
 }
 
 export type ChatMessagesResponse = {

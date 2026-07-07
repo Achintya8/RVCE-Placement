@@ -4,6 +4,8 @@ const normalizeCompany = (row) => ({
   id: row.id,
   name: row.name,
   minCgpa: row.min_cgpa,
+  minOverallCgpa: row.min_overall_cgpa,
+  minUgCgpa: row.min_ug_cgpa,
   stipend: row.stipend,
   package: row.package,
   testDate: row.test_date,
@@ -16,6 +18,7 @@ const normalizeCompany = (row) => ({
   tracker: row.application_tracker,
   consentBlocked: row.consent_blocked ?? false,
   trackerBlocked: row.tracker_blocked ?? false,
+  defaultConsent: row.default_consent ?? false,
 });
 
 export const createCompany = async (payload) => {
@@ -23,23 +26,29 @@ export const createCompany = async (payload) => {
     `INSERT INTO "companies" (
       "name",
       "min_cgpa",
+      "min_overall_cgpa",
+      "min_ug_cgpa",
       "stipend",
       "package",
       "test_date",
       "interview_date",
       "deadline",
+      "default_consent",
       "created_by",
       "created_at"
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
     RETURNING *`,
     [
       payload.name,
       payload.minCgpa,
+      payload.minOverallCgpa || null,
+      payload.minUgCgpa || null,
       payload.stipend,
       payload.package,
       payload.testDate,
       payload.interviewDate,
       payload.deadline,
+      payload.defaultConsent ?? false,
       payload.createdBy,
     ],
   );
@@ -59,7 +68,7 @@ export const listCompanies = async (studentId) => {
 
   const { rows } = await query(
     `SELECT c.*,
-        ${studentId ? 'a."consent" AS application_consent, a."tracker" AS application_tracker' : 'NULL AS application_consent, NULL AS application_tracker'}
+        ${studentId ? 'COALESCE(a."consent", c."default_consent") AS application_consent, a."tracker" AS application_tracker' : 'NULL AS application_consent, NULL AS application_tracker'}
       FROM "companies" c
       ${joins}
       ORDER BY c."created_at" DESC NULLS LAST, c."id" DESC`,
@@ -81,7 +90,7 @@ export const findCompanyById = async (companyId, studentId = null) => {
 
   const { rows } = await query(
     `SELECT c.*,
-      ${studentId ? 'a."consent" AS application_consent, a."tracker" AS application_tracker' : 'NULL AS application_consent, NULL AS application_tracker'}
+      ${studentId ? 'COALESCE(a."consent", c."default_consent") AS application_consent, a."tracker" AS application_tracker' : 'NULL AS application_consent, NULL AS application_tracker'}
       FROM "companies" c
       ${joins}
       WHERE c."id" = $1
@@ -100,14 +109,23 @@ export const listEligibleStudentsForCompany = async (companyId) => {
         u."personal_email_id",
         u."ug_cgpa",
         u."resume_url",
-        a."consent",
+        COALESCE(a."consent", c."default_consent") AS "consent",
         a."tracker"
-      FROM "applications" a
-      INNER JOIN "users" u ON u."id" = a."student_id"
-      INNER JOIN "companies" c ON c."id" = a."company_id"
-      WHERE a."company_id" = $1
-        AND a."consent" = TRUE
-        AND (c."min_cgpa" IS NULL OR u."ug_cgpa" >= c."min_cgpa")
+      FROM "users" u
+      CROSS JOIN "companies" c
+      LEFT JOIN "applications" a ON a."student_id" = u."id" AND a."company_id" = c."id"
+      WHERE c."id" = $1
+        AND COALESCE(a."consent", c."default_consent") = TRUE
+        AND (c."min_cgpa" IS NULL OR COALESCE(NULLIF(u."first_sem_sgpa", 0), u."ug_cgpa") >= c."min_cgpa")
+        AND (
+          c."min_overall_cgpa" IS NULL OR (
+            u."ug_cgpa" >= c."min_overall_cgpa"
+            AND (u."first_sem_sgpa" IS NULL OR u."first_sem_sgpa" >= c."min_overall_cgpa")
+            AND (u."tenth_marks" IS NULL OR u."tenth_marks" >= c."min_overall_cgpa" * 10)
+            AND (u."twelfth_marks" IS NULL OR u."twelfth_marks" >= c."min_overall_cgpa" * 10)
+          )
+        )
+        AND (c."min_ug_cgpa" IS NULL OR u."ug_cgpa" >= c."min_ug_cgpa")
       ORDER BY u."name" ASC NULLS LAST`,
     [companyId],
   );
@@ -145,5 +163,41 @@ export const updateCompanyBlocks = async (companyId, consentBlocked, trackerBloc
     [companyId, consentBlocked, trackerBlocked]
   );
   return rows[0] ? normalizeCompany(rows[0]) : null;
+};
+
+export const updateCompany = async (companyId, payload) => {
+  const { rows } = await query(
+    `UPDATE "companies"
+      SET "name" = $2,
+          "min_cgpa" = $3,
+          "min_overall_cgpa" = $4,
+          "min_ug_cgpa" = $11,
+          "package" = $5,
+          "stipend" = $6,
+          "test_date" = $7,
+          "interview_date" = $8,
+          "deadline" = $9,
+          "default_consent" = $10
+      WHERE "id" = $1
+      RETURNING *`,
+    [
+      companyId,
+      payload.name,
+      payload.minCgpa,
+      payload.minOverallCgpa,
+      payload.package,
+      payload.stipend,
+      payload.testDate,
+      payload.interviewDate,
+      payload.deadline,
+      payload.defaultConsent ?? false,
+      payload.minUgCgpa,
+    ]
+  );
+  return rows[0] ? normalizeCompany(rows[0]) : null;
+};
+
+export const deleteCompany = async (companyId) => {
+  await query('DELETE FROM "companies" WHERE "id" = $1', [companyId]);
 };
 

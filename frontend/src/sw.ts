@@ -25,6 +25,18 @@ type PushNotificationPayload = {
 clientsClaim()
 self.skipWaiting()
 
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    Promise.all([
+      caches.delete('api-file-cache'),
+      caches.delete('api-cache'),
+      caches.delete('api-resume-cache'),
+    ]).then(() => {
+      console.log('Cleared old caches to resolve broken assets')
+    })
+  )
+})
+
 precacheAndRoute(self.__WB_MANIFEST)
 
 // Register a navigation route to serve index.html for all offline navigation requests (SPAs)
@@ -55,7 +67,7 @@ registerRoute(
     networkTimeoutSeconds: 5,
     plugins: [
       new CacheableResponsePlugin({
-        statuses: [0, 200],
+        statuses: [200],
       }),
       new ExpirationPlugin({
         maxEntries: 100,
@@ -65,11 +77,31 @@ registerRoute(
   })
 )
 
-// Cache file storage (resumes, profile pictures, attachments) with Cache-First strategy
+// Cache resumes with Network-First strategy
+registerRoute(
+  ({ url }) => {
+    const isResume = url.pathname.includes('/resumes/');
+    return isResume;
+  },
+  new NetworkFirst({
+    cacheName: 'api-resume-cache',
+    networkTimeoutSeconds: 5,
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [200],
+      }),
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      }),
+    ],
+  })
+)
+
+// Cache file storage (profile pictures, attachments) with Cache-First strategy
 registerRoute(
   ({ url }) => {
     const isStorage = 
-      url.pathname.includes('/resumes/') || 
       url.pathname.includes('/attachments/') || 
       url.pathname.includes('/profile-pictures/');
     return isStorage;
@@ -78,7 +110,7 @@ registerRoute(
     cacheName: 'api-file-cache',
     plugins: [
       new CacheableResponsePlugin({
-        statuses: [0, 200],
+        statuses: [200],
       }),
       new ExpirationPlugin({
         maxEntries: 50,
@@ -321,12 +353,81 @@ self.addEventListener('push', (event) => {
       const hasFocusedClient = windowClients.some((client) => client.focused)
       if (hasFocusedClient) return
 
-      await self.registration.showNotification(title, {
-        body: notification.body ?? '',
-        icon: '/pwa-192x192.png',
-        badge: '/pwa-64x64.png',
-        data,
-      })
+      // Handle chat message notifications grouping (WhatsApp-style)
+      if (data.type === 'chat_message' || data.type === 'message_mention') {
+        const activeNotifications = await self.registration.getNotifications({ tag: 'chat_notification' })
+        
+        let unreadMessages: Array<{ senderName: string; text: string; attachmentUrl?: string }> = []
+        
+        if (activeNotifications.length > 0) {
+          const oldNotification = activeNotifications[0]
+          if (oldNotification.data && Array.isArray(oldNotification.data.unreadMessages)) {
+            unreadMessages = [...oldNotification.data.unreadMessages]
+          }
+        }
+        
+        unreadMessages.push({
+          senderName: title,
+          text: notification.body ?? '',
+          attachmentUrl: data.attachmentUrl || '',
+        })
+
+        // Build notification text
+        let displayTitle = ''
+        let displayBody = ''
+        
+        // Find unique senders
+        const uniqueSenders = new Set(unreadMessages.map(m => m.senderName))
+        
+        if (uniqueSenders.size === 1) {
+          displayTitle = title // e.g. "John Doe"
+          if (unreadMessages.length === 1) {
+            displayBody = unreadMessages[0].text
+          } else {
+            displayBody = `${unreadMessages[unreadMessages.length - 1].text} (+${unreadMessages.length - 1} unread)`
+          }
+        } else {
+          displayTitle = `${unreadMessages.length} new messages`
+          // Show last 3 messages to avoid cluttering notification view
+          displayBody = unreadMessages
+            .slice(-3)
+            .map(m => `${m.senderName}: ${m.text}`)
+            .join('\n')
+          if (unreadMessages.length > 3) {
+            displayBody += `\n(+${unreadMessages.length - 3} more)`
+          }
+        }
+
+        const options: any = {
+          body: displayBody,
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-64x64.png',
+          tag: 'chat_notification',
+          data: {
+            ...data,
+            unreadMessages,
+          },
+        }
+
+        // Attach image preview if the latest message is an image
+        const latestMsg = unreadMessages[unreadMessages.length - 1]
+        if (latestMsg.attachmentUrl) {
+          const isImage = /\.(jpeg|jpg|gif|png|webp|svg)/i.test(latestMsg.attachmentUrl)
+          if (isImage) {
+            options.image = latestMsg.attachmentUrl
+          }
+        }
+
+        await self.registration.showNotification(displayTitle, options)
+      } else {
+        // Standard notification (for other modules like Companies, Forms, etc.)
+        await self.registration.showNotification(title, {
+          body: notification.body ?? '',
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-64x64.png',
+          data,
+        })
+      }
     })(),
   )
 })

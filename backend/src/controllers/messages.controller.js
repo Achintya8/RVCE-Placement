@@ -85,16 +85,21 @@ export const createMessageHandler = async (req, res, next) => {
     const senderUserId = Number(req.auth.userId);
     const targetUserIds = allStudentIds.filter((id) => Number(id) !== senderUserId);
     if (targetUserIds.length > 0) {
+      const isImage = req.file && req.file.mimetype.startsWith('image/');
       await sendToUsers({
         userIds: targetUserIds,
         excludeUserIds: [senderUserId],
         title: sender?.name || 'New Message',
-        body: text ? (text.length > 50 ? text.substring(0, 47) + '...' : text) : '📎 Attachment',
+        body: text 
+          ? (text.length > 50 ? text.substring(0, 47) + '...' : text) 
+          : (isImage ? '📷 Photo' : '📎 Attachment'),
         data: {
           type: 'chat_message',
           messageId: String(message.id),
           senderId: String(req.auth.userId),
           parentId: parentId ? String(parentId) : undefined,
+          attachmentUrl: attachmentUrl || '',
+          attachmentName: attachmentName || '',
         },
       });
     }

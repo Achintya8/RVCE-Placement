@@ -109,6 +109,11 @@ export class PlacementRepository {
     return list.map((item) => parseFormSummary(item as Record<string, unknown>))
   }
 
+  async getProfileDataForms(): Promise<PlacementFormDetail[]> {
+    const list = await this.client.getList('/forms/profile-data')
+    return list.map((item) => parseFormDetail(item as Record<string, unknown>))
+  }
+
   async getAllForms(): Promise<PlacementFormSummary[]> {
     const list = await this.client.getList('/forms')
     return list.map((item) => parseFormSummary(item as Record<string, unknown>))
@@ -213,14 +218,40 @@ export class PlacementRepository {
 
   async createCompany(payload: {
     name: string
-    minCgpa: number
+    minCgpa?: number | null
+    minOverallCgpa?: number | null
+    minUgCgpa?: number | null
     package: string
     stipend: string
     testDate?: string | null
     interviewDate?: string | null
     deadline?: string | null
+    defaultConsent?: boolean
   }): Promise<void> {
     await this.client.postJson('/companies', payload)
+  }
+
+  async updateCompany(
+    companyId: number,
+    payload: {
+      name: string
+      minCgpa?: number | null
+      minOverallCgpa?: number | null
+      minUgCgpa?: number | null
+      package: string
+      stipend: string
+      testDate?: string | null
+      interviewDate?: string | null
+      deadline?: string | null
+      defaultConsent?: boolean
+    },
+  ): Promise<Company> {
+    const json = await this.client.putJson(`/companies/${companyId}`, payload)
+    return parseCompany(json as Record<string, unknown>)
+  }
+
+  async deleteCompany(companyId: number): Promise<void> {
+    await this.client.delete(`/companies/${companyId}`)
   }
 
   async updateCompanyStatus(companyId: number, status: string): Promise<Company> {
@@ -245,12 +276,17 @@ export class PlacementRepository {
     return list.map((item) => parseStudent(item as Record<string, unknown>))
   }
 
+  async getStudentProfileData(studentId: number): Promise<PlacementFormDetail[]> {
+    const list = await this.client.getList(`/users/students/${studentId}/profile-data`)
+    return list.map((item) => parseFormDetail(item as Record<string, unknown>))
+  }
+
   async verifyStudent(studentId: number): Promise<void> {
     await this.client.postJson(`/users/students/${studentId}/verify`, {})
   }
 
-  async rejectStudent(studentId: number, reason: string): Promise<void> {
-    await this.client.postJson(`/users/students/${studentId}/reject`, { reason })
+  async rejectStudent(studentId: number, reason: string, rejectedFields?: string[]): Promise<void> {
+    await this.client.postJson(`/users/students/${studentId}/reject`, { reason, rejectedFields })
   }
 
   async approveProfileUnlock(studentId: number): Promise<void> {

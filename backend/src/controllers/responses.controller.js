@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { findFormById, getFormQuestions } from '../repositories/form.repository.js';
 import { findCompanyById } from '../repositories/company.repository.js';
 import { listResponsesForForm, replaceFormResponses } from '../repositories/response.repository.js';
+import { updateUserVerification } from '../repositories/user.repository.js';
 import { ApiError } from '../utils/apiError.js';
 
 const responseSchema = z.object({
@@ -49,6 +50,10 @@ export const submitFormResponses = async (req, res, next) => {
       companyId: form.companyId,
       answers,
     });
+
+    if (form.type === 'profile_data') {
+      await updateUserVerification(req.auth.userId, false);
+    }
 
     res.json({
       formId,

@@ -108,9 +108,15 @@ export function CompaniesPanel() {
                     {c.name}
                   </CardTitle>
                   {isExpanded && (
-                    <CardDescription className="flex items-center gap-2 text-muted-foreground animate-in fade-in duration-200">
-                      <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                      Min CGPA: {c.minCgpa.toFixed(1)}
+                    <CardDescription className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-muted-foreground animate-in fade-in duration-200 text-xs mt-1">
+                      <span className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                        {[
+                          c.minCgpa != null ? `Current: ${c.minCgpa.toFixed(1)}` : null,
+                          c.minOverallCgpa != null ? `Overall: ${c.minOverallCgpa.toFixed(1)}` : null,
+                          c.minUgCgpa != null ? `UG: ${c.minUgCgpa.toFixed(1)}` : null,
+                        ].filter(Boolean).join(' | ') || 'All Eligible'}
+                      </span>
                     </CardDescription>
                   )}
                 </div>

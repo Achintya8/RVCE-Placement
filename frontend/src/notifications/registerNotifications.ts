@@ -5,7 +5,7 @@ const NOTIFICATION_OPT_OUT_KEY = 'notifications_opted_out'
 
 let serviceWorkerMessageListenerRegistered = false
 
-function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
   const rawData = window.atob(base64)
@@ -15,7 +15,21 @@ function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
     outputArray[i] = rawData.charCodeAt(i)
   }
 
-  return outputArray.buffer as ArrayBuffer
+  return outputArray
+}
+
+export function isIOS(): boolean {
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  )
+}
+
+export function isStandalone(): boolean {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as any).standalone === true
+  )
 }
 
 function canUsePushNotifications(): boolean {
@@ -31,11 +45,15 @@ export function getNotificationPreference(): {
   supported: boolean
   permission: NotificationPermission | 'unsupported'
   optedOut: boolean
+  isIOS: boolean
+  isStandalone: boolean
 } {
   return {
     supported: canUsePushNotifications(),
     permission: 'Notification' in window ? Notification.permission : 'unsupported',
     optedOut: localStorage.getItem(NOTIFICATION_OPT_OUT_KEY) === 'true',
+    isIOS: isIOS(),
+    isStandalone: isStandalone(),
   }
 }
 
@@ -65,16 +83,15 @@ export async function blockNotifications(): Promise<void> {
 
 function applicationServerKeysMatch(
   subscription: PushSubscription | null,
-  publicKey: ArrayBuffer,
+  publicKey: Uint8Array,
 ) {
   const currentKey = subscription?.options.applicationServerKey
   if (!currentKey) return false
 
   const current = new Uint8Array(currentKey)
-  const expected = new Uint8Array(publicKey)
-  if (current.byteLength !== expected.byteLength) return false
+  if (current.byteLength !== publicKey.byteLength) return false
 
-  return current.every((value, index) => value === expected[index])
+  return current.every((value, index) => value === publicKey[index])
 }
 
 function registerForegroundMessageListener() {
@@ -165,11 +182,13 @@ export async function registerNotifications(repo: PlacementRepository): Promise<
   const { configured, publicKey } = await repo.getNotificationPublicKey()
   if (!configured || !publicKey) return
 
-  const permission = await Notification.requestPermission()
-  if (permission !== 'granted') return
+  if (Notification.permission !== 'granted') {
+    const permission = await Notification.requestPermission()
+    if (permission !== 'granted') return
+  }
 
   const registration = await navigator.serviceWorker.ready
-  const applicationServerKey = urlBase64ToArrayBuffer(publicKey)
+  const applicationServerKey = urlBase64ToUint8Array(publicKey)
   let subscription =
     await registration.pushManager.getSubscription()
 
@@ -184,7 +203,7 @@ export async function registerNotifications(repo: PlacementRepository): Promise<
   if (!subscription) {
     subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey,
+      applicationServerKey: applicationServerKey as BufferSource,
     })
   }
 

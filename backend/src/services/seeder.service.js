@@ -116,6 +116,11 @@ export const seedStudentsFromExcel = async () => {
         );
 
         if (checkRes.rows.length > 0) {
+          // If the student already exists, make sure they are marked as verified
+          await query(
+            'UPDATE "users" SET "verified" = true WHERE "college_email_id" = $1 AND "verified" = false',
+            [collegeEmail]
+          );
           skippedCount++;
           continue;
         }

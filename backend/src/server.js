@@ -4,6 +4,7 @@ import { env } from './config/env.js';
 import { connectMongo } from './config/mongodb.js';
 import { deleteOldMessages } from './services/cleanup.service.js';
 import { seedStudentsFromExcel } from './services/seeder.service.js';
+import { runMigrations } from './config/migrate.js';
 
 const startServer = async () => {
   try {
@@ -13,6 +14,7 @@ const startServer = async () => {
     await seedStudentsFromExcel();
     
     await connectMongo();
+    await runMigrations();
     app.listen(env.port, () => {
       console.log(`MCA Placement backend listening on port ${env.port}`);
       

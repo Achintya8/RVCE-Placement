@@ -7,9 +7,10 @@ import type {
   StudentSummary,
 } from '@/types'
 import { repo } from '../store/useAuthStore'
+import { resolveBackendUrl } from '../config'
 import { toast } from 'sonner'
 import { downloadBlob, formatDate } from '../lib/format'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -55,7 +56,8 @@ import {
   Trash2,
   Clock,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Search
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AdminPanelSkeleton } from '@/components/modern/Skeleton'
@@ -85,6 +87,24 @@ type AdminData = {
   students: StudentSummary[]
 }
 
+const FIELD_LABELS: Record<string, string> = {
+  name: 'Full Name',
+  usn: 'USN',
+  collegeEmailId: 'College Email ID',
+  personalEmailId: 'Personal Email ID',
+  phoneNumber: 'Phone Number',
+  aadhar: 'Aadhar Number',
+  gender: 'Gender',
+  ugCgpa: 'UG CGPA',
+  firstSemSgpa: '1st Sem SGPA',
+  tenthMarks: '10th Aggregate (%)',
+  twelfthMarks: '12th Aggregate (%)',
+  linkedIn: 'LinkedIn URL',
+  gitHub: 'GitHub URL',
+  resumeUrl: 'Resume',
+  profilePictureUrl: 'Profile Picture'
+};
+
 export function AdminPanel() {
   const [data, setData] = useState<AdminData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -113,7 +133,21 @@ export function AdminPanel() {
   const [cStip, setCStip] = useState('')
   const [cTest, setCTest] = useState('')
   const [cInt, setCInt] = useState('')
-  const [cDeadline, setCDeadline] = useState('')
+  const [cOverallCgpa, setCOverallCgpa] = useState('')
+  const [cUgCgpa, setCUgCgpa] = useState('')
+  const [cDefaultConsent, setCDefaultConsent] = useState(false)
+
+  // Company Edit Form State
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null)
+  const [eName, setEName] = useState('')
+  const [eCgpa, setECgpa] = useState('')
+  const [eOverallCgpa, setEOverallCgpa] = useState('')
+  const [eUgCgpa, setEUgCgpa] = useState('')
+  const [ePkg, setEPkg] = useState('')
+  const [eStip, setEStip] = useState('')
+  const [eTest, setETest] = useState('')
+  const [eInt, setEInt] = useState('')
+  const [eDefaultConsent, setEDefaultConsent] = useState(false)
 
   // Google Forms Style Form Builder State
   interface BuilderQuestion {
@@ -126,7 +160,7 @@ export function AdminPanel() {
   }
 
   const [fTitle, setFTitle] = useState('')
-  const [fFormType, setFFormType] = useState<'general' | 'company'>('general')
+  const [fFormType, setFFormType] = useState<'general' | 'company' | 'profile'>('general')
   const [fCompanyId, setFCompanyId] = useState<string>('')
   const [formQuestions, setFormQuestions] = useState<BuilderQuestion[]>([
     { id: 'q-1', questionText: '', fieldType: 'text', options: '', folderLink: '', isRequired: false }
@@ -191,6 +225,81 @@ export function AdminPanel() {
   const [reviewStudent, setReviewStudent] = useState<StudentSummary | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
+  const [selectedRejectedFields, setSelectedRejectedFields] = useState<string[]>([])
+  const [studentSearch, setStudentSearch] = useState('')
+  const [selectedStudentActions, setSelectedStudentActions] = useState<StudentSummary | null>(null)
+  const [reviewStudentProfileData, setReviewStudentProfileData] = useState<any[]>([])
+
+  const closeReview = () => {
+    setReviewStudent(null)
+    setRejectReason('')
+    setSelectedRejectedFields([])
+  }
+
+  const getFieldStatus = (fieldName: string) => {
+    if (!reviewStudent) return { isRejected: false, isEdited: false }
+
+    const isRejected = Array.isArray(reviewStudent.rejectedFields) && reviewStudent.rejectedFields.includes(fieldName)
+
+    let isEdited = false
+    if (reviewStudent.lastVerifiedProfile && !reviewStudent.verified) {
+      const lastVal = reviewStudent.lastVerifiedProfile[fieldName]
+      const currentVal = (reviewStudent as any)[fieldName]
+      
+      const normalizeForCompare = (val: any) => {
+        if (val === null || val === undefined) return ''
+        return String(val).trim()
+      }
+      
+      if (normalizeForCompare(lastVal) !== normalizeForCompare(currentVal)) {
+        isEdited = true
+      }
+    }
+
+    return { isRejected, isEdited }
+  }
+
+  const renderProfileField = (label: string, fieldName: string, value: any, isCustomContent = false) => {
+    const { isRejected, isEdited } = getFieldStatus(fieldName)
+    return (
+      <div className={cn(
+        "p-2.5 rounded-xl border transition-all duration-200",
+        isRejected 
+          ? "bg-red-500/5 border-red-500/20 shadow-sm shadow-red-500/5" 
+          : isEdited 
+            ? "bg-amber-500/5 border-amber-500/20 shadow-sm shadow-amber-500/5"
+            : "border-transparent"
+      )}>
+        <div className="flex items-center justify-between">
+          <Label className="text-muted-foreground text-xs">{label}</Label>
+          <div className="flex gap-1.5">
+            {isRejected && <Badge className="bg-red-500/10 text-red-500 hover:bg-red-500/15 border-red-500/20 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase">Incorrect</Badge>}
+            {isEdited && <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/15 border-amber-500/20 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase">Edited</Badge>}
+          </div>
+        </div>
+        {isCustomContent ? (
+          <div className="mt-1">{value}</div>
+        ) : (
+          <p className={cn(
+            "font-bold text-sm sm:text-base mt-0.5 break-all sm:break-words",
+            isRejected ? "text-red-500" : isEdited ? "text-amber-500" : "text-slate-900 dark:text-white"
+          )}>
+            {value || '—'}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  useEffect(() => {
+    if (reviewStudent) {
+      repo.getStudentProfileData(reviewStudent.id)
+        .then(setReviewStudentProfileData)
+        .catch((e) => console.error('Failed to load student profile responses:', e))
+    } else {
+      setReviewStudentProfileData([])
+    }
+  }, [reviewStudent])
 
   // Forms view toggle
   const [showAllForms, setShowAllForms] = useState(false)
@@ -237,15 +346,57 @@ export function AdminPanel() {
     run(async () => {
       await repo.createCompany({
         name: cName.trim(),
-        minCgpa: Number.parseFloat(cCgpa) || 0,
+        minCgpa: cCgpa ? Number.parseFloat(cCgpa) : null,
+        minOverallCgpa: cOverallCgpa ? Number.parseFloat(cOverallCgpa) : null,
+        minUgCgpa: cUgCgpa ? Number.parseFloat(cUgCgpa) : null,
         package: cPkg.trim(),
         stipend: cStip.trim(),
         testDate: cTest.trim() || null,
         interviewDate: cInt.trim() || null,
-        deadline: cDeadline.trim() || null,
+        deadline: null,
+        defaultConsent: cDefaultConsent,
       })
-      setCName(''); setCCgpa(''); setCPkg(''); setCStip(''); setCTest(''); setCInt(''); setCDeadline('')
+      setCName(''); setCCgpa(''); setCOverallCgpa(''); setCUgCgpa(''); setCPkg(''); setCStip(''); setCTest(''); setCInt(''); setCDefaultConsent(false)
     }, 'Company created.')
+
+  const startEditCompany = (company: Company) => {
+    setEditingCompany(company)
+    setEName(company.name)
+    setECgpa(company.minCgpa != null ? String(company.minCgpa) : '')
+    setEOverallCgpa(company.minOverallCgpa != null ? String(company.minOverallCgpa) : '')
+    setEUgCgpa(company.minUgCgpa != null ? String(company.minUgCgpa) : '')
+    setEPkg(company.package || '')
+    setEStip(company.stipend || '')
+    setETest(company.testDate || '')
+    setEInt(company.interviewDate || '')
+    setEDefaultConsent(company.defaultConsent ?? false)
+  }
+
+  const saveEditedCompany = () => {
+    if (!editingCompany || !eName.trim()) return
+    void run(async () => {
+      await repo.updateCompany(editingCompany.id, {
+        name: eName.trim(),
+        minCgpa: eCgpa ? Number.parseFloat(eCgpa) : null,
+        minOverallCgpa: eOverallCgpa ? Number.parseFloat(eOverallCgpa) : null,
+        minUgCgpa: eUgCgpa ? Number.parseFloat(eUgCgpa) : null,
+        package: ePkg.trim(),
+        stipend: eStip.trim(),
+        testDate: eTest.trim() || null,
+        interviewDate: eInt.trim() || null,
+        deadline: null,
+        defaultConsent: eDefaultConsent,
+      })
+      setEditingCompany(null)
+    }, 'Company updated successfully.')
+  }
+
+  const handleDeleteCompany = (companyId: number) => {
+    if (!confirm('Are you sure you want to delete this company? All forms and student applications associated with this company will be deleted. This action cannot be undone.')) return
+    void run(async () => {
+      await repo.deleteCompany(companyId)
+    }, 'Company deleted successfully.')
+  }
 
   const addBuilderQuestion = () => {
     setFormQuestions(prev => [
@@ -304,8 +455,8 @@ export function AdminPanel() {
       // 1. Create the Form
       const createdForm = await repo.createForm({
         title: fTitle.trim(),
-        type: 'custom', // Default type is 'custom' for general forms
-        companyId: fFormType === 'general' ? null : Number(fCompanyId),
+        type: fFormType === 'profile' ? 'profile_data' : 'custom',
+        companyId: fFormType === 'company' ? Number(fCompanyId) : null,
       })
 
       const formId = (createdForm as any)?.id
@@ -358,10 +509,11 @@ export function AdminPanel() {
     if (!reviewStudent || !rejectReason.trim()) return
     setRejecting(true)
     try {
-      await repo.rejectStudent(reviewStudent.id, rejectReason.trim())
+      await repo.rejectStudent(reviewStudent.id, rejectReason.trim(), selectedRejectedFields)
       toast.success('Student profile rejected. They have been notified.')
       setReviewStudent(null)
       setRejectReason('')
+      setSelectedRejectedFields([])
       await load()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e))
@@ -407,6 +559,16 @@ export function AdminPanel() {
       await repo.toggleFormResponses(formId, checked)
     }, checked ? 'Form is now accepting student responses.' : 'Form is now closed to new responses.')
   }
+
+  const filteredStudents = (data?.students || [])
+    .filter(s => {
+      const query = studentSearch.toLowerCase().trim()
+      if (!query) return true
+      const nameMatch = s.name?.toLowerCase().includes(query)
+      const usnMatch = s.usn?.toLowerCase().includes(query)
+      return nameMatch || usnMatch
+    })
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
 
   const toggleCompanyStatus = (companyId: number, currentStatus: string | undefined) =>
     run(async () => {
@@ -512,7 +674,18 @@ export function AdminPanel() {
     } else {
       const company = data.companies.find(c => c.id === f.companyId);
       if (company) {
-        assignedCount = data.students.filter(s => s.ugCgpa >= company.minCgpa).length;
+        assignedCount = data.students.filter(s => {
+          const currentCgpa = s.firstSemSgpa || s.ugCgpa;
+          if (company.minCgpa && currentCgpa < company.minCgpa) return false;
+          if (company.minOverallCgpa) {
+            if (s.ugCgpa < company.minOverallCgpa) return false;
+            if (s.firstSemSgpa && s.firstSemSgpa < company.minOverallCgpa) return false;
+            if (s.tenthMarks && s.tenthMarks < company.minOverallCgpa * 10) return false;
+            if (s.twelfthMarks && s.twelfthMarks < company.minOverallCgpa * 10) return false;
+          }
+          if (company.minUgCgpa && s.ugCgpa < company.minUgCgpa) return false;
+          return true;
+        }).length;
       } else {
         assignedCount = data.students.length;
       }
@@ -527,15 +700,14 @@ export function AdminPanel() {
     <div className="space-y-8 pb-20 animate-in fade-in duration-700">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">SPC Dashboard</h1>
-        <p className="text-muted-foreground text-sm">Manage recruitment drives, student profiles, and placement forms.</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-8 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 rounded-xl">
-          <TabsTrigger value="overview" className="rounded-lg">Overview</TabsTrigger>
-          <TabsTrigger value="companies" className="rounded-lg">Companies</TabsTrigger>
-          <TabsTrigger value="forms" className="rounded-lg">Forms</TabsTrigger>
-          <TabsTrigger value="students" className="rounded-lg">Students</TabsTrigger>
+        <TabsList className="ios-segmented-list mb-8">
+          <TabsTrigger value="overview" className="ios-segmented-trigger">Overview</TabsTrigger>
+          <TabsTrigger value="companies" className="ios-segmented-trigger">Companies</TabsTrigger>
+          <TabsTrigger value="forms" className="ios-segmented-trigger">Forms</TabsTrigger>
+          <TabsTrigger value="students" className="ios-segmented-trigger">Students</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -569,7 +741,6 @@ export function AdminPanel() {
           <Card className="glass-panel">
             <CardHeader>
               <CardTitle>Recent Companies</CardTitle>
-              <CardDescription className="text-muted-foreground">Latest placement opportunities added to the portal.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
@@ -587,7 +758,12 @@ export function AdminPanel() {
                     {data.companies.slice(0, 5).map(c => (
                       <TableRow key={c.id} className="border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:bg-white/5">
                         <TableCell className="font-bold text-slate-900 dark:text-white">{c.name}</TableCell>
-                        <TableCell className="text-muted-foreground">{c.minCgpa.toFixed(1)}</TableCell>
+                        <TableCell className="text-muted-foreground text-xs">
+                          {c.minCgpa != null && <div>Current: {c.minCgpa.toFixed(1)}</div>}
+                          {c.minOverallCgpa != null && <div>Overall: {c.minOverallCgpa.toFixed(1)}</div>}
+                          {c.minUgCgpa != null && <div>UG: {c.minUgCgpa.toFixed(1)}</div>}
+                          {c.minCgpa == null && c.minOverallCgpa == null && c.minUgCgpa == null && <div>All Eligible</div>}
+                        </TableCell>
                         <TableCell className="text-muted-foreground">{c.package || 'TBD'}</TableCell>
                         <TableCell className="text-muted-foreground">{c.testDate ? formatDate(c.testDate) : 'TBD'}</TableCell>
                         <TableCell className="text-right">
@@ -610,7 +786,6 @@ export function AdminPanel() {
               <CardTitle className="flex items-center gap-2">
                 <Plus className="w-5 h-5 text-primary" /> Create Drive
               </CardTitle>
-              <CardDescription className="text-muted-foreground">Add a new company recruitment drive details.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -619,8 +794,16 @@ export function AdminPanel() {
                   <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" placeholder="e.g. Google" value={cName} onChange={e => setCName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-text-main">Min CGPA</Label>
+                  <Label className="text-text-main">Min CGPA (Current)</Label>
                   <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" type="number" step="0.1" placeholder="e.g. 7.5" value={cCgpa} onChange={e => setCCgpa(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-text-main">Min Overall CGPA</Label>
+                  <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" type="number" step="0.1" placeholder="e.g. 6.5" value={cOverallCgpa} onChange={e => setCOverallCgpa(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-text-main">Min UG CGPA</Label>
+                  <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" type="number" step="0.1" placeholder="e.g. 6.0" value={cUgCgpa} onChange={e => setCUgCgpa(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-text-main">Package</Label>
@@ -638,9 +821,20 @@ export function AdminPanel() {
                   <Label className="text-text-main">Interview Date (YYYY-MM-DD)</Label>
                   <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" placeholder="2026-06-20" value={cInt} onChange={e => setCInt(e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-text-main">Deadline (YYYY-MM-DD HH:MM)</Label>
-                  <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" placeholder="2026-06-14 23:59" value={cDeadline} onChange={e => setCDeadline(e.target.value)} />
+              </div>
+              <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                <Switch
+                  id="cDefaultConsent"
+                  checked={cDefaultConsent}
+                  onCheckedChange={setCDefaultConsent}
+                />
+                <div>
+                  <Label htmlFor="cDefaultConsent" className="text-sm font-semibold text-slate-900 dark:text-white cursor-pointer">Default Consent: ON</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {cDefaultConsent
+                      ? 'All eligible students will be auto-consented. They can opt out individually.'
+                      : 'Students must explicitly provide consent to participate in this drive.'}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -659,10 +853,7 @@ export function AdminPanel() {
                   <TableHeader className="bg-slate-100 dark:bg-white/5">
                     <TableRow className="border-slate-200 dark:border-white/10 hover:bg-transparent">
                       <TableHead className="text-text-main font-bold">Company</TableHead>
-                      <TableHead className="text-text-main font-bold hidden md:table-cell">Package</TableHead>
-                      <TableHead className="text-text-main font-bold hidden md:table-cell">Stipend</TableHead>
-                      <TableHead className="text-text-main font-bold hidden md:table-cell">Min CGPA</TableHead>
-                      <TableHead className="text-text-main font-bold hidden md:table-cell">Status</TableHead>
+                      <TableHead className="text-text-main font-bold">Status</TableHead>
                       <TableHead className="text-text-main font-bold">Block Consent</TableHead>
                       <TableHead className="text-text-main font-bold">Block Tracker</TableHead>
                       <TableHead className="text-right text-text-main font-bold">Export</TableHead>
@@ -675,11 +866,11 @@ export function AdminPanel() {
                         <>
                           <TableRow key={c.id} className="border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:bg-white/5">
                             <TableCell 
-                              className="font-bold text-primary cursor-pointer hover:underline select-none md:cursor-default md:hover:no-underline"
+                              className="font-bold text-primary cursor-pointer hover:underline select-none"
                               onClick={() => toggleExpandCompany(c.id)}
                             >
                               <div className="flex items-center gap-1.5">
-                                <span className="md:hidden">
+                                <span>
                                   {isExpanded ? (
                                     <ChevronDown className="w-4 h-4 text-slate-400" />
                                   ) : (
@@ -689,10 +880,7 @@ export function AdminPanel() {
                                 {c.name}
                               </div>
                             </TableCell>
-                            <TableCell className="text-muted-foreground hidden md:table-cell">{c.package || 'TBD'}</TableCell>
-                            <TableCell className="text-muted-foreground hidden md:table-cell">{c.stipend || 'TBD'}</TableCell>
-                            <TableCell className="text-muted-foreground hidden md:table-cell">{c.minCgpa}</TableCell>
-                            <TableCell className="hidden md:table-cell">
+                            <TableCell>
                               <Badge variant={c.status === 'completed' ? 'outline' : 'default'} className={cn("cursor-pointer", c.status === 'completed' ? "text-amber-400 border-amber-400/20 bg-amber-400/10" : "bg-green-500/20 text-green-400 hover:bg-green-500/30")} onClick={() => void toggleCompanyStatus(c.id, c.status)}>
                                 {c.status === 'completed' ? 'Completed' : 'Ongoing'}
                               </Badge>
@@ -718,32 +906,46 @@ export function AdminPanel() {
                             </TableCell>
                           </TableRow>
                           {isExpanded && (
-                            <TableRow className="border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 hover:bg-transparent md:hidden">
-                              <TableCell colSpan={4} className="p-4">
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-200">
-                                  <div className="space-y-1">
-                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Package</span>
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.package || 'TBD'}</p>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Stipend</span>
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.stipend || 'TBD'}</p>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Min CGPA</span>
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.minCgpa}</p>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</span>
-                                    <div>
-                                      <Badge 
-                                        variant={c.status === 'completed' ? 'outline' : 'default'} 
-                                        className={cn("cursor-pointer mt-0.5", c.status === 'completed' ? "text-amber-400 border-amber-400/20 bg-amber-400/10" : "bg-green-500/20 text-green-400 hover:bg-green-500/30")} 
-                                        onClick={() => void toggleCompanyStatus(c.id, c.status)}
-                                      >
-                                        {c.status === 'completed' ? 'Completed' : 'Ongoing'}
-                                      </Badge>
+                            <TableRow className="border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 hover:bg-transparent">
+                              <TableCell colSpan={5} className="p-4">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-in slide-in-from-top-2 duration-200">
+                                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 flex-1">
+                                    <div className="space-y-1">
+                                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Package</span>
+                                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.package || 'TBD'}</p>
                                     </div>
+                                    <div className="space-y-1">
+                                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Stipend</span>
+                                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.stipend || 'TBD'}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Academic Requirements</span>
+                                      <p className="text-xs font-semibold text-slate-900 dark:text-white leading-relaxed">
+                                        {[
+                                          c.minCgpa != null ? `Current: ${c.minCgpa.toFixed(1)}` : null,
+                                          c.minOverallCgpa != null ? `Overall: ${c.minOverallCgpa.toFixed(1)}` : null,
+                                          c.minUgCgpa != null ? `UG: ${c.minUgCgpa.toFixed(1)}` : null,
+                                        ].filter(Boolean).join(' | ') || 'All Eligible'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3 border-t md:border-t-0 md:border-l border-slate-200 dark:border-white/10 pt-4 md:pt-0 md:pl-6">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      onClick={() => startEditCompany(c)}
+                                      className="hover:bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white border-slate-200 dark:border-white/10"
+                                    >
+                                      Edit Drive
+                                    </Button>
+                                    <Button 
+                                      variant="destructive" 
+                                      size="sm" 
+                                      onClick={() => handleDeleteCompany(c.id)}
+                                      className="bg-red-500/20 hover:bg-red-500/30 text-red-500 border border-red-500/20"
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-1.5" /> Delete
+                                    </Button>
                                   </div>
                                 </div>
                               </TableCell>
@@ -766,9 +968,6 @@ export function AdminPanel() {
                 <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white">
                   <FileText className="w-6 h-6 text-primary" /> Create Custom Form
                 </CardTitle>
-                <CardDescription className="text-slate-500 dark:text-slate-400 mt-1">
-                  Design a new form, add custom questions, and assign it to students in a single flow.
-                </CardDescription>
               </div>
             </CardHeader>
             <CardContent className="space-y-8 pt-8">
@@ -789,8 +988,8 @@ export function AdminPanel() {
                     <Select
                       value={fFormType}
                       onValueChange={(v) => {
-                        setFFormType(v as 'general' | 'company');
-                        if (v === 'general') setFCompanyId('');
+                        setFFormType(v as 'general' | 'company' | 'profile');
+                        if (v !== 'company') setFCompanyId('');
                       }}
                     >
                       <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11">
@@ -799,6 +998,7 @@ export function AdminPanel() {
                       <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
                         <SelectItem value="general">General (All Students)</SelectItem>
                         <SelectItem value="company">Company Specific</SelectItem>
+                        <SelectItem value="profile">Profile Collection Fields</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -954,7 +1154,6 @@ export function AdminPanel() {
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>View Submissions & Pending</CardTitle>
-                <CardDescription className="text-muted-foreground">Monitor student participation and download data.</CardDescription>
               </div>
               <Button variant="outline" onClick={() => setShowAllForms(!showAllForms)} className="border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-white/5">
                 {showAllForms ? 'Show Recent Only' : 'View All Forms'}
@@ -968,6 +1167,9 @@ export function AdminPanel() {
                       <div className="min-w-0">
                         <p className="font-bold text-slate-900 dark:text-white truncate flex items-center gap-2">
                           {f.title}
+                          <Badge variant="secondary" className="text-[10px] border-primary/20 bg-primary/10 text-primary font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                            {f.type === 'profile_data' ? 'profile fields' : f.type}
+                          </Badge>
                           {f.acceptingResponses === false && (
                             <Badge variant="outline" className="text-[10px] border-red-500/20 bg-red-500/10 text-red-400 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                               Closed
@@ -1012,68 +1214,85 @@ export function AdminPanel() {
 
         <TabsContent value="students" className="space-y-6">
           <Card className="glass-panel">
-            <CardHeader>
-              <CardTitle>Student Verification</CardTitle>
-              <CardDescription className="text-muted-foreground">Verify profiles to prevent further edits before sharing data with companies.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {data.students.map(s => (
-                  <Card key={s.id} className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-none">
-                    <CardContent className="p-4 flex flex-col gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                          {s.name.charAt(0)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold truncate text-slate-900 dark:text-white">{s.name}</p>
-                            {s.placed && (
-                              <Badge className="bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/20 hover:bg-green-500/20 text-[10px] px-1.5 py-0.5 font-bold shrink-0">
-                                Placed
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate">{s.collegeEmailId}</p>
-                        </div>
-                      </div>
-                      {s.unlockRequested ? (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="w-full text-amber-400 border-amber-400/20 bg-amber-400/10 hover:bg-amber-400/20 gap-2"
-                          disabled={busy}
-                          onClick={() => void approveUnlock(s.id)}
-                        >
-                          <Unlock className="w-4 h-4" /> Approve Unlock
-                        </Button>
-                      ) : (
-                        <Button 
-                          size="sm" 
-                          variant={s.verified ? "ghost" : "default"}
-                          className={cn("w-full", s.verified ? "text-green-500 bg-green-400/10 hover:bg-green-400/20 dark:text-green-300" : "shadow-lg shadow-primary/20")}
-                          disabled={busy}
-                          onClick={() => setReviewStudent(s)}
-                        >
-                          {s.verified ? <><CheckCircle2 className="w-4 h-4 mr-2" /> View Verified Profile</> : "Review Profile"}
-                        </Button>
-                      )}
-                      <div className="flex items-center justify-between border-t border-slate-200 dark:border-white/10 pt-3 mt-1">
-                        <Label htmlFor={`placed-${s.id}`} className="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
-                          Mark Placed
-                        </Label>
-                        <Switch
-                          id={`placed-${s.id}`}
-                          checked={s.placed ?? false}
-                          onCheckedChange={(checked) => void handleTogglePlaced(s.id, checked)}
-                          disabled={busy}
-                          className="data-[state=checked]:bg-green-500"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle>Student Verification</CardTitle>
               </div>
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                <Input
+                  placeholder="Search name or USN..."
+                  value={studentSearch}
+                  onChange={(e) => setStudentSearch(e.target.value)}
+                  className="pl-9 bg-slate-50/50 dark:bg-slate-900 border-slate-200 dark:border-white/10"
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-6">
+              {filteredStudents.length === 0 ? (
+                <div className="text-center py-8 text-slate-400">
+                  No students found matching your search.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-slate-200 dark:border-white/10 hover:bg-transparent">
+                        <TableHead className="p-2 sm:p-4 text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400">USN</TableHead>
+                        <TableHead className="p-2 sm:p-4 text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400">Student</TableHead>
+                        <TableHead className="w-[40px] p-2 sm:p-4 text-right font-bold text-slate-500 dark:text-slate-400"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredStudents.map((s) => (
+                        <TableRow
+                          key={s.id}
+                          onClick={() => setSelectedStudentActions(s)}
+                          className={cn(
+                            "cursor-pointer border-slate-200 dark:border-white/10 select-none transition-colors",
+                            selectedStudentActions?.id === s.id
+                              ? "bg-slate-200/60 dark:bg-white/15 hover:bg-slate-200/70 dark:hover:bg-white/20"
+                              : s.unlockRequested
+                                ? "bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-950/30 dark:hover:bg-amber-950/45"
+                                : s.verified
+                                  ? "bg-green-500/10 hover:bg-green-500/15 dark:bg-green-950/30 dark:hover:bg-green-950/45"
+                                  : s.rejected
+                                    ? "bg-red-500/10 hover:bg-red-500/15 dark:bg-red-950/30 dark:hover:bg-red-950/45"
+                                    : "hover:bg-slate-100/50 dark:hover:bg-white/5"
+                          )}
+                        >
+                          <TableCell className="p-2 sm:p-4 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
+                            {s.usn || "N/A"}
+                          </TableCell>
+                          <TableCell className="p-2 sm:p-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] sm:text-xs shrink-0 overflow-hidden">
+                                {s.profilePictureUrl ? (
+                                  <img
+                                    src={resolveBackendUrl(s.profilePictureUrl)}
+                                    alt={s.name}
+                                    className="h-full w-full object-cover animate-in fade-in duration-300"
+                                  />
+                                ) : (
+                                  s.name.charAt(0)
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                                  {s.name}
+                                </p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="p-2 sm:p-4 text-right">
+                            <ChevronRight className="w-4 h-4 text-slate-400 inline-block" />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -1148,7 +1367,7 @@ export function AdminPanel() {
       {responsesModal && (
         <Dialog open={true} onOpenChange={() => setResponsesModal(null)}>
           <DialogContent className="glass-panel text-slate-900 dark:text-white w-[92vw] sm:w-full max-w-5xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-0 overflow-hidden">
-            <DialogHeader className="p-6 pb-2">
+            <DialogHeader className="p-6 pb-2 pr-14">
               <DialogTitle className="text-2xl text-slate-900 dark:text-white">{responsesModal.title}</DialogTitle>
               <DialogDescription className="text-muted-foreground">Viewing raw student submissions for this form.</DialogDescription>
             </DialogHeader>
@@ -1217,7 +1436,7 @@ export function AdminPanel() {
       {pendingModal && (
         <Dialog open={true} onOpenChange={() => setPendingModal(null)}>
           <DialogContent className="glass-panel text-slate-900 dark:text-white w-[92vw] sm:w-full max-w-2xl max-h-[80vh] sm:max-h-[80vh] flex flex-col p-0 overflow-hidden">
-            <DialogHeader className="p-6 pb-2">
+            <DialogHeader className="p-6 pb-2 pr-14">
               <DialogTitle className="text-2xl text-slate-900 dark:text-white">Pending Submissions</DialogTitle>
               <DialogDescription className="text-muted-foreground">Students who have not yet submitted "{pendingModal.title}".</DialogDescription>
             </DialogHeader>
@@ -1247,40 +1466,147 @@ export function AdminPanel() {
           </DialogContent>
         </Dialog>
       )}
+      {selectedStudentActions && (
+        <Dialog open={true} onOpenChange={() => setSelectedStudentActions(null)}>
+          <DialogContent className="glass-panel text-slate-900 dark:text-white max-w-sm p-6 rounded-2xl">
+            <DialogHeader className="text-center pb-4 border-b border-slate-100 dark:border-white/10">
+              <DialogTitle className="text-lg font-bold truncate">
+                {selectedStudentActions.name}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground truncate">
+                {selectedStudentActions.usn || "No USN"}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-5 pt-4">
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Verification & Status</span>
+                <div className="flex flex-wrap gap-2">
+                  {selectedStudentActions.verified ? (
+                    <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/15 border-green-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Verified</Badge>
+                  ) : selectedStudentActions.rejected ? (
+                    <Badge className="bg-red-500/10 text-red-500 hover:bg-red-500/15 border-red-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Rejected</Badge>
+                  ) : (
+                    <Badge className="bg-slate-500/10 text-slate-500 dark:text-slate-400 hover:bg-slate-500/15 border-slate-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Unverified</Badge>
+                  )}
+                  {selectedStudentActions.unlockRequested && (
+                    <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/15 border-amber-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse">Unlock Requested</Badge>
+                  )}
+                  {selectedStudentActions.placed && (
+                    <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/15 border-emerald-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Placed</Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Available Actions</span>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={() => {
+                      const s = selectedStudentActions
+                      setSelectedStudentActions(null)
+                      setReviewStudent(s)
+                    }}
+                    variant="outline"
+                    className="w-full justify-start text-xs font-semibold h-10 rounded-xl gap-2 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10"
+                  >
+                    <Eye className="w-4 h-4 text-slate-400" />
+                    {selectedStudentActions.verified ? "View Profile" : "Review Profile"}
+                  </Button>
+
+                  {selectedStudentActions.unlockRequested && (
+                    <Button
+                      onClick={() => {
+                        const s = selectedStudentActions
+                        setSelectedStudentActions(null)
+                        void approveUnlock(s.id)
+                      }}
+                      variant="outline"
+                      className="w-full justify-start text-xs font-semibold h-10 rounded-xl gap-2 border-amber-500/20 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10"
+                    >
+                      <Unlock className="w-4 h-4 text-amber-500" />
+                      Approve Unlock Request
+                    </Button>
+                  )}
+
+                  <Button
+                    onClick={() => {
+                      const s = selectedStudentActions
+                      setSelectedStudentActions(null)
+                      void handleTogglePlaced(s.id, !s.placed)
+                    }}
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-xs font-semibold h-10 rounded-xl gap-2",
+                      selectedStudentActions.placed 
+                        ? "border-red-500/20 bg-red-500/5 text-red-500 hover:bg-red-500/10" 
+                        : "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                    )}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    {selectedStudentActions.placed ? "Mark as Unplaced" : "Mark as Placed"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
       {reviewStudent && (
-        <Dialog open={true} onOpenChange={() => setReviewStudent(null)}>
+        <Dialog open={true} onOpenChange={closeReview}>
           <DialogContent className="glass-panel text-slate-900 dark:text-white w-[92vw] sm:w-full max-w-3xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-0 overflow-hidden">
-            <DialogHeader className="p-6 pb-2">
+            <DialogHeader className="p-6 pb-2 pr-14">
               <DialogTitle className="text-2xl text-slate-900 dark:text-white">Profile Review: {reviewStudent.name}</DialogTitle>
               <DialogDescription className="text-muted-foreground">Review the student's details before verifying.</DialogDescription>
             </DialogHeader>
             <div className="flex-1 overflow-y-auto p-6 pt-2">
+              {reviewStudent.rejectionReason && (
+                <div className="mb-6 p-4 rounded-xl border border-red-500/25 bg-red-500/10 text-red-700 dark:text-red-400">
+                  <div className="flex gap-2 items-center font-bold mb-1">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Previous Rejection Details</span>
+                  </div>
+                  <p className="text-sm">Reason: {reviewStudent.rejectionReason}</p>
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <div><Label className="text-muted-foreground">Full Name</Label><p className="font-bold text-slate-900 dark:text-white">{reviewStudent.name}</p></div>
-                  <div><Label className="text-muted-foreground">USN</Label><p className="font-bold text-slate-900 dark:text-white">{reviewStudent.usn || '—'}</p></div>
-                  <div><Label className="text-muted-foreground">College Email</Label><p className="text-slate-900 dark:text-white">{reviewStudent.collegeEmailId || '—'}</p></div>
-                  <div><Label className="text-muted-foreground">Personal Email</Label><p className="text-slate-900 dark:text-white">{reviewStudent.personalEmailId || '—'}</p></div>
-                  <div><Label className="text-muted-foreground">Phone</Label><p className="text-slate-900 dark:text-white">{reviewStudent.phoneNumber || '—'}</p></div>
-                  <div><Label className="text-muted-foreground">Aadhar</Label><p className="text-slate-900 dark:text-white">{reviewStudent.aadhar || '—'}</p></div>
+                  {renderProfileField('Full Name', 'name', reviewStudent.name)}
+                  {renderProfileField('USN', 'usn', reviewStudent.usn)}
+                  {renderProfileField('College Email', 'collegeEmailId', reviewStudent.collegeEmailId)}
+                  {renderProfileField('Personal Email', 'personalEmailId', reviewStudent.personalEmailId)}
+                  {renderProfileField('Phone', 'phoneNumber', reviewStudent.phoneNumber)}
+                  {renderProfileField('Aadhar', 'aadhar', reviewStudent.aadhar)}
+                  {renderProfileField('Gender', 'gender', reviewStudent.gender)}
                 </div>
                 <div className="space-y-4">
-                  <div><Label className="text-muted-foreground">UG CGPA</Label><p className="font-bold text-slate-900 dark:text-white">{reviewStudent.ugCgpa || '—'}</p></div>
-                  <div><Label className="text-muted-foreground">1st Sem SGPA</Label><p className="text-slate-900 dark:text-white">{reviewStudent.firstSemSgpa || '—'}</p></div>
-                  <div><Label className="text-muted-foreground">10th Marks</Label><p className="text-slate-900 dark:text-white">{reviewStudent.tenthMarks || '—'}</p></div>
-                  <div><Label className="text-muted-foreground">12th Marks</Label><p className="text-slate-900 dark:text-white">{reviewStudent.twelfthMarks || '—'}</p></div>
-                  <div>
-                    <Label className="text-muted-foreground">Links</Label>
-                    <div className="flex gap-4 mt-1">
-                      {reviewStudent.linkedIn ? <a href={reviewStudent.linkedIn} target="_blank" rel="noreferrer" className="text-primary hover:underline">LinkedIn</a> : <span className="text-muted-foreground">No LinkedIn</span>}
-                      {reviewStudent.gitHub ? <a href={reviewStudent.gitHub} target="_blank" rel="noreferrer" className="text-primary hover:underline">GitHub</a> : <span className="text-muted-foreground">No GitHub</span>}
-                      {reviewStudent.resumeUrl ? <a href={reviewStudent.resumeUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline font-bold">View Resume</a> : <span className="text-muted-foreground">No Resume</span>}
+                  {renderProfileField('UG CGPA', 'ugCgpa', reviewStudent.ugCgpa)}
+                  {renderProfileField('1st Sem SGPA', 'firstSemSgpa', reviewStudent.firstSemSgpa)}
+                  {renderProfileField('10th Marks', 'tenthMarks', reviewStudent.tenthMarks)}
+                  {renderProfileField('12th Marks', 'twelfthMarks', reviewStudent.twelfthMarks)}
+                  {renderProfileField('Links', 'links', (
+                    <div className="flex gap-4">
+                      {reviewStudent.linkedIn ? (
+                        <div className={getFieldStatus('linkedIn').isRejected ? 'text-red-500 border border-red-500/20 px-2 py-0.5 rounded bg-red-500/5' : getFieldStatus('linkedIn').isEdited ? 'text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded bg-amber-500/5' : ''}>
+                          <a href={reviewStudent.linkedIn} target="_blank" rel="noreferrer" className="text-primary hover:underline">LinkedIn</a>
+                        </div>
+                      ) : <span className="text-muted-foreground">No LinkedIn</span>}
+                      {reviewStudent.gitHub ? (
+                        <div className={getFieldStatus('gitHub').isRejected ? 'text-red-500 border border-red-500/20 px-2 py-0.5 rounded bg-red-500/5' : getFieldStatus('gitHub').isEdited ? 'text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded bg-amber-500/5' : ''}>
+                          <a href={reviewStudent.gitHub} target="_blank" rel="noreferrer" className="text-primary hover:underline">GitHub</a>
+                        </div>
+                      ) : <span className="text-muted-foreground">No GitHub</span>}
+                      {reviewStudent.resumeUrl ? (
+                        <div className={getFieldStatus('resumeUrl').isRejected ? 'text-red-500 border border-red-500/20 px-2 py-0.5 rounded bg-red-500/5' : getFieldStatus('resumeUrl').isEdited ? 'text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded bg-amber-500/5' : ''}>
+                           <a href={resolveBackendUrl(reviewStudent.resumeUrl)} target="_blank" rel="noreferrer" className="text-primary hover:underline font-bold">View Resume</a>
+                        </div>
+                      ) : <span className="text-muted-foreground">No Resume</span>}
                     </div>
-                  </div>
+                  ), true)}
                    <div>
                     <Label className="text-muted-foreground">Verification Status</Label>
                     <p className="font-bold text-slate-900 dark:text-white">
-                      {reviewStudent.verified ? <span className="text-green-500">Verified</span> : <span className="text-amber-500">Unverified</span>}
+                      {reviewStudent.verified ? <span className="text-green-500">Verified</span> : reviewStudent.rejected ? <span className="text-red-500">Rejected</span> : <span className="text-amber-500">Unverified</span>}
                     </p>
                   </div>
                   <div>
@@ -1289,33 +1615,205 @@ export function AdminPanel() {
                       {reviewStudent.placed ? <span className="text-green-500">Placed (Consent Frozen)</span> : <span className="text-muted-foreground">Not Placed</span>}
                     </p>
                   </div>
+                  {reviewStudentProfileData.flatMap((form) =>
+                    form.questions.map((q: any) => (
+                      <div key={q.id}>
+                        <Label className="text-muted-foreground">{form.summary.title}</Label>
+                        <p className="font-bold text-slate-900 dark:text-white mt-0.5">
+                          {q.fieldType === 'file' && q.answer ? (
+                            <a href={q.answer} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold truncate block">
+                              View Uploaded File
+                            </a>
+                          ) : (
+                            q.answer || '—'
+                          )}
+                        </p>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
-            </div>
-            <DialogFooter className="p-6 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex flex-col gap-4">
               {!reviewStudent.verified && (
-                <div className="w-full space-y-2">
-                  <Label className="text-text-main text-sm font-bold">Rejection Reason (Required if rejecting)</Label>
-                  <Input 
-                    placeholder="Enter reason for rejection (e.g., Incorrect Aadhar format)" 
-                    value={rejectReason} 
-                    onChange={e => setRejectReason(e.target.value)}
-                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white"
-                  />
+                <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10 space-y-4">
+                  <div className="space-y-3 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                    <Label className="text-text-main text-sm font-bold block mb-1">Select Incorrect Fields (Optional)</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-left">
+                      {Object.entries(FIELD_LABELS).map(([key, label]) => {
+                        const isChecked = selectedRejectedFields.includes(key);
+                        return (
+                          <label key={key} className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={(checked) => {
+                                setSelectedRejectedFields(prev => 
+                                  checked 
+                                    ? [...prev, key] 
+                                    : prev.filter(f => f !== key)
+                                );
+                              }}
+                            />
+                            <span>{label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="space-y-2 text-left">
+                    <Label className="text-text-main text-sm font-bold">Rejection Reason (Required if rejecting)</Label>
+                    <Input 
+                      placeholder="Enter reason for rejection (e.g., Incorrect Aadhar format)" 
+                      value={rejectReason} 
+                      onChange={e => setRejectReason(e.target.value)}
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white"
+                    />
+                  </div>
                 </div>
               )}
-              <div className="flex flex-col sm:flex-row w-full sm:justify-between items-stretch sm:items-center gap-2 sm:gap-4">
-                <Button onClick={() => setReviewStudent(null)} className="order-3 sm:order-1 text-slate-900 dark:text-white hover:bg-slate-200 dark:bg-white/10 w-full sm:w-auto" variant="ghost">Close</Button>
-                {!reviewStudent.verified && (
-                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto order-1 sm:order-2">
-                    <Button onClick={handleVerifyStudent} disabled={rejecting} className="w-full gap-2 order-1 shadow-lg shadow-primary/20 sm:w-auto sm:order-2">
-                      <CheckCircle2 className="w-4 h-4" /> Approve & Lock
-                    </Button>
-                    <Button variant="destructive" onClick={handleRejectStudent} disabled={rejecting || !rejectReason.trim()} className="w-full sm:w-auto order-2 sm:order-1">Reject Profile</Button>
-                  </div>
-                )}
+            </div>
+
+            <div className="p-4 sm:p-6 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4 w-full">
+              <Button onClick={closeReview} className="w-full sm:w-auto text-slate-900 dark:text-white hover:bg-slate-200 dark:bg-white/10" variant="ghost">Close</Button>
+              {!reviewStudent.verified && (
+                <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
+                  <Button variant="destructive" onClick={handleRejectStudent} disabled={rejecting || !rejectReason.trim()} className="w-full sm:w-auto">Reject Profile</Button>
+                  <Button onClick={handleVerifyStudent} disabled={rejecting} className="w-full sm:w-auto gap-2 shadow-lg shadow-primary/20">
+                    <CheckCircle2 className="w-4 h-4" /> Approve & Lock
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+      {editingCompany && (
+        <Dialog open={true} onOpenChange={() => setEditingCompany(null)}>
+          <DialogContent className="glass-panel text-slate-900 dark:text-white w-[92vw] sm:w-full max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-0 overflow-hidden">
+            <DialogHeader className="p-6 pb-2 pr-14">
+              <DialogTitle className="text-2xl text-slate-900 dark:text-white">Edit Recruitment Drive</DialogTitle>
+              <DialogDescription className="text-muted-foreground">Modify company parameters and academic eligibility constraints.</DialogDescription>
+            </DialogHeader>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Company Name */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Company Name</Label>
+                  <Input 
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. Google" 
+                    value={eName} 
+                    onChange={e => setEName(e.target.value)} 
+                  />
+                </div>
+
+                {/* Package */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Package (LPA)</Label>
+                  <Input 
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. 12 LPA or TBD" 
+                    value={ePkg} 
+                    onChange={e => setEPkg(e.target.value)} 
+                  />
+                </div>
+
+                {/* Stipend */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Stipend (PM)</Label>
+                  <Input 
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. 50k PM or TBD" 
+                    value={eStip} 
+                    onChange={e => setEStip(e.target.value)} 
+                  />
+                </div>
+
+                {/* Min CGPA (Current) */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Min CGPA (Current)</Label>
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. 7.5" 
+                    value={eCgpa} 
+                    onChange={e => setECgpa(e.target.value)} 
+                  />
+                </div>
+
+                {/* Min Overall CGPA */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Min Overall CGPA (10th/12th/UG/PG)</Label>
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. 6.5 (Optional)" 
+                    value={eOverallCgpa} 
+                    onChange={e => setEOverallCgpa(e.target.value)} 
+                  />
+                </div>
+
+                {/* Min UG CGPA */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Min UG CGPA</Label>
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    placeholder="e.g. 6.0 (Optional)" 
+                    value={eUgCgpa} 
+                    onChange={e => setEUgCgpa(e.target.value)} 
+                  />
+                </div>
+
+                {/* Test Date */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Online Test Date</Label>
+                  <Input 
+                    type="date"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    value={eTest ? eTest.substring(0, 10) : ''} 
+                    onChange={e => setETest(e.target.value)} 
+                  />
+                </div>
+
+                {/* Interview Date */}
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Interview Date</Label>
+                  <Input 
+                    type="date"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
+                    value={eInt ? eInt.substring(0, 10) : ''} 
+                    onChange={e => setEInt(e.target.value)} 
+                  />
+                </div>
               </div>
+
+              {/* Default Consent */}
+              <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                <Switch
+                  id="eDefaultConsent"
+                  checked={eDefaultConsent}
+                  onCheckedChange={setEDefaultConsent}
+                />
+                <div>
+                  <Label htmlFor="eDefaultConsent" className="text-sm font-semibold text-slate-900 dark:text-white cursor-pointer">Default Consent: ON</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {eDefaultConsent
+                      ? 'All eligible students will be auto-consented. They can opt out individually.'
+                      : 'Students must explicitly provide consent to participate in this drive.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="p-6 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/10">
+              <Button variant="ghost" onClick={() => setEditingCompany(null)} className="text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-white/5">Cancel</Button>
+              <Button onClick={saveEditedCompany} className="gap-2 shadow-lg shadow-primary/20" disabled={busy}>
+                Save Changes
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

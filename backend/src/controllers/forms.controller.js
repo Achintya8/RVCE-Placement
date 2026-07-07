@@ -7,6 +7,7 @@ import {
   findFormById,
   getFormQuestions,
   listAssignedFormsForStudent,
+  listProfileDataFormsForStudent,
   listForms,
   listQuestions,
   replaceFormQuestionMappings,
@@ -21,7 +22,7 @@ import { encodeQuestionText } from '../utils/questionParser.js';
 
 const formSchema = z.object({
   title: z.string().min(1),
-  type: z.enum(['consent', 'tracker', 'custom']),
+  type: z.enum(['consent', 'tracker', 'custom', 'profile_data']),
   companyId: z.coerce.number().optional().nullable(),
 });
 
@@ -234,6 +235,23 @@ export const toggleFormResponses = async (req, res, next) => {
     }
 
     res.json(updatedForm);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getProfileDataForms = async (req, res, next) => {
+  try {
+    const forms = await listProfileDataFormsForStudent(req.auth.userId);
+    const result = [];
+    for (const f of forms) {
+      const questions = await getFormQuestions(f.id, req.auth.userId);
+      result.push({
+        ...f,
+        questions,
+      });
+    }
+    res.json(result);
   } catch (error) {
     next(error);
   }

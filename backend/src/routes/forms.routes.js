@@ -9,7 +9,8 @@ import {
   sendFormToStudents,
   getPendingStudents,
   deleteFormRecord,
-  toggleFormResponses
+  toggleFormResponses,
+  getProfileDataForms
 } from '../controllers/forms.controller.js';
 import { authenticate, requireSpc } from '../middleware/auth.js';
 
@@ -19,6 +20,7 @@ router.use(authenticate);
 
 router.get('/', getForms);
 router.get('/assigned/me', getAssignedForms);
+router.get('/profile-data', getProfileDataForms);
 router.get('/:id', getFormDetail);
 router.post('/', requireSpc, createFormRecord);
 router.post('/:id/questions', requireSpc, mapQuestionsToForm);

@@ -4,9 +4,13 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { globalRateLimiter } from './middleware/rateLimiter.js';
 import router from './routes/index.js';
 
 const app = express();
+
+// Enable if running behind a reverse proxy (e.g., Render, Heroku, Nginx)
+app.set('trust proxy', 1);
 
 app.use(cors());
 app.use(helmet({
@@ -27,7 +31,7 @@ app.get('/health', (_req, res) => {
   });
 });
 
-app.use('/api', router);
+app.use('/api', globalRateLimiter, router);
 app.use(notFoundHandler);
 app.use(errorHandler);
 

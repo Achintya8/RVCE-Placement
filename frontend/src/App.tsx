@@ -5,8 +5,6 @@ import HomeScreen from './screens/HomeScreen'
 import { LoadingRegion } from '@/components/modern/Skeleton'
 import { CollegeLogo } from '@/components/modern/CollegeLogo'
 
-const spinnerSpokes = Array.from({ length: 12 }, (_, index) => index)
-
 function useOnlineStatus() {
   const [isOnline, setIsOnline] = useState(navigator.onLine)
 
@@ -26,12 +24,13 @@ function useOnlineStatus() {
   return isOnline
 }
 
-function CupertinoActivityIndicator() {
+function NewtonsCradleLoader() {
   return (
-    <div className="cupertino-activity-indicator" aria-hidden="true">
-      {spinnerSpokes.map((spoke) => (
-        <span key={spoke} />
-      ))}
+    <div className="newtons-cradle" aria-hidden="true">
+      <div className="newtons-cradle__dot" />
+      <div className="newtons-cradle__dot" />
+      <div className="newtons-cradle__dot" />
+      <div className="newtons-cradle__dot" />
     </div>
   )
 }
@@ -45,8 +44,8 @@ function Splash() {
       <div className="ios-glass-panel relative z-10 rounded-[1.35rem] p-6">
         <CollegeLogo imageClassName="w-44 sm:w-48" />
       </div>
-      <div className="relative z-10 mt-8 flex flex-col items-center gap-3">
-        <CupertinoActivityIndicator />
+      <div className="relative z-10 mt-8 flex flex-col items-center gap-6">
+        <NewtonsCradleLoader />
         <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Initialising Portal</p>
       </div>
     </LoadingRegion>

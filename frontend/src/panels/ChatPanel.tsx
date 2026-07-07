@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChatMessage, ChatUser } from '@/types'
 import { useAuthStore, repo } from '../store/useAuthStore'
+import { resolveBackendUrl } from '../config'
 import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
@@ -122,6 +123,18 @@ export function ChatPanel() {
     void repo.getAllUsersForMention().then(setUsers).catch(console.error)
   }, [])
 
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((registration) => {
+        if ('getNotifications' in registration) {
+          void registration.getNotifications({ tag: 'chat_notification' }).then((notifications) => {
+            notifications.forEach((n) => n.close())
+          })
+        }
+      }).catch(console.error)
+    }
+  }, [])
+
   // Track scroll position to know if user is near the bottom
   useEffect(() => {
     const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
@@ -158,17 +171,49 @@ export function ChatPanel() {
   const send = async () => {
     const t = text.trim()
     if (!t && !attachment) return
+
+    // Store replying state and reset inputs immediately to feel instant
+    const replyCopy = replyingTo
+    setText('')
+    localStorage.removeItem('chat_draft_msg')
+    setAttachment(null)
+    setMentionSearch(null)
+    setReplyingTo(null)
     setSending(true)
+
+    // Generate unique temporary negative ID for the optimistic message
+    const optimisticId = -Date.now()
+    const optimisticMsg: ChatMessage = {
+      id: optimisticId,
+      messageText: t || null,
+      attachmentUrl: attachment ? URL.createObjectURL(attachment) : null,
+      attachmentName: attachment ? attachment.name : null,
+      createdAt: new Date().toISOString(),
+      sender: {
+        id: session?.user.id || 0,
+        name: session?.user.name || 'You',
+        email: session?.user.collegeEmailId
+      },
+      parentMessage: replyCopy ? {
+        id: replyCopy.id,
+        senderName: replyCopy.sender.name,
+        messageText: replyCopy.messageText
+      } : null,
+      mentionedUsers: [],
+      isOptimistic: true
+    }
+
+    // Append optimistically to local UI state
+    setMessages((m) => [...m, optimisticMsg])
+
     try {
-      const msg = await repo.sendMessage(t, attachment || undefined, replyingTo?.id || undefined)
-      setMessages((m) => [...m, msg])
-      setText('')
-      localStorage.removeItem('chat_draft_msg')
-      setAttachment(null)
-      setMentionSearch(null)
-      setReplyingTo(null)
+      const msg = await repo.sendMessage(t, attachment || undefined, replyCopy?.id || undefined)
+      // Replace optimistic message with actual server message
+      setMessages((m) => m.map(item => item.id === optimisticId ? msg : item))
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e))
+      // Mark as failed so user knows it failed
+      setMessages((m) => m.map(item => item.id === optimisticId ? { ...item, hasFailed: true, isOptimistic: false } : item))
     } finally {
       setSending(false)
     }
@@ -260,7 +305,7 @@ export function ChatPanel() {
   const renderMessageText = (msg: ChatMessage, isMe: boolean) => {
     const md = prepareMarkdown(msg)
     return (
-      <div className="break-words">
+      <div className="break-words [word-break:break-word] [overflow-wrap:anywhere] w-full">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
@@ -324,9 +369,30 @@ export function ChatPanel() {
             </div>
           ) : (
             <>
+              {/* Chat Header (visible when not searching) */}
+              {!searchActive && (
+                <div className="flex items-center justify-between bg-white dark:bg-[#121212] pl-14 pr-4 py-3 md:px-4 border-b border-slate-200 dark:border-white/10 shadow-sm z-40 shrink-0 top-safe-chat-header">
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col text-left">
+                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Placement Related messages Only</span>
+
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => setSearchActive(true)}
+                    variant="ghost"
+                    size="icon"
+                    className="w-9 h-9 rounded-full text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    title="Search messages"
+                  >
+                    <Search className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+
               {/* Animated Search Bar */}
               {searchActive && (
-                <div className="flex items-center justify-between bg-white dark:bg-slate-900 px-4 py-2.5 border-b border-slate-200 dark:border-white/10 shadow-sm animate-in slide-in-from-top duration-200 z-50">
+                <div className="flex items-center justify-between bg-white dark:bg-[#121212] pl-14 pr-4 py-2.5 md:px-4 border-b border-slate-200 dark:border-white/10 shadow-sm animate-in slide-in-from-top duration-200 z-50 top-safe-chat-search">
                   <div className="flex items-center gap-2 flex-1 max-w-md">
                     <Search className="w-4 h-4 text-slate-400" />
                     <input
@@ -337,7 +403,7 @@ export function ChatPanel() {
                         setSearchQuery(e.target.value)
                         setCurrentMatchIdx(0)
                       }}
-                      className="bg-transparent text-sm border-0 focus:ring-0 focus:outline-none w-full text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                      className="bg-transparent text-[16px] md:text-sm border-0 focus:ring-0 focus:outline-none w-full text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
                       autoFocus
                     />
                   </div>
@@ -384,24 +450,11 @@ export function ChatPanel() {
                 </div>
               )}
 
-              {/* Floating Search Toggle Button */}
-              {!searchActive && (
-                <Button
-                  onClick={() => setSearchActive(true)}
-                  variant="secondary"
-                  size="icon"
-                  className="absolute top-4 right-4 z-40 rounded-full w-10 h-10 shadow-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-300 backdrop-blur-md opacity-90 hover:opacity-100 scale-100 active:scale-95"
-                  title="Search messages"
-                >
-                  <Search className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-                </Button>
-              )}
-
               {/* WhatsApp-style scroll to bottom button */}
               {showScrollBtn && (
                 <button
                   onClick={scrollToBottom}
-                  className="absolute bottom-[90px] right-5 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 animate-in fade-in zoom-in-95"
+                  className="absolute bottom-[90px] right-5 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 animate-in fade-in zoom-in-95"
                   title="Scroll to latest messages"
                 >
                   <ChevronDown className="w-5 h-5 text-slate-600 dark:text-slate-300" />
@@ -427,7 +480,7 @@ export function ChatPanel() {
                     messages.map((m, idx) => {
                       const isMe = m.sender.id === session?.user.id
                       const isAdmin = session?.isSpc
-                      const canDelete = isMe || isAdmin
+                      const canDelete = (isMe || isAdmin) && !m.isOptimistic && !m.hasFailed
 
                       const prevMsg = idx > 0 ? messages[idx - 1] : null
                       const isNewDay = !prevMsg ||
@@ -447,6 +500,7 @@ export function ChatPanel() {
                             startY = e.touches[0].clientY
                           }}
                           onTouchEnd={(e) => {
+                            if (m.isOptimistic) return
                             const diffX = e.changedTouches[0].clientX - startX
                             const diffY = e.changedTouches[0].clientY - startY
                             if (diffX > 60 && Math.abs(diffY) < 30) {
@@ -477,13 +531,23 @@ export function ChatPanel() {
                               <span className="text-[11px] text-slate-400 dark:text-white/30">
                                 {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
-                              <button
-                                onClick={() => setReplyingTo(m)}
-                                className="opacity-0 max-md:opacity-75 group-hover/msg:opacity-100 transition-opacity p-1.5 text-slate-400 hover:text-primary hover:bg-slate-200 dark:hover:bg-white/10 rounded-md"
-                                title="Reply to message"
-                              >
-                                <CornerUpLeft className="w-4 h-4" />
-                              </button>
+                              {m.isOptimistic && (
+                                <Clock className="w-3 h-3 text-slate-450 dark:text-white/40 animate-pulse shrink-0" />
+                              )}
+                              {m.hasFailed && (
+                                <span title="Failed to send">
+                                  <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                                </span>
+                              )}
+                              {!m.isOptimistic && !m.hasFailed && (
+                                <button
+                                  onClick={() => setReplyingTo(m)}
+                                  className="opacity-0 max-md:opacity-75 group-hover/msg:opacity-100 transition-opacity p-1.5 text-slate-400 hover:text-primary hover:bg-slate-200 dark:hover:bg-white/10 rounded-md"
+                                  title="Reply to message"
+                                >
+                                  <CornerUpLeft className="w-4 h-4" />
+                                </button>
+                              )}
                               {canDelete && (
                                 <button
                                   onClick={() => void deleteMessage(m.id)}
@@ -499,8 +563,8 @@ export function ChatPanel() {
                               className={cn(
                                 "px-4 py-2 rounded-[16px] text-base transition-all duration-300 border shadow-sm",
                                 isMe
-                                  ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 border-indigo-100 dark:border-indigo-900/50 rounded-tr-none shadow-indigo-100/30"
-                                  : "bg-slate-100 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 border-slate-200/50 dark:border-slate-800/50 rounded-tl-none",
+                                  ? "bg-indigo-50 dark:bg-white/10 text-indigo-950 dark:text-white border-indigo-100 dark:border-white/20 rounded-tr-none shadow-indigo-100/30 dark:shadow-none"
+                                  : "bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-slate-200 border-slate-200/50 dark:border-white/10 rounded-tl-none",
                                 isCurrentMatch && "ring-2 ring-yellow-400 dark:ring-yellow-500 scale-[1.01] shadow-[0_0_15px_rgba(234,179,8,0.4)]"
                               )}
                             >
@@ -535,7 +599,7 @@ export function ChatPanel() {
                                 </div>
                               )}
                               {m.messageText && renderMessageText(m, isMe)}
-                              {m.attachmentUrl && m.attachmentName && renderAttachment(m.attachmentUrl, m.attachmentName)}
+                              {m.attachmentUrl && m.attachmentName && renderAttachment(resolveBackendUrl(m.attachmentUrl), m.attachmentName)}
                             </div>
                           </div>
                         </div>
@@ -545,9 +609,9 @@ export function ChatPanel() {
                 </div>
               </ScrollArea>
 
-              <div className="relative p-4 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 flex flex-col gap-2">
+              <div className="relative px-3 py-2 sm:p-4 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 flex flex-col gap-2 pb-[calc(env(safe-area-inset-bottom,0px)+8px)] sm:pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">
                 {mentionSearch !== null && filteredUsers.length > 0 && (
-                  <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden z-50">
+                  <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
                     {filteredUsers.map(u => (
                       <button
                         key={u.id}
@@ -575,7 +639,7 @@ export function ChatPanel() {
                 )}
 
                 {replyingTo && (
-                  <div className="flex items-center justify-between bg-white dark:bg-slate-900 px-3 py-2 rounded-lg border-l-4 border-primary border border-slate-200 dark:border-slate-800 shadow-sm animate-in slide-in-from-bottom-2 duration-200">
+                  <div className="flex items-center justify-between bg-white dark:bg-[#1a1a1a] px-3 py-2 rounded-lg border-l-4 border-primary border border-slate-200 dark:border-white/10 shadow-sm animate-in slide-in-from-bottom-2 duration-200">
                     <div className="flex flex-col text-left overflow-hidden">
                       <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
                         Replying to {replyingTo.sender.id === session?.user.id ? 'You' : replyingTo.sender.name}
@@ -617,7 +681,7 @@ export function ChatPanel() {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="shrink-0 bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:bg-white/10 h-10 w-10"
+                    className="shrink-0 bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:bg-white/10 h-9 w-9 sm:h-10 sm:w-10"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={sending || !!err}
                   >
@@ -741,13 +805,13 @@ export function ChatPanel() {
                         }
                       }
                     }}
-                    className="min-h-[40px] max-h-[150px] bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-primary/50 resize-none py-2"
+                    className="min-h-[36px] max-h-[120px] bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-primary/50 resize-none py-1.5 text-[16px] md:text-sm"
                   />
                   <Button
                     type="submit"
                     size="icon"
                     disabled={sending || !!err || (!text.trim() && !attachment)}
-                    className="shrink-0 shadow-lg shadow-primary/20 h-10 w-10"
+                    className="shrink-0 shadow-lg shadow-primary/20 h-9 w-9 sm:h-10 sm:w-10"
                   >
                     <Send className="w-4 h-4" />
                   </Button>

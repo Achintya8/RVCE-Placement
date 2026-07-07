@@ -7,7 +7,9 @@ import {
   listCompanies,
   listEligibleStudentsForCompany,
   updateCompanyStatus,
-  updateCompanyBlocks
+  updateCompanyBlocks,
+  updateCompany,
+  deleteCompany
 } from '../repositories/company.repository.js';
 import { generateCompanyWorkbook } from '../services/export.service.js';
 import { ApiError } from '../utils/apiError.js';
@@ -16,12 +18,15 @@ import { sendToUsers } from '../services/notification.service.js';
 
 const companySchema = z.object({
   name: z.string().min(1),
-  minCgpa: z.coerce.number().min(0).max(10),
+  minCgpa: z.coerce.number().min(0).max(10).optional().nullable(),
+  minOverallCgpa: z.coerce.number().min(0).max(10).optional().nullable(),
+  minUgCgpa: z.coerce.number().min(0).max(10).optional().nullable(),
   stipend: z.string().optional().nullable(),
   package: z.string().optional().nullable(),
   testDate: z.string().optional().nullable(),
   interviewDate: z.string().optional().nullable(),
   deadline: z.string().optional().nullable(),
+  defaultConsent: z.boolean().optional().default(false),
 });
 
 export const getCompanies = async (req, res, next) => {
@@ -153,6 +158,35 @@ export const updateBlocks = async (req, res, next) => {
 
     const updated = await updateCompanyBlocks(id, consentBlocked, trackerBlocked);
     res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateCompanyRecord = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const payload = companySchema.parse(req.body);
+    const company = await findCompanyById(id);
+    if (!company) {
+      throw new ApiError(404, 'Company not found.');
+    }
+    const updated = await updateCompany(id, payload);
+    res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteCompanyRecord = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const company = await findCompanyById(id);
+    if (!company) {
+      throw new ApiError(404, 'Company not found.');
+    }
+    await deleteCompany(id);
+    res.status(204).end();
   } catch (error) {
     next(error);
   }

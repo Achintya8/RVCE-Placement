@@ -1,17 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { useProfileStore } from '../store/useProfileStore'
-import { useAuthStore } from '../store/useAuthStore'
+import { useAuthStore, repo } from '../store/useAuthStore'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle2, AlertCircle, Upload, Save, FileText, Clock, Unlock, Camera, Moon, Sun, User, LogOut } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CheckCircle2, AlertCircle, Upload, Save, FileText, Clock, Unlock, Camera, Moon, Sun, User, LogOut, Bell } from 'lucide-react'
 import { StudentProfileSkeleton } from '@/components/modern/Skeleton'
 import { ApiClientError } from '../api/client'
+import { resolveBackendUrl } from '../config'
 import type { AppUser } from '@/types'
+import {
+  allowNotifications,
+  getNotificationPreference,
+  registerNotificationsSafely,
+} from '../notifications/registerNotifications'
+
 
 const FormField = ({ label, value, onChange, id, type = 'text', disabled = false, error }: {
   label: string
@@ -46,6 +54,31 @@ export function ProfilePanel() {
   const { theme, setTheme } = useTheme()
   const logout = useAuthStore((state) => state.logout)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [notificationPreference, setNotificationPreference] = useState(() =>
+    getNotificationPreference(),
+  )
+
+  const refreshNotificationPreference = () => {
+    setNotificationPreference(getNotificationPreference())
+  }
+
+  const enableNotifications = async () => {
+    if (!notificationPreference.supported) {
+      toast.error('Notifications are not supported in this browser.')
+      return
+    }
+
+    const permission = await allowNotifications()
+    refreshNotificationPreference()
+
+    if (permission === 'granted') {
+      toast.success('Notifications enabled! Subscribing for placement alerts...')
+      await registerNotificationsSafely(repo)
+    } else {
+      toast.error('Notifications are blocked in your browser settings.')
+    }
+  }
+
 
 
   const handleFieldChange = (field: keyof AppUser, value: any) => {
@@ -58,6 +91,43 @@ export function ProfilePanel() {
       })
     }
   }
+
+  const [profileDataForms, setProfileDataForms] = useState<any[]>([])
+  const [dynamicValues, setDynamicValues] = useState<Record<number, Record<number, string>>>({})
+
+  const loadProfileDataForms = async () => {
+    try {
+      const forms = await repo.getProfileDataForms()
+      setProfileDataForms(forms)
+      
+      const valuesMap: Record<number, Record<number, string>> = {}
+      for (const form of forms) {
+        const formValues: Record<number, string> = {}
+        for (const q of form.questions) {
+          formValues[q.id] = q.answer ?? ''
+        }
+        valuesMap[form.summary.id] = formValues
+      }
+      setDynamicValues(valuesMap)
+    } catch (e) {
+      console.error('Failed to load dynamic profile forms:', e)
+    }
+  }
+
+  useEffect(() => {
+    void loadProfileDataForms()
+  }, [])
+
+  const handleDynamicFieldChange = (formId: number, questionId: number, value: string) => {
+    setDynamicValues((prev) => ({
+      ...prev,
+      [formId]: {
+        ...(prev[formId] ?? {}),
+        [questionId]: value,
+      },
+    }))
+  }
+
   const { 
     profile: user, 
     draft, 
@@ -81,8 +151,41 @@ export function ProfilePanel() {
   const onSave = async () => {
     setFieldErrors({})
     try {
+      // 1. Validate dynamic fields first
+      const validatedDynamicPayloads: Record<number, Record<number, string | number | boolean>> = {}
+      for (const form of profileDataForms) {
+        const answers: Record<number, string | number | boolean> = {}
+        const formVals = dynamicValues[form.summary.id] ?? {}
+        for (const q of form.questions) {
+          const raw = formVals[q.id] ?? ''
+          if (q.isRequired && !raw.trim()) {
+            toast.error(`Please fill in "${q.questionText}"`)
+            return
+          }
+          if (q.fieldType === 'number') {
+            const n = Number.parseFloat(raw)
+            answers[q.id] = Number.isNaN(n) ? raw : n
+          } else if (q.fieldType === 'boolean') {
+            answers[q.id] = raw === 'true'
+          } else {
+            answers[q.id] = raw
+          }
+        }
+        validatedDynamicPayloads[form.summary.id] = answers
+      }
+
+      // 2. Save standard profile
       await saveProfile()
-      toast.success('Profile updated.')
+
+      // 3. Save dynamic forms
+      for (const form of profileDataForms) {
+        const payload = validatedDynamicPayloads[form.summary.id]
+        await repo.submitFormResponses(form.summary.id, payload)
+      }
+
+      toast.success('Profile updated successfully.')
+      void loadProfileDataForms()
+      void fetchProfile()
     } catch (e) {
       if (e instanceof ApiClientError && e.details && Array.isArray(e.details)) {
         const errors: Record<string, string> = {}
@@ -184,7 +287,7 @@ export function ProfilePanel() {
             <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/10">
               {user.profilePictureUrl ? (
                 <img
-                  src={user.profilePictureUrl}
+                  src={resolveBackendUrl(user.profilePictureUrl)}
                   alt={user.name}
                   className="h-full w-full object-cover"
                 />
@@ -289,7 +392,7 @@ export function ProfilePanel() {
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider dark:text-muted-foreground">Current Resume</p>
                 <a
-                  href={user.resumeUrl}
+                  href={resolveBackendUrl(user.resumeUrl)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-sm font-medium text-primary hover:underline truncate block"
@@ -301,6 +404,8 @@ export function ProfilePanel() {
           </CardContent>
         )}
       </Card>
+
+
 
       {/* Main Profile Form */}
       <Card className="glass-panel">
@@ -324,6 +429,105 @@ export function ProfilePanel() {
             <FormField label="1st Sem SGPA" value={String(draft.firstSemSgpa ?? '')} onChange={(v) => handleFieldChange('firstSemSgpa', v)} id="pf-fs" type="number" disabled={readOnly} error={fieldErrors.firstSemSgpa} />
             <FormField label="10th Aggregate (%)" value={String(draft.tenthMarks ?? '')} onChange={(v) => handleFieldChange('tenthMarks', v)} id="pf-10" type="number" disabled={readOnly} error={fieldErrors.tenthMarks} />
             <FormField label="12th Aggregate (%)" value={String(draft.twelfthMarks ?? '')} onChange={(v) => handleFieldChange('twelfthMarks', v)} id="pf-12" type="number" disabled={readOnly} error={fieldErrors.twelfthMarks} />
+            <div className="space-y-2">
+              <Label htmlFor="pf-gender" className="text-sm font-medium text-slate-600 dark:text-muted-foreground">Gender</Label>
+              <Select
+                value={draft.gender ?? ''}
+                onValueChange={(v) => handleFieldChange('gender', v)}
+                disabled={readOnly}
+              >
+                <SelectTrigger id="pf-gender" className="border-slate-200 bg-white text-slate-950 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Dynamic Fields */}
+            {profileDataForms.flatMap((form) => 
+              form.questions.map((q: any) => {
+                const value = dynamicValues[form.summary.id]?.[q.id] ?? ''
+                const isClosed = form.summary.acceptingResponses === false
+                return (
+                  <div key={q.id} className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-600 dark:text-muted-foreground">
+                      {form.summary.title}
+                    </Label>
+                    {q.fieldType === 'text' || q.fieldType === 'number' ? (
+                      <Input
+                        type={q.fieldType === 'number' ? 'number' : 'text'}
+                        value={value}
+                        onChange={(e) => handleDynamicFieldChange(form.summary.id, q.id, e.target.value)}
+                        placeholder={`Enter ${form.summary.title.toLowerCase()}...`}
+                        disabled={isClosed || readOnly || saving}
+                        className="bg-white border-slate-200 text-slate-950 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-primary/50"
+                      />
+                    ) : q.fieldType === 'boolean' ? (
+                      <Select
+                        value={value}
+                        disabled={isClosed || readOnly || saving}
+                        onValueChange={(v) => handleDynamicFieldChange(form.summary.id, q.id, v)}
+                      >
+                        <SelectTrigger className="bg-white border-slate-200 text-slate-950 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                          <SelectValue placeholder="Select an option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">Yes</SelectItem>
+                          <SelectItem value="false">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : q.fieldType === 'dropdown' ? (
+                      <Select
+                        value={value}
+                        disabled={isClosed || readOnly || saving}
+                        onValueChange={(v) => handleDynamicFieldChange(form.summary.id, q.id, v)}
+                      >
+                        <SelectTrigger className="bg-white border-slate-200 text-slate-950 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                          <SelectValue placeholder="Choose one..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {q.options?.map((o: string) => (
+                            <SelectItem key={o} value={o}>
+                              {o}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : q.fieldType === 'file' ? (
+                      <div className="space-y-2">
+                        <Input
+                          type="file"
+                          disabled={isClosed || readOnly || saving}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            const toastId = toast.loading(`Uploading "${file.name}"...`)
+                            try {
+                              const res = await repo.uploadResponseFile(file, q.folderLink)
+                              handleDynamicFieldChange(form.summary.id, q.id, res.fileUrl)
+                              toast.success(`Uploaded "${file.name}" successfully!`, { id: toastId })
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : String(err), { id: toastId })
+                            }
+                          }}
+                          className="bg-white border-slate-200 text-slate-950 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-primary/50 cursor-pointer w-full"
+                        />
+                        {value && (
+                          <p className="text-xs text-green-600 dark:text-green-400 font-medium truncate flex items-center gap-1.5 bg-green-50 dark:bg-green-950/20 p-2.5 rounded-lg border border-green-100 dark:border-green-900/20">
+                            Uploaded! <a href={value} target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-green-700">View File</a>
+                          </p>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                )
+              })
+            )}
           </div>
         </CardContent>
         <CardFooter className="justify-end border-t border-white/45 p-4 bg-white/20 dark:border-white/10 dark:bg-white/5 sm:p-6">
@@ -332,6 +536,67 @@ export function ProfilePanel() {
             {saving ? 'Saving...' : 'Save Profile'}
           </Button>
         </CardFooter>
+      </Card>
+
+      {/* Push Notifications Card */}
+      <Card className="glass-panel">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-slate-950 dark:text-white">
+            <Bell className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            Push Notifications
+          </CardTitle>
+          <CardDescription className="text-slate-600 dark:text-muted-foreground">
+            Receive real-time placement alerts, deadlines, and messages directly on your device.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!notificationPreference.supported ? (
+            notificationPreference.isIOS && !notificationPreference.isStandalone ? (
+              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 dark:bg-amber-500/5 text-amber-800 dark:text-amber-300">
+                <p className="font-semibold text-sm">iOS PWA Installation Required</p>
+                <p className="text-xs mt-1 leading-relaxed text-slate-600 dark:text-slate-350">
+                  To receive push notifications on iOS, you must first add this web app to your Home Screen. 
+                  Tap the Safari <strong>Share</strong> button (usually a square with an up arrow at the bottom of the screen) and select <strong>'Add to Home Screen'</strong>. 
+                  Once installed, open the app from your Home Screen and enable notifications here.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-4 dark:bg-destructive/5 text-destructive-foreground">
+                <p className="font-semibold text-sm">Unsupported Browser or Environment</p>
+                <p className="text-xs mt-1 leading-relaxed text-slate-600 dark:text-slate-350">
+                  Push notifications are not supported in this browser or over an insecure connection. 
+                  Ensure you are using a secure connection (HTTPS) and a modern mobile or desktop browser (Safari, Chrome, Firefox, Edge).
+                </p>
+              </div>
+            )
+          ) : notificationPreference.permission === 'granted' ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-green-500/20 bg-green-500/10 p-4 dark:bg-green-500/5 text-green-700 dark:text-green-305">
+              <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0" />
+              <div>
+                <p className="font-semibold text-sm">Notifications Enabled</p>
+                <p className="text-xs mt-0.5 text-slate-600 dark:text-slate-350">
+                  You are successfully subscribed to real-time placement alerts on this device.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-205 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+              <div className="space-y-0.5">
+                <p className="font-semibold text-sm text-slate-905 dark:text-white">Alerts Disabled</p>
+                <p className="text-xs text-slate-600 dark:text-slate-350">
+                  You haven't authorized notifications on this browser yet.
+                </p>
+              </div>
+              <Button
+                onClick={() => void enableNotifications()}
+                className="w-full sm:w-auto gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+              >
+                <Bell className="w-4 h-4" />
+                Enable Alerts
+              </Button>
+            </div>
+          )}
+        </CardContent>
       </Card>
     </div>
   )

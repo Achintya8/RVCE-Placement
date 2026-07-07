@@ -8,11 +8,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-white shadow-[0_12px_28px_rgba(0,122,255,0.24)] hover:bg-primary/90",
-        destructive: "bg-red-500 text-white shadow-[0_12px_28px_rgba(239,68,68,0.24)] hover:bg-red-600",
-        outline: "ios-glass-control text-slate-900 hover:bg-white/75 dark:text-white dark:hover:bg-white/10",
-        secondary: "ios-glass-control text-slate-900 hover:bg-white/75 dark:text-white dark:hover:bg-white/10",
-        ghost: "text-slate-800 hover:bg-white/55 dark:text-white dark:hover:bg-white/10",
+        default: "btn-swipe btn-swipe-default shadow-[0_12px_28px_rgba(0,122,255,0.12)]",
+        destructive: "btn-swipe btn-swipe-destructive shadow-[0_12px_28px_rgba(239,68,68,0.12)]",
+        outline: "btn-swipe btn-swipe-outline",
+        secondary: "btn-swipe btn-swipe-secondary",
+        ghost: "btn-swipe btn-swipe-ghost",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
@@ -38,9 +38,31 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    let computedClassName = cn(buttonVariants({ variant, size, className }))
+    
+    // If it's an icon button or explicitly fully rounded, remove swipe animation classes
+    if (size === "icon" || className?.includes("rounded-full")) {
+      computedClassName = computedClassName
+        .replace(/\bbtn-swipe\S*\b/g, "")
+        .trim()
+      
+      // Restore standard Shadcn theme values that were overriden by btn-swipe classes
+      if (variant === "default" || !variant) {
+        computedClassName = cn(computedClassName, "bg-primary text-primary-foreground hover:bg-primary/90")
+      } else if (variant === "destructive") {
+        computedClassName = cn(computedClassName, "bg-destructive text-destructive-foreground hover:bg-destructive/90")
+      } else if (variant === "outline") {
+        computedClassName = cn(computedClassName, "border border-input bg-background hover:bg-accent hover:text-accent-foreground")
+      } else if (variant === "secondary") {
+        computedClassName = cn(computedClassName, "bg-secondary text-secondary-foreground hover:bg-secondary/80")
+      } else if (variant === "ghost") {
+        computedClassName = cn(computedClassName, "hover:bg-accent hover:text-accent-foreground")
+      }
+    }
+
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={computedClassName}
         ref={ref}
         {...props}
       />

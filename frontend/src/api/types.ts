@@ -51,6 +51,13 @@ export function parseAppUser(json: Record<string, unknown>): AppUser {
     profilePictureUrl: json.profilePictureUrl as string | null | undefined,
     unlockRequested: Boolean(json.unlockRequested),
     placed: Boolean(json.placed),
+    gender: json.gender as string | null | undefined,
+    rejected: Boolean(json.rejected),
+    rejectionReason: json.rejectionReason as string | null | undefined,
+    rejectedFields: Array.isArray(json.rejectedFields) ? json.rejectedFields.map(String) : null,
+    lastVerifiedProfile: typeof json.lastVerifiedProfile === 'string'
+      ? (JSON.parse(json.lastVerifiedProfile) as Record<string, any>)
+      : (json.lastVerifiedProfile as Record<string, any> | null | undefined),
   }
 }
 
@@ -67,7 +74,9 @@ export function parseCompany(json: Record<string, unknown>): Company {
   return {
     id: num(json.id),
     name: String(json.name ?? ''),
-    minCgpa: num(json.minCgpa),
+    minCgpa: json.minCgpa != null ? num(json.minCgpa) : null,
+    minOverallCgpa: json.minOverallCgpa != null ? num(json.minOverallCgpa) : null,
+    minUgCgpa: json.minUgCgpa != null ? num(json.minUgCgpa) : null,
     package: String(json.package ?? ''),
     stipend: String(json.stipend ?? ''),
     testDate: json.testDate as string | null | undefined,
@@ -78,6 +87,7 @@ export function parseCompany(json: Record<string, unknown>): Company {
     status: json.status as string | undefined,
     consentBlocked: Boolean(json.consentBlocked),
     trackerBlocked: Boolean(json.trackerBlocked),
+    defaultConsent: Boolean(json.defaultConsent),
   }
 }
 

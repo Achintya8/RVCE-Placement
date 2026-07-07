@@ -74,23 +74,51 @@ export const listAssignedFormsForStudent = async (studentId) => {
         ON a."company_id" = f."company_id" AND a."student_id" = $1
       INNER JOIN "users" u ON u."id" = $1
       WHERE u."verified" = TRUE
+        AND f."type" != 'profile_data'
         AND (c."status" IS NULL OR c."status" = 'ongoing')
         AND (
           f."company_id" IS NULL
           OR (
-            (c."min_cgpa" IS NULL OR u."ug_cgpa" >= c."min_cgpa")
+            (c."min_cgpa" IS NULL OR COALESCE(NULLIF(u."first_sem_sgpa", 0), u."ug_cgpa") >= c."min_cgpa")
             AND (
-              (f."type" NOT IN ('consent', 'tracker'))
-              OR (c."deadline" IS NULL OR c."deadline" > NOW() OR fr."id" IS NOT NULL)
+              c."min_overall_cgpa" IS NULL OR (
+                u."ug_cgpa" >= c."min_overall_cgpa"
+                AND (u."first_sem_sgpa" IS NULL OR u."first_sem_sgpa" >= c."min_overall_cgpa")
+                AND (u."tenth_marks" IS NULL OR u."tenth_marks" >= c."min_overall_cgpa" * 10)
+                AND (u."twelfth_marks" IS NULL OR u."twelfth_marks" >= c."min_overall_cgpa" * 10)
+              )
+            )
+            AND (c."min_ug_cgpa" IS NULL OR u."ug_cgpa" >= c."min_ug_cgpa")
+            AND (
+               (f."type" NOT IN ('consent', 'tracker'))
+               OR (c."deadline" IS NULL OR c."deadline" > NOW() OR fr."id" IS NOT NULL)
             )
             AND (
               f."type" = 'consent' 
-              OR a."consent" = TRUE 
-              OR (a."consent" IS NULL AND c."deadline" <= NOW() AND FALSE) -- Defaults to false after deadline
+              OR COALESCE(a."consent", c."default_consent") = TRUE
             )
           )
         )
       GROUP BY f."id", c."name"
+      ORDER BY f."created_at" DESC NULLS LAST, f."id" DESC`,
+    [studentId],
+  );
+
+  return rows.map(normalizeForm);
+};
+
+export const listProfileDataFormsForStudent = async (studentId) => {
+  const { rows } = await query(
+    `SELECT f.*,
+        COUNT(DISTINCT fqm."id") AS question_count,
+        COUNT(DISTINCT fr."id") AS response_count
+      FROM "forms" f
+      LEFT JOIN "form_question_map" fqm ON fqm."form_id" = f."id"
+      LEFT JOIN "form_responses" fr
+        ON fr."form_id" = f."id" AND fr."student_id" = $1
+      WHERE f."type" = 'profile_data'
+        AND (f."accepting_responses" = true OR fr."id" IS NOT NULL)
+      GROUP BY f."id"
       ORDER BY f."created_at" DESC NULLS LAST, f."id" DESC`,
     [studentId],
   );
@@ -204,29 +232,33 @@ export const getPendingStudentsForForm = async (formId) => {
 
   if (form.companyId) {
     params.push(form.companyId);
-    joinApplications = `LEFT JOIN "applications" a ON a."student_id" = u."id" AND a."company_id" = $2`;
+    joinApplications = `
+      LEFT JOIN "applications" a ON a."student_id" = u."id" AND a."company_id" = $2
+      LEFT JOIN "companies" c ON c."id" = $2
+    `;
     
-    // Fetch company to get min_cgpa and deadline
-    const { rows: companyRows } = await query(`SELECT min_cgpa, deadline FROM "companies" WHERE id = $1`, [form.companyId]);
-    const minCgpa = companyRows[0]?.min_cgpa;
-    const deadline = companyRows[0]?.deadline;
+    // Fetch company to get criteria and deadline
+    const { rows: companyRows } = await query(
+      `SELECT min_cgpa, min_overall_cgpa, min_ug_cgpa, deadline FROM "companies" WHERE id = $1`,
+      [form.companyId]
+    );
+    const company = companyRows[0];
+    const deadline = company?.deadline;
     const deadlinePassed = deadline && new Date(deadline) <= new Date();
     
-    if (minCgpa != null) {
-      params.push(minCgpa);
-      companyConditions = `
-        AND u."ug_cgpa" >= $3
-        AND (
-          ${form.type === 'consent' ? 'TRUE' : `(a."consent" = TRUE OR (a."consent" IS NULL AND ${deadlinePassed ? 'FALSE' : 'FALSE'}))`}
-        )
-      `;
-    } else {
-      companyConditions = `
-        AND (
-          ${form.type === 'consent' ? 'TRUE' : `(a."consent" = TRUE OR (a."consent" IS NULL AND ${deadlinePassed ? 'FALSE' : 'FALSE'}))`}
-        )
-      `;
-    }
+    companyConditions = `
+      AND (${company?.min_cgpa === null || company?.min_cgpa === undefined} OR COALESCE(NULLIF(u."first_sem_sgpa", 0), u."ug_cgpa") >= ${company?.min_cgpa || 0})
+      AND (${company?.min_overall_cgpa === null || company?.min_overall_cgpa === undefined} OR (
+        u."ug_cgpa" >= ${company?.min_overall_cgpa || 0}
+        AND (u."first_sem_sgpa" IS NULL OR u."first_sem_sgpa" >= ${company?.min_overall_cgpa || 0})
+        AND (u."tenth_marks" IS NULL OR u."tenth_marks" >= ${(company?.min_overall_cgpa || 0) * 10})
+        AND (u."twelfth_marks" IS NULL OR u."twelfth_marks" >= ${(company?.min_overall_cgpa || 0) * 10})
+      ))
+      AND (${company?.min_ug_cgpa === null || company?.min_ug_cgpa === undefined} OR u."ug_cgpa" >= ${company?.min_ug_cgpa || 0})
+      AND (
+        ${form.type === 'consent' ? 'TRUE' : `(COALESCE(a."consent", c."default_consent") = TRUE)`}
+      )
+    `;
   }
 
   const { rows } = await query(

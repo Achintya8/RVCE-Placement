@@ -1,0 +1,26 @@
+name: Ephemeral Runner Demo
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      simulate_attack:
+        description: 'Simulate Attack (Delays runner by 15s)'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Normal CI/CD Work
+        if: ${{ inputs.simulate_attack == false }}
+        run: sleep 2 # Normal baseline
+        
+      - name: Malicious Hijacking Simulation
+        if: ${{ inputs.simulate_attack == true }}
+        run: |
+          echo "WARNING: Unauthorized binary execution detected..."
+          sleep 15 # The ML will flag this as anomalous compared to 2 seconds!
