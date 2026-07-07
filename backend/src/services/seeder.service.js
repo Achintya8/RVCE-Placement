@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import ExcelJS from 'exceljs';
 import { query } from '../config/db.js';
 
@@ -37,10 +38,37 @@ const getText = (cellValue) => {
 };
 
 export const seedStudentsFromExcel = async () => {
-  const filePath = 'C:/Users/achin/RVCE-Placement/student.xlsx';
+  // 1. Resolve path dynamically: env override -> common relative paths -> absolute fallback
+  let filePath = process.env.STUDENTS_EXCEL_PATH;
+
+  if (!filePath) {
+    const cwd = process.cwd();
+    const pathsToTry = [
+      path.join(cwd, 'student.xlsx'),                 // Run from root
+      path.join(cwd, '..', 'student.xlsx'),            // Run from backend/
+      path.join(cwd, 'backend', 'student.xlsx'),       // Run from parent
+    ];
+
+    for (const p of pathsToTry) {
+      if (fs.existsSync(p)) {
+        filePath = p;
+        break;
+      }
+    }
+
+    if (!filePath) {
+      try {
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        filePath = path.join(__dirname, '..', '..', '..', 'student.xlsx'); // Relative to this file
+      } catch (err) {
+        filePath = 'student.xlsx';
+      }
+    }
+  }
 
   if (!fs.existsSync(filePath)) {
-    console.warn(`⚠️ Seeding skipped: Student Excel file not found at "${filePath}"`);
+    console.warn(`⚠️ Seeding skipped: Student Excel file not found at resolve path: "${filePath}"`);
     return;
   }
 
