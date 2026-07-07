@@ -122,7 +122,8 @@ export const seedStudentsFromExcel = async () => {
 
       const name = getText(getVal('Full Name'));
       const usn = getText(getVal('USN'));
-      const personalEmail = getEmailString(getVal('Personal Email ')); // Note potential space
+      const personalEmail = getEmailString(getVal('Personal Email')); // Trimmed key
+      const gender = getText(getVal('Gender'));
       const phoneNumberRaw = getText(getVal('Phone Number'));
       const aadharRaw = getText(getVal('AADHAR Number'));
       const tenth = getFloat(getVal('10th %'));
@@ -144,10 +145,15 @@ export const seedStudentsFromExcel = async () => {
         );
 
         if (checkRes.rows.length > 0) {
-          // If the student already exists, make sure they are marked as verified
+          // If the student already exists, make sure they are marked as verified,
+          // and update personal email and gender if not set yet
           await query(
-            'UPDATE "users" SET "verified" = true WHERE "college_email_id" = $1 AND "verified" = false',
-            [collegeEmail]
+            `UPDATE "users" 
+             SET "verified" = true,
+                 "personal_email_id" = COALESCE("personal_email_id", $2),
+                 "gender" = COALESCE("gender", $3)
+             WHERE "college_email_id" = $1`,
+            [collegeEmail, personalEmail, gender]
           );
           skippedCount++;
           continue;
@@ -169,8 +175,9 @@ export const seedStudentsFromExcel = async () => {
             "tenth_marks",
             "twelfth_marks",
             "verified",
-            "created_at"
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())`,
+            "created_at",
+            "gender"
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), $14)`,
           [
             name,
             collegeEmail,
@@ -185,6 +192,7 @@ export const seedStudentsFromExcel = async () => {
             tenth,
             twelfth,
             true, // initially verified = true
+            gender,
           ]
         );
 
