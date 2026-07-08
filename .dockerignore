@@ -1,0 +1,12 @@
+# Root-level .dockerignore
+.git
+.github
+.gitignore
+.env*
+*.md
+*.png
+*.xlsx
+AGENT_CONTEXT.md
+Database Schema.png
+student.xlsx
+req.txt

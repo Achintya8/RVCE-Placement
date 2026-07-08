@@ -1,53 +1,103 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# RVCE Placement Portal — Production Docker Compose
+# ══════════════════════════════════════════════════════════════════════════════
+# Usage:
+#   1. Copy .env.docker to .env and fill in your values
+#   2. docker compose -f docker-compose.prod.yml up -d
+#
+# To build locally instead of pulling:
+#   docker compose -f docker-compose.prod.yml build
+#   docker compose -f docker-compose.prod.yml up -d
+# ══════════════════════════════════════════════════════════════════════════════
+
 services:
+  # ── PostgreSQL Database ──────────────────────────────────────────────────────
   database:
     image: postgres:15-alpine
     container_name: placement-db
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       POSTGRES_DB: ${DB_NAME:-mca_placement}
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-mca_placement}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
+  # ── MongoDB ──────────────────────────────────────────────────────────────────
   mongodb:
-    image: mongo:6-alpine
+    image: mongo:6
     container_name: placement-mongo
-    restart: always
+    restart: unless-stopped
     volumes:
       - mongodata:/data/db
+    ports:
+      - "127.0.0.1:27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
+  # ── Backend API ──────────────────────────────────────────────────────────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    image: ghcr.io/achintya8/rvce-placement-backend:latest
     container_name: placement-backend
-    restart: always
+    restart: unless-stopped
     environment:
       - PORT=4000
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD}@database:5432/${DB_NAME:-mca_placement}
       - MONGODB_URI=mongodb://mongodb:27017/${MONGO_DB_NAME:-mca_placement}
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_DRIVE_FOLDER_ID=${GOOGLE_DRIVE_FOLDER_ID}
-      - GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL=${GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL}
-      - GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=${GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY}
-      - WEB_PUSH_PUBLIC_KEY=${WEB_PUSH_PUBLIC_KEY}
-      - WEB_PUSH_PRIVATE_KEY=${WEB_PUSH_PRIVATE_KEY}
-      - WEB_PUSH_SUBJECT=${WEB_PUSH_SUBJECT}
-      - SPC_EMAILS=${SPC_EMAILS}
-      - FRONTEND_URL=${FRONTEND_URL}
-      - BACKEND_URL=${BACKEND_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_DRIVE_FOLDER_ID=${GOOGLE_DRIVE_FOLDER_ID:-}
+      - GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL=${GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL:-}
+      - GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=${GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY:-}
+      - WEB_PUSH_PUBLIC_KEY=${WEB_PUSH_PUBLIC_KEY:-}
+      - WEB_PUSH_PRIVATE_KEY=${WEB_PUSH_PRIVATE_KEY:-}
+      - WEB_PUSH_SUBJECT=${WEB_PUSH_SUBJECT:-mailto:placements@rvce.edu.in}
+      - SPC_EMAILS=${SPC_EMAILS:-}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost}
+      - BACKEND_URL=${BACKEND_URL:-http://localhost:4000}
     depends_on:
-      - database
-      - mongodb
+      database:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
     ports:
       - "127.0.0.1:4000:4000"
     volumes:
       - uploads:/app/uploads
+
+  # ── Frontend (Nginx) ────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=/api
+        - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+    image: ghcr.io/achintya8/rvce-placement-frontend:latest
+    container_name: placement-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
 
 volumes:
   pgdata:

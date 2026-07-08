@@ -170,3 +170,65 @@ npm run dev
 - [backend/src/server.js](file:///c:/Users/achin/RVCE-Placement/backend/src/server.js)
 - [frontend/src/main.tsx](file:///c:/Users/achin/RVCE-Placement/frontend/src/main.tsx)
 - [frontend/src/App.tsx](file:///c:/Users/achin/RVCE-Placement/frontend/src/App.tsx)
+
+---
+
+## Docker Deployment
+
+The entire stack (PostgreSQL, MongoDB, Backend API, Frontend) is fully containerized and published to **GitHub Container Registry**.
+
+### Quick Start (Pull pre-built images)
+
+```bash
+# 1. Clone the repo (needed for schema.sql and docker-compose file)
+git clone https://github.com/Achintya8/RVCE-Placement.git
+cd RVCE-Placement
+
+# 2. Set up environment
+cp .env.docker .env
+# Edit .env with your actual passwords and secrets
+
+# 3. Pull and run
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+```
+
+The app will be available at **http://localhost:3000**.
+
+### Build Locally
+
+```bash
+# Build all images from source
+docker compose -f docker-compose.prod.yml build
+
+# Start the stack
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### Published Images
+
+| Image | Registry |
+|-------|----------|
+| Backend API | `ghcr.io/achintya8/rvce-placement-backend:latest` |
+| Frontend (Nginx) | `ghcr.io/achintya8/rvce-placement-frontend:latest` |
+
+### Useful Commands
+
+```bash
+# View logs
+docker compose -f docker-compose.prod.yml logs -f
+
+# Stop all services
+docker compose -f docker-compose.prod.yml down
+
+# Stop and remove volumes (⚠️ deletes all data)
+docker compose -f docker-compose.prod.yml down -v
+
+# Rebuild a single service
+docker compose -f docker-compose.prod.yml build backend
+```
+
+### CI/CD
+
+Images are automatically built and pushed to GHCR on every push to `main` via the [docker-publish.yml](.github/workflows/docker-publish.yml) GitHub Actions workflow.
+
