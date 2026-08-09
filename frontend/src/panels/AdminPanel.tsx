@@ -59,9 +59,16 @@ import {
   ChevronRight,
   Search,
   Paperclip,
+  BrainCircuit,
+  Trophy,
 } from 'lucide-react'
+
 import { cn } from '@/lib/utils'
 import { AdminPanelSkeleton } from '@/components/modern/Skeleton'
+import { ResumeJDMatcherModal } from '@/components/spc/ResumeJDMatcherModal'
+import { BatchCandidateRankerModal } from '@/components/spc/BatchCandidateRankerModal'
+
+
 
 const EXPORT_FIELDS: { key: string; label: string }[] = [
   { key: 'usn', label: 'USN' },
@@ -233,7 +240,12 @@ export function AdminPanel() {
   const [selectedRejectedFields, setSelectedRejectedFields] = useState<string[]>([])
   const [studentSearch, setStudentSearch] = useState('')
   const [selectedStudentActions, setSelectedStudentActions] = useState<StudentSummary | null>(null)
+  const [ragMatcherStudent, setRagMatcherStudent] = useState<StudentSummary | null>(null)
+  const [batchRankerOpen, setBatchRankerOpen] = useState(false)
+  const [batchRankerCompanyId, setBatchRankerCompanyId] = useState<number | null>(null)
+  const [batchRankerJd, setBatchRankerJd] = useState<string>('')
   const [reviewStudentProfileData, setReviewStudentProfileData] = useState<any[]>([])
+
 
   const closeReview = () => {
     setReviewStudent(null)
@@ -709,9 +721,25 @@ export function AdminPanel() {
 
   return (
     <div className="space-y-8 pb-20 animate-in fade-in duration-700">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">SPC Dashboard</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">SPC Dashboard</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Placement Management & AI RAG Candidate Evaluation</p>
+        </div>
+        <Button
+          onClick={() => {
+            setBatchRankerCompanyId(null)
+            setBatchRankerJd('')
+            setBatchRankerOpen(true)
+          }}
+          className="gap-2 shadow-lg shadow-primary/20"
+        >
+          <Trophy className="w-4 h-4" />
+          Rank Candidates for JD (RAG)
+        </Button>
+
       </div>
+
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="ios-segmented-list mb-8">
@@ -1597,6 +1625,20 @@ export function AdminPanel() {
                     <CheckCircle2 className="w-4 h-4" />
                     {selectedStudentActions.placed ? "Mark as Unplaced" : "Mark as Placed"}
                   </Button>
+
+                  <Button
+                    onClick={() => {
+                      const s = selectedStudentActions
+                      setSelectedStudentActions(null)
+                      setRagMatcherStudent(s)
+                    }}
+                    variant="outline"
+                    className="w-full justify-start text-xs font-semibold h-10 rounded-xl gap-2 border-indigo-500/20 bg-indigo-500/5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10"
+                  >
+                    <BrainCircuit className="w-4 h-4 text-indigo-500" />
+                    RAG Resume-JD Matcher
+                  </Button>
+
                 </div>
               </div>
             </div>
@@ -1897,6 +1939,23 @@ export function AdminPanel() {
           </DialogContent>
         </Dialog>
       )}
+
+      <ResumeJDMatcherModal
+        isOpen={!!ragMatcherStudent}
+        onClose={() => setRagMatcherStudent(null)}
+        student={ragMatcherStudent}
+        companies={data?.companies || []}
+      />
+
+      <BatchCandidateRankerModal
+        isOpen={batchRankerOpen}
+        onClose={() => setBatchRankerOpen(false)}
+        companies={data?.companies || []}
+        initialCompanyId={batchRankerCompanyId}
+        initialJd={batchRankerJd}
+      />
     </div>
   )
 }
+
+

@@ -10,6 +10,7 @@ import messagesRoutes from './messages.js';
 import usersRoutes from './users.routes.js';
 import storageRoutes from './storage.routes.js';
 import notificationsRoutes from './notifications.routes.js';
+import ragRoutes from './rag.routes.js';
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use('/questions', questionsRoutes);
 router.use('/responses', responsesRoutes);
 router.use('/messages', messagesRoutes);
 router.use('/notifications', notificationsRoutes);
+router.use('/rag', ragRoutes);
 router.use('/', storageRoutes);
 
 export default router;
