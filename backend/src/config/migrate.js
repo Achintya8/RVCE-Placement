@@ -21,6 +21,13 @@ export const runMigrations = async () => {
     // 3.5 Companies table: min_ug_cgpa column
     await query('ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "min_ug_cgpa" DOUBLE PRECISION;');
 
+    // 3.6 Companies table: jd_url and additional_info columns
+    await query(`
+      ALTER TABLE "companies"
+      ADD COLUMN IF NOT EXISTS "jd_url" TEXT,
+      ADD COLUMN IF NOT EXISTS "additional_info" TEXT;
+    `);
+
     // 3.8 Users table: gender column
     await query('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "gender" VARCHAR(50);');
 

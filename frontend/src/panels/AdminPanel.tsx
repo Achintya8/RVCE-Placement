@@ -57,7 +57,8 @@ import {
   Clock,
   ChevronDown,
   ChevronRight,
-  Search
+  Search,
+  Paperclip,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AdminPanelSkeleton } from '@/components/modern/Skeleton'
@@ -136,6 +137,8 @@ export function AdminPanel() {
   const [cOverallCgpa, setCOverallCgpa] = useState('')
   const [cUgCgpa, setCUgCgpa] = useState('')
   const [cDefaultConsent, setCDefaultConsent] = useState(false)
+  const [cAdditionalInfo, setCAdditionalInfo] = useState('')
+  const [cJdFile, setCJdFile] = useState<File | null>(null)
 
   // Company Edit Form State
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
@@ -148,6 +151,8 @@ export function AdminPanel() {
   const [eTest, setETest] = useState('')
   const [eInt, setEInt] = useState('')
   const [eDefaultConsent, setEDefaultConsent] = useState(false)
+  const [eAdditionalInfo, setEAdditionalInfo] = useState('')
+  const [eJdFile, setEJdFile] = useState<File | null>(null)
 
   // Google Forms Style Form Builder State
   interface BuilderQuestion {
@@ -355,8 +360,10 @@ export function AdminPanel() {
         interviewDate: cInt.trim() || null,
         deadline: null,
         defaultConsent: cDefaultConsent,
+        additionalInfo: cAdditionalInfo.trim() || null,
+        jdFile: cJdFile,
       })
-      setCName(''); setCCgpa(''); setCOverallCgpa(''); setCUgCgpa(''); setCPkg(''); setCStip(''); setCTest(''); setCInt(''); setCDefaultConsent(false)
+      setCName(''); setCCgpa(''); setCOverallCgpa(''); setCUgCgpa(''); setCPkg(''); setCStip(''); setCTest(''); setCInt(''); setCDefaultConsent(false); setCAdditionalInfo(''); setCJdFile(null)
     }, 'Company created.')
 
   const startEditCompany = (company: Company) => {
@@ -370,6 +377,8 @@ export function AdminPanel() {
     setETest(company.testDate || '')
     setEInt(company.interviewDate || '')
     setEDefaultConsent(company.defaultConsent ?? false)
+    setEAdditionalInfo(company.additionalInfo || '')
+    setEJdFile(null)
   }
 
   const saveEditedCompany = () => {
@@ -386,6 +395,8 @@ export function AdminPanel() {
         interviewDate: eInt.trim() || null,
         deadline: null,
         defaultConsent: eDefaultConsent,
+        additionalInfo: eAdditionalInfo.trim() || null,
+        jdFile: eJdFile,
       })
       setEditingCompany(null)
     }, 'Company updated successfully.')
@@ -821,6 +832,25 @@ export function AdminPanel() {
                   <Label className="text-text-main">Interview Date (YYYY-MM-DD)</Label>
                   <Input className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" placeholder="2026-06-20" value={cInt} onChange={e => setCInt(e.target.value)} />
                 </div>
+                <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-3">
+                  <Label className="text-text-main font-semibold">Attach Job Description (PDF - Optional)</Label>
+                  <Input 
+                    type="file" 
+                    accept="application/pdf"
+                    className="bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white cursor-pointer file:bg-primary/10 file:text-primary file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3 file:font-semibold" 
+                    onChange={e => setCJdFile(e.target.files?.[0] || null)} 
+                  />
+                  {cJdFile && <p className="text-xs text-primary font-medium">Selected: {cJdFile.name}</p>}
+                </div>
+                <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-3">
+                  <Label className="text-text-main font-semibold">Additional Information (Optional)</Label>
+                  <textarea 
+                    className="w-full min-h-[80px] p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                    placeholder="Enter any additional instructions, eligibility criteria, or recruitment details..." 
+                    value={cAdditionalInfo} 
+                    onChange={e => setCAdditionalInfo(e.target.value)} 
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
                 <Switch
@@ -919,15 +949,36 @@ export function AdminPanel() {
                                       <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.stipend || 'TBD'}</p>
                                     </div>
                                     <div className="space-y-1">
-                                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Academic Requirements</span>
-                                      <p className="text-xs font-semibold text-slate-900 dark:text-white leading-relaxed">
-                                        {[
-                                          c.minCgpa != null ? `Current: ${c.minCgpa.toFixed(1)}` : null,
-                                          c.minOverallCgpa != null ? `Overall: ${c.minOverallCgpa.toFixed(1)}` : null,
-                                          c.minUgCgpa != null ? `UG: ${c.minUgCgpa.toFixed(1)}` : null,
-                                        ].filter(Boolean).join(' | ') || 'All Eligible'}
-                                      </p>
-                                    </div>
+                                       <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Academic Requirements</span>
+                                       <p className="text-xs font-semibold text-slate-900 dark:text-white leading-relaxed">
+                                         {[
+                                           c.minCgpa != null ? `Current: ${c.minCgpa.toFixed(1)}` : null,
+                                           c.minOverallCgpa != null ? `Overall: ${c.minOverallCgpa.toFixed(1)}` : null,
+                                           c.minUgCgpa != null ? `UG: ${c.minUgCgpa.toFixed(1)}` : null,
+                                         ].filter(Boolean).join(' | ') || 'All Eligible'}
+                                       </p>
+                                     </div>
+                                     {c.jdUrl && (
+                                       <div className="space-y-1">
+                                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Job Description</span>
+                                         <div>
+                                           <a 
+                                             href={resolveBackendUrl(c.jdUrl)} 
+                                             target="_blank" 
+                                             rel="noreferrer" 
+                                             className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
+                                           >
+                                             <Paperclip className="w-3.5 h-3.5" /> View JD (PDF)
+                                           </a>
+                                         </div>
+                                       </div>
+                                     )}
+                                     {c.additionalInfo && (
+                                       <div className="space-y-1 col-span-2 sm:col-span-3">
+                                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Additional Information</span>
+                                         <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{c.additionalInfo}</p>
+                                       </div>
+                                     )}
                                   </div>
                                   <div className="flex items-center gap-3 border-t md:border-t-0 md:border-l border-slate-200 dark:border-white/10 pt-4 md:pt-0 md:pl-6">
                                     <Button 
@@ -1787,6 +1838,34 @@ export function AdminPanel() {
                     className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11" 
                     value={eInt ? eInt.substring(0, 10) : ''} 
                     onChange={e => setEInt(e.target.value)} 
+                  />
+                </div>
+
+                {/* Attach / Replace JD */}
+                <div className="space-y-2 col-span-1 md:col-span-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Attach / Replace JD (PDF - Optional)</Label>
+                  <Input 
+                    type="file" 
+                    accept="application/pdf"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white h-11 cursor-pointer file:bg-primary/10 file:text-primary file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3 file:font-semibold" 
+                    onChange={e => setEJdFile(e.target.files?.[0] || null)} 
+                  />
+                  {editingCompany?.jdUrl && !eJdFile && (
+                    <div className="text-xs mt-1">
+                      Current JD: <a href={resolveBackendUrl(editingCompany.jdUrl)} target="_blank" rel="noreferrer" className="text-primary font-bold hover:underline">View current PDF</a>
+                    </div>
+                  )}
+                  {eJdFile && <p className="text-xs text-primary font-medium">Selected new file: {eJdFile.name}</p>}
+                </div>
+
+                {/* Additional Information */}
+                <div className="space-y-2 col-span-1 md:col-span-2">
+                  <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">Additional Information (Optional)</Label>
+                  <textarea 
+                    className="w-full min-h-[80px] p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                    placeholder="Enter additional details..." 
+                    value={eAdditionalInfo} 
+                    onChange={e => setEAdditionalInfo(e.target.value)} 
                   />
                 </div>
               </div>
