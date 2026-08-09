@@ -48,6 +48,8 @@ export type Company = {
   consentBlocked?: boolean
   trackerBlocked?: boolean
   defaultConsent?: boolean
+  jdUrl?: string | null
+  additionalInfo?: string | null
 }
 
 export type PlacementFormSummary = {

@@ -16,17 +16,21 @@ import { ApiError } from '../utils/apiError.js';
 import { listStudentIds } from '../repositories/user.repository.js';
 import { sendToUsers } from '../services/notification.service.js';
 
+import { uploadAttachment } from '../services/storage.service.js';
+
 const companySchema = z.object({
   name: z.string().min(1),
-  minCgpa: z.coerce.number().min(0).max(10).optional().nullable(),
-  minOverallCgpa: z.coerce.number().min(0).max(10).optional().nullable(),
-  minUgCgpa: z.coerce.number().min(0).max(10).optional().nullable(),
+  minCgpa: z.preprocess((val) => (val === '' || val === 'null' || val === undefined ? null : val), z.coerce.number().min(0).max(10).optional().nullable()),
+  minOverallCgpa: z.preprocess((val) => (val === '' || val === 'null' || val === undefined ? null : val), z.coerce.number().min(0).max(10).optional().nullable()),
+  minUgCgpa: z.preprocess((val) => (val === '' || val === 'null' || val === undefined ? null : val), z.coerce.number().min(0).max(10).optional().nullable()),
   stipend: z.string().optional().nullable(),
   package: z.string().optional().nullable(),
   testDate: z.string().optional().nullable(),
   interviewDate: z.string().optional().nullable(),
   deadline: z.string().optional().nullable(),
-  defaultConsent: z.boolean().optional().default(false),
+  defaultConsent: z.preprocess((val) => val === true || val === 'true', z.boolean().optional().default(false)),
+  additionalInfo: z.string().optional().nullable(),
+  jdUrl: z.string().optional().nullable(),
 });
 
 export const getCompanies = async (req, res, next) => {
@@ -56,8 +60,20 @@ export const getCompany = async (req, res, next) => {
 export const createCompanyRecord = async (req, res, next) => {
   try {
     const payload = companySchema.parse(req.body);
+
+    let jdUrl = payload.jdUrl || null;
+    if (req.file) {
+      jdUrl = await uploadAttachment({
+        buffer: req.file.buffer,
+        fileName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        userId: req.auth.userId,
+      });
+    }
+
     const company = await createCompany({
       ...payload,
+      jdUrl,
       createdBy: req.auth.userId,
     });
 
@@ -171,7 +187,21 @@ export const updateCompanyRecord = async (req, res, next) => {
     if (!company) {
       throw new ApiError(404, 'Company not found.');
     }
-    const updated = await updateCompany(id, payload);
+
+    let jdUrl = payload.jdUrl;
+    if (req.file) {
+      jdUrl = await uploadAttachment({
+        buffer: req.file.buffer,
+        fileName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        userId: req.auth.userId,
+      });
+    }
+
+    const updated = await updateCompany(id, {
+      ...payload,
+      jdUrl,
+    });
     res.json(updated);
   } catch (error) {
     next(error);

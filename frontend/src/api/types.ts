@@ -88,6 +88,8 @@ export function parseCompany(json: Record<string, unknown>): Company {
     consentBlocked: Boolean(json.consentBlocked),
     trackerBlocked: Boolean(json.trackerBlocked),
     defaultConsent: Boolean(json.defaultConsent),
+    jdUrl: json.jdUrl as string | null | undefined,
+    additionalInfo: json.additionalInfo as string | null | undefined,
   }
 }
 
