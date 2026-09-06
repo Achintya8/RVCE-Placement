@@ -294,6 +294,36 @@ export class ApiClient {
     }
   }
 
+  async putFormData(
+    path: string,
+    form: FormData,
+  ): Promise<Record<string, unknown>> {
+    try {
+      const res = await fetch(this.getFullUrl(path), {
+        method: 'PUT',
+        headers: this.authHeaders(),
+        body: form,
+      })
+      if (!res.ok) throw await readError(res)
+      return (await res.json()) as Record<string, unknown>
+    } catch (err: unknown) {
+      if (isNetworkError(err)) {
+        const serialized = await serializeFormData(form)
+        await queueRequest({
+          url: path,
+          method: 'PUT',
+          headers: this.authHeaders() as Record<string, string>,
+          body: serialized,
+          isFormData: true,
+          createdAt: Date.now()
+        })
+        await registerSyncTag()
+        throw new ApiClientError('You are offline. Your file edit has been queued and will run automatically when you reconnect.', 0)
+      }
+      throw err
+    }
+  }
+
   async getBytes(path: string): Promise<Uint8Array> {
     const res = await fetch(this.getFullUrl(path), {
       headers: this.authHeaders(),

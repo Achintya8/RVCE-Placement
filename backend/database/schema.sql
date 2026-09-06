@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS "companies" (
   "consent_blocked" BOOLEAN DEFAULT false,
   "tracker_blocked" BOOLEAN DEFAULT false,
   "default_consent" BOOLEAN DEFAULT false,
+  "jd_url"          TEXT,
+  "additional_info" TEXT,
   "created_at"      TIMESTAMP DEFAULT NOW()
 );
 

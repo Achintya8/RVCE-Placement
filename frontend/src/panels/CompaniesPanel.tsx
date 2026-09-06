@@ -8,10 +8,11 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Building2, Calendar, IndianRupee, Star, Mail, CheckCircle2, AlertCircle, Lock, ChevronDown, ChevronRight } from 'lucide-react'
+import { Building2, Calendar, IndianRupee, Star, Mail, CheckCircle2, AlertCircle, Lock, ChevronDown, ChevronRight, Paperclip, FileText } from 'lucide-react'
 import { formatDate } from '../lib/format'
 import { CompanyListSkeleton } from '@/components/modern/Skeleton'
 import { cn } from '@/lib/utils'
+import { resolveBackendUrl } from '../config'
 
 export function CompaniesPanel() {
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
@@ -152,6 +153,27 @@ export function CompaniesPanel() {
                     </div>
                     <p className="text-sm font-bold text-slate-900 dark:text-white">{formatDate(c.interviewDate ?? null)}</p>
                   </div>
+                  {c.jdUrl && (
+                    <div className="col-span-2 ios-glass-control rounded-2xl p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Paperclip className="w-4 h-4 text-primary" />
+                        <span className="text-xs font-semibold text-slate-900 dark:text-white">Job Description (PDF)</span>
+                      </div>
+                      <Button variant="outline" size="sm" asChild className="h-8 text-xs font-semibold hover:bg-primary/10 hover:text-primary">
+                        <a href={resolveBackendUrl(c.jdUrl)} target="_blank" rel="noreferrer">
+                          View PDF
+                        </a>
+                      </Button>
+                    </div>
+                  )}
+                  {c.additionalInfo && (
+                    <div className="col-span-2 ios-glass-control space-y-1.5 rounded-2xl p-3">
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                        <FileText className="w-3 h-3 text-primary" /> Additional Information
+                      </div>
+                      <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{c.additionalInfo}</p>
+                    </div>
+                  )}
                 </div>
               )}
 

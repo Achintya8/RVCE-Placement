@@ -19,6 +19,8 @@ const normalizeCompany = (row) => ({
   consentBlocked: row.consent_blocked ?? false,
   trackerBlocked: row.tracker_blocked ?? false,
   defaultConsent: row.default_consent ?? false,
+  jdUrl: row.jd_url ?? null,
+  additionalInfo: row.additional_info ?? null,
 });
 
 export const createCompany = async (payload) => {
@@ -34,9 +36,11 @@ export const createCompany = async (payload) => {
       "interview_date",
       "deadline",
       "default_consent",
+      "jd_url",
+      "additional_info",
       "created_by",
       "created_at"
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
     RETURNING *`,
     [
       payload.name,
@@ -49,6 +53,8 @@ export const createCompany = async (payload) => {
       payload.interviewDate,
       payload.deadline,
       payload.defaultConsent ?? false,
+      payload.jdUrl || null,
+      payload.additionalInfo || null,
       payload.createdBy,
     ],
   );
@@ -177,7 +183,9 @@ export const updateCompany = async (companyId, payload) => {
           "test_date" = $7,
           "interview_date" = $8,
           "deadline" = $9,
-          "default_consent" = $10
+          "default_consent" = $10,
+          "jd_url" = COALESCE($12, "jd_url"),
+          "additional_info" = $13
       WHERE "id" = $1
       RETURNING *`,
     [
@@ -192,6 +200,8 @@ export const updateCompany = async (companyId, payload) => {
       payload.deadline,
       payload.defaultConsent ?? false,
       payload.minUgCgpa,
+      payload.jdUrl !== undefined ? payload.jdUrl : null,
+      payload.additionalInfo !== undefined ? payload.additionalInfo : null,
     ]
   );
   return rows[0] ? normalizeCompany(rows[0]) : null;

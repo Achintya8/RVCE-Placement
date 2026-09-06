@@ -227,8 +227,39 @@ export class PlacementRepository {
     interviewDate?: string | null
     deadline?: string | null
     defaultConsent?: boolean
+    additionalInfo?: string | null
+    jdFile?: File | null
   }): Promise<void> {
-    await this.client.postJson('/companies', payload)
+    if (payload.jdFile) {
+      const formData = new FormData()
+      formData.append('name', payload.name)
+      if (payload.minCgpa != null) formData.append('minCgpa', String(payload.minCgpa))
+      if (payload.minOverallCgpa != null) formData.append('minOverallCgpa', String(payload.minOverallCgpa))
+      if (payload.minUgCgpa != null) formData.append('minUgCgpa', String(payload.minUgCgpa))
+      formData.append('package', payload.package)
+      formData.append('stipend', payload.stipend)
+      if (payload.testDate) formData.append('testDate', payload.testDate)
+      if (payload.interviewDate) formData.append('interviewDate', payload.interviewDate)
+      if (payload.deadline) formData.append('deadline', payload.deadline)
+      formData.append('defaultConsent', String(Boolean(payload.defaultConsent)))
+      if (payload.additionalInfo) formData.append('additionalInfo', payload.additionalInfo)
+      formData.append('jdFile', payload.jdFile)
+      await this.client.postFormData('/companies', formData)
+    } else {
+      await this.client.postJson('/companies', {
+        name: payload.name,
+        minCgpa: payload.minCgpa,
+        minOverallCgpa: payload.minOverallCgpa,
+        minUgCgpa: payload.minUgCgpa,
+        package: payload.package,
+        stipend: payload.stipend,
+        testDate: payload.testDate,
+        interviewDate: payload.interviewDate,
+        deadline: payload.deadline,
+        defaultConsent: payload.defaultConsent,
+        additionalInfo: payload.additionalInfo,
+      })
+    }
   }
 
   async updateCompany(
@@ -244,10 +275,42 @@ export class PlacementRepository {
       interviewDate?: string | null
       deadline?: string | null
       defaultConsent?: boolean
+      additionalInfo?: string | null
+      jdFile?: File | null
     },
   ): Promise<Company> {
-    const json = await this.client.putJson(`/companies/${companyId}`, payload)
-    return parseCompany(json as Record<string, unknown>)
+    if (payload.jdFile) {
+      const formData = new FormData()
+      formData.append('name', payload.name)
+      if (payload.minCgpa != null) formData.append('minCgpa', String(payload.minCgpa))
+      if (payload.minOverallCgpa != null) formData.append('minOverallCgpa', String(payload.minOverallCgpa))
+      if (payload.minUgCgpa != null) formData.append('minUgCgpa', String(payload.minUgCgpa))
+      formData.append('package', payload.package)
+      formData.append('stipend', payload.stipend)
+      if (payload.testDate) formData.append('testDate', payload.testDate)
+      if (payload.interviewDate) formData.append('interviewDate', payload.interviewDate)
+      if (payload.deadline) formData.append('deadline', payload.deadline)
+      formData.append('defaultConsent', String(Boolean(payload.defaultConsent)))
+      if (payload.additionalInfo) formData.append('additionalInfo', payload.additionalInfo)
+      formData.append('jdFile', payload.jdFile)
+      const json = await this.client.putFormData(`/companies/${companyId}`, formData)
+      return parseCompany(json as Record<string, unknown>)
+    } else {
+      const json = await this.client.putJson(`/companies/${companyId}`, {
+        name: payload.name,
+        minCgpa: payload.minCgpa,
+        minOverallCgpa: payload.minOverallCgpa,
+        minUgCgpa: payload.minUgCgpa,
+        package: payload.package,
+        stipend: payload.stipend,
+        testDate: payload.testDate,
+        interviewDate: payload.interviewDate,
+        deadline: payload.deadline,
+        defaultConsent: payload.defaultConsent,
+        additionalInfo: payload.additionalInfo,
+      })
+      return parseCompany(json as Record<string, unknown>)
+    }
   }
 
   async deleteCompany(companyId: number): Promise<void> {
