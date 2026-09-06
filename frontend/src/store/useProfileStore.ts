@@ -65,7 +65,7 @@ export const useProfileStore = create<ProfileState>()(
           }
           set({ draft: merged })
           return
-        } catch (e) {
+        } catch {
           // Ignore parse errors and fallback
         }
       }

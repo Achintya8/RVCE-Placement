@@ -10,7 +10,6 @@ import {
 import {
   parseMentions,
   getMentionedUserIds,
-  validateMessageText,
 } from '../services/message.service.js';
 import { sendToUsers } from '../services/notification.service.js';
 import { findUserById } from '../repositories/user.repository.js';

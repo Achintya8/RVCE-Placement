@@ -373,8 +373,8 @@ self.addEventListener('push', (event) => {
         })
 
         // Build notification text
-        let displayTitle = ''
-        let displayBody = ''
+        let displayTitle: string
+        let displayBody: string
         
         // Find unique senders
         const uniqueSenders = new Set(unreadMessages.map(m => m.senderName))

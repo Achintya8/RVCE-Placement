@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import { listApplicationsForStudent } from '../repositories/application.repository.js';
 import {
   createCompany,
   findCompanyById,

@@ -17,14 +17,6 @@ const upload = multer({
 export const resumeUploadMiddleware = upload.single('resume');
 export const profilePictureUploadMiddleware = upload.single('profilePicture');
 
-const emptyStringToNull = (value) => {
-  if (typeof value === 'string' && value.trim() === '') {
-    return null;
-  }
-
-  return value;
-};
-
 const profileSchema = z.object({
   name: z.string().min(1),
   usn: z.string().min(1),

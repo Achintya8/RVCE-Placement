@@ -89,7 +89,6 @@ export const uploadResume = async ({
       }
 
       // Upload new file
-      // Upload new file
       const uploadStream = bucket.openUploadStream(resumeName, {
         metadata: { userId, contentType: mimeType },
       });

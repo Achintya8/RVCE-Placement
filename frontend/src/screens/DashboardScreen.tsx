@@ -206,14 +206,10 @@ export default function DashboardScreen() {
     }
   }, [selectedPanelId])
 
-  if (!session) return null
-
   const safeIndex = useMemo(() => {
     const idx = panels.findIndex((p) => p.id === selectedPanelId)
     return idx >= 0 ? idx : 0
   }, [panels, selectedPanelId])
-
-  const active = panels[safeIndex] ?? panels[0]
 
   const dockItems = useMemo(
     () =>
@@ -225,6 +221,10 @@ export default function DashboardScreen() {
       })),
     [panels, safeIndex]
   )
+
+  if (!session) return null
+
+  const active = panels[safeIndex] ?? panels[0]
 
 
   return (
