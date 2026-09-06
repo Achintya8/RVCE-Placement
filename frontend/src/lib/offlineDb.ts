@@ -1,3 +1,11 @@
+// ============================================================================
+// PlacementOfflineDB - Client-Side IndexedDB Storage Wrapper
+// Stores:
+//  1. 'config': Persists current JWT token & API base URL for Service Worker access.
+//  2. 'requests': Queues offline POST/PUT/DELETE mutations (replayed via SW on reconnect).
+//  3. 'syncCache': Tracks cached company & form IDs to compute diffs for push notifications.
+// ============================================================================
+
 export interface QueuedRequest {
   id?: number
   url: string
@@ -22,12 +30,15 @@ function openDB(): Promise<IDBDatabase> {
     request.onsuccess = () => resolve(request.result)
     request.onupgradeneeded = () => {
       const db = request.result
+      // Auth tokens & environment base URLs
       if (!db.objectStoreNames.contains('config')) {
         db.createObjectStore('config', { keyPath: 'key' })
       }
+      // Offline mutation queue
       if (!db.objectStoreNames.contains('requests')) {
         db.createObjectStore('requests', { keyPath: 'id', autoIncrement: true })
       }
+      // Periodic sync ID caches
       if (!db.objectStoreNames.contains('syncCache')) {
         db.createObjectStore('syncCache', { keyPath: 'key' })
       }

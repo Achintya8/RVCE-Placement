@@ -32,6 +32,12 @@ const companySchema = z.object({
   jdUrl: z.string().optional().nullable(),
 });
 
+/**
+ * GET /api/companies
+ * Fetches all registered company drives.
+ * If requested by a student, performs a LEFT JOIN on `applications` to inject
+ * their specific `consent` (defaulting to company.default_consent) and `tracker` status.
+ */
 export const getCompanies = async (req, res, next) => {
   try {
     const companies = await listCompanies(req.auth.userId);
@@ -41,6 +47,10 @@ export const getCompanies = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/companies/:id
+ * Fetches single company details with authenticated student's application state.
+ */
 export const getCompany = async (req, res, next) => {
   try {
     const companyId = Number(req.params.id);
@@ -56,6 +66,14 @@ export const getCompany = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/companies
+ * SPC Action: Registers a new recruitment drive:
+ * 1. Validates eligibility parameters (min CGPA, overall CGPA, UG CGPA, package, deadlines).
+ * 2. Uploads optional Job Description (JD) attachment to GridFS/storage if uploaded.
+ * 3. Saves company in PostgreSQL.
+ * 4. Broadcasts Web Push notification to all active students alerting them of the new drive.
+ */
 export const createCompanyRecord = async (req, res, next) => {
   try {
     const payload = companySchema.parse(req.body);

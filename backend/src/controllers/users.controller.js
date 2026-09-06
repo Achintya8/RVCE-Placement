@@ -33,6 +33,11 @@ const profileSchema = z.object({
   gender: z.string().optional().nullable(),
 });
 
+/**
+ * GET /api/users/me
+ * Retrieves current authenticated student's profile, including academic records,
+ * verification state, unlock request flags, and rejection status.
+ */
 export const getMyProfile = async (req, res, next) => {
   try {
     const user = await findUserById(req.auth.userId);
@@ -47,6 +52,12 @@ export const getMyProfile = async (req, res, next) => {
   }
 };
 
+/**
+ * PUT /api/users/me
+ * Updates student profile details with strict validation (Zod).
+ * Integrity Guard: If `existing.verified === true`, profile edits are blocked (HTTP 403)
+ * to prevent students from tampering with academic scores during active company drives.
+ */
 export const updateMyProfile = async (req, res, next) => {
   try {
     const existing = await findUserById(req.auth.userId);
@@ -55,6 +66,7 @@ export const updateMyProfile = async (req, res, next) => {
       throw new ApiError(404, 'User not found.');
     }
 
+    // Strict profile lock: once verified by SPC, student cannot modify academic data
     if (existing.verified) {
       throw new ApiError(403, 'Verified profiles cannot be edited.');
     }
@@ -125,6 +137,13 @@ export const uploadMyProfilePicture = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/users/students/:id/reject
+ * Rejects a student's verification submission with granular field feedback:
+ * 1. Stores rejection reason and an array of offending field names (e.g. ['tenthMarks', 'resumeUrl']) in PostgreSQL JSONB.
+ * 2. Maps field keys to human-readable labels.
+ * 3. Triggers targeted Web Push notification alerting the student exactly what needs correction.
+ */
 export const rejectStudent = async (req, res, next) => {
   try {
     const studentId = Number(req.params.id);
@@ -183,6 +202,10 @@ export const rejectStudent = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/users/students
+ * SPC Directory: Lists all students with optional filtering by verification status (`?verified=true|false`).
+ */
 export const getStudents = async (req, res, next) => {
   try {
     const verified = req.query.verified === undefined ? undefined : req.query.verified === 'true';
@@ -192,6 +215,13 @@ export const getStudents = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/users/students/:id/verify
+ * Approves and locks a student's profile:
+ * 1. Sets `verified = true`, creating a snapshot of verified academic data.
+ * 2. Prevents any further student edits until an unlock request is granted.
+ * 3. Sends confirmation push notification.
+ */
 export const verifyStudent = async (req, res, next) => {
   try {
     const studentId = Number(req.params.id);

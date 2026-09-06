@@ -1,4 +1,14 @@
 /// <reference lib="webworker" />
+// ============================================================================
+// MCA Placement Management System - Service Worker (sw.ts)
+// Built with Workbox (injectManifest strategy)
+// Responsibilities:
+//  1. App Shell Precaching & Offline SPA Fallback
+//  2. API Caching Strategies (Network-First for JSON, Cache-First for media)
+//  3. Background Sync (Offline mutation queue replay via IndexedDB)
+//  4. Periodic Sync (Background checks for new placement drives)
+//  5. Web Push Notifications (Smart WhatsApp-style message aggregation)
+// ============================================================================
 
 import { clientsClaim } from 'workbox-core'
 import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching'
@@ -22,9 +32,12 @@ type PushNotificationPayload = {
   }
 }
 
+// Immediately claim client tabs without waiting for reload
 clientsClaim()
 self.skipWaiting()
 
+// ── 1. LIFECYCLE: Cache Activation & Cleanup ──────────────────────────────────
+// When a new SW version activates, purge stale caches to prevent broken assets.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
@@ -37,10 +50,12 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+// Precache static assets compiled by Vite (HTML, JS, CSS, icons)
 precacheAndRoute(self.__WB_MANIFEST)
 
-// Register a navigation route to serve index.html for all offline navigation requests (SPAs)
-// Except for API requests which should bypass the service worker's shell caching
+// ── 2. SPA NAVIGATION ROUTE ──────────────────────────────────────────────────
+// Serve index.html for all client page transitions while offline,
+// explicitly excluding API endpoints from shell caching.
 try {
   registerRoute(
     new NavigationRoute(
@@ -54,7 +69,11 @@ try {
   console.warn('NavigationRoute not registered (expected in dev mode):', error)
 }
 
-// Cache API GET requests with Network-First strategy
+// ── 3. WORKBOX CACHING STRATEGIES ──────────────────────────────────────────
+
+// A. Network-First for API GET Requests
+// Fetches fresh data from backend. If network drops or takes >5 seconds, falls back to cached JSON.
+// Note: Binary Excel exports (/export) are excluded so users always get fresh spreadsheets.
 registerRoute(
   ({ url, request }) => {
     const isApi = url.pathname.startsWith('/api') || url.pathname.includes('/api/');
@@ -71,13 +90,14 @@ registerRoute(
       }),
       new ExpirationPlugin({
         maxEntries: 100,
-        maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+        maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days TTL
       }),
     ],
   })
 )
 
-// Cache resumes with Network-First strategy
+// B. Network-First for Resumes
+// Allows students to view cached resumes when offline, but attempts to fetch updated versions first.
 registerRoute(
   ({ url }) => {
     const isResume = url.pathname.includes('/resumes/');
@@ -92,17 +112,18 @@ registerRoute(
       }),
       new ExpirationPlugin({
         maxEntries: 50,
-        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days TTL
       }),
     ],
   })
 )
 
-// Cache file storage (profile pictures, attachments) with Cache-First strategy
+// C. Cache-First for Profile Pictures & Media Attachments
+// Static binary images have immutable URLs; served instantly from cache for fastest render speed.
 registerRoute(
   ({ url }) => {
-    const isStorage = 
-      url.pathname.includes('/attachments/') || 
+    const isStorage =
+      url.pathname.includes('/attachments/') ||
       url.pathname.includes('/profile-pictures/');
     return isStorage;
   },
@@ -114,7 +135,7 @@ registerRoute(
       }),
       new ExpirationPlugin({
         maxEntries: 50,
-        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days TTL
       }),
     ],
   })
@@ -122,7 +143,8 @@ registerRoute(
 
 import { getConfig, getQueuedRequests, deleteQueuedRequest, getCachedIds, saveCachedIds } from './lib/offlineDb'
 
-// REPLAY OF QUEUED REQUESTS
+// ── 4. OFFLINE MUTATION BACKGROUND SYNC ───────────────────────────────────────
+// Broadcasts to open client browser tabs when an offline request is replayed.
 async function notifyClientsOfSync(url: string, method: string) {
   const clientsList = await self.clients.matchAll({
     type: 'window',
@@ -214,8 +236,8 @@ async function fetchNewCompaniesAndForms(): Promise<void> {
         await saveCachedIds('companies', currentIds)
 
         if (newCompanies.length > 0) {
-          const title = newCompanies.length === 1 
-            ? `New Opportunity: ${newCompanies[0].name}` 
+          const title = newCompanies.length === 1
+            ? `New Opportunity: ${newCompanies[0].name}`
             : `${newCompanies.length} New Placements Available!`
           const body = newCompanies.length === 1
             ? `Package: ${newCompanies[0].package} | Cutoff: ${newCompanies[0].minCgpa} CGPA`
@@ -246,8 +268,8 @@ async function fetchNewCompaniesAndForms(): Promise<void> {
         await saveCachedIds('forms', currentIds)
 
         if (newForms.length > 0) {
-          const title = newForms.length === 1 
-            ? `New Form Assigned` 
+          const title = newForms.length === 1
+            ? `New Form Assigned`
             : `${newForms.length} New Forms Assigned`
           const body = newForms.length === 1
             ? `Please fill out: "${newForms[0].title}"`
@@ -350,45 +372,54 @@ self.addEventListener('push', (event) => {
         })
       })
 
+      // Suppress system push popups if the student is currently focused inside the app tab
       const hasFocusedClient = windowClients.some((client) => client.focused)
       if (hasFocusedClient) return
 
-      // Handle chat message notifications grouping (WhatsApp-style)
+      // ── 7. CHAT MESSAGE NOTIFICATION GROUPING (WhatsApp-style) ─────────────
+      // Instead of spamming separate notifications for every chat message,
+      // collapse multiple unread messages into a single stacked notification card.
       if (data.type === 'chat_message' || data.type === 'message_mention') {
+        // Step A: Check if an active chat notification already exists on screen
         const activeNotifications = await self.registration.getNotifications({ tag: 'chat_notification' })
-        
+
         let unreadMessages: Array<{ senderName: string; text: string; attachmentUrl?: string }> = []
-        
+
+        // Step B: If an existing notification is found, recover previous unread messages from its payload
         if (activeNotifications.length > 0) {
           const oldNotification = activeNotifications[0]
           if (oldNotification.data && Array.isArray(oldNotification.data.unreadMessages)) {
             unreadMessages = [...oldNotification.data.unreadMessages]
           }
         }
-        
+
+        // Step C: Append the newly received message to the accumulated list
         unreadMessages.push({
           senderName: title,
           text: notification.body ?? '',
           attachmentUrl: data.attachmentUrl || '',
         })
 
-        // Build notification text
+        // Step D: Format notification title and body based on sender variety
         let displayTitle: string
         let displayBody: string
-        
-        // Find unique senders
+
+        // Detect how many distinct people have sent unread messages
         const uniqueSenders = new Set(unreadMessages.map(m => m.senderName))
-        
+
         if (uniqueSenders.size === 1) {
-          displayTitle = title // e.g. "John Doe"
+          // Scenario 1: Messages from a single person (e.g. "John Doe")
+          displayTitle = title
           if (unreadMessages.length === 1) {
             displayBody = unreadMessages[0].text
           } else {
+            // E.g. "Meeting at 4pm (+2 unread)"
             displayBody = `${unreadMessages[unreadMessages.length - 1].text} (+${unreadMessages.length - 1} unread)`
           }
         } else {
+          // Scenario 2: Multiple senders across class group chat
+          // E.g. "4 new messages" -> preview last 3 senders to prevent UI clutter
           displayTitle = `${unreadMessages.length} new messages`
-          // Show last 3 messages to avoid cluttering notification view
           displayBody = unreadMessages
             .slice(-3)
             .map(m => `${m.senderName}: ${m.text}`)
@@ -398,6 +429,8 @@ self.addEventListener('push', (event) => {
           }
         }
 
+        // Step E: Construct Web Notification options
+        // Using tag: 'chat_notification' instructs the OS to replace/update the existing card in-place
         const options: any = {
           body: displayBody,
           icon: '/pwa-192x192.png',
@@ -405,11 +438,11 @@ self.addEventListener('push', (event) => {
           tag: 'chat_notification',
           data: {
             ...data,
-            unreadMessages,
+            unreadMessages, // Store full unread list for subsequent stackings
           },
         }
 
-        // Attach image preview if the latest message is an image
+        // Step F: If the latest message has an image attachment, attach large banner preview
         const latestMsg = unreadMessages[unreadMessages.length - 1]
         if (latestMsg.attachmentUrl) {
           const isImage = /\.(jpeg|jpg|gif|png|webp|svg)/i.test(latestMsg.attachmentUrl)
@@ -420,7 +453,7 @@ self.addEventListener('push', (event) => {
 
         await self.registration.showNotification(displayTitle, options)
       } else {
-        // Standard notification (for other modules like Companies, Forms, etc.)
+        // Standard notification (for Company Drives, Forms, Verification status, etc.)
         await self.registration.showNotification(title, {
           body: notification.body ?? '',
           icon: '/pwa-192x192.png',

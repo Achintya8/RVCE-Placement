@@ -3,6 +3,16 @@ import ExcelJS from 'exceljs';
 import { query } from '../config/db.js';
 import { decodeQuestionText } from '../utils/questionParser.js';
 
+/**
+ * Compiles a customized Microsoft Excel (.xlsx) workbook for a company recruitment drive:
+ * 1. Fetches company cutoff criteria (min CGPA, overall CGPA, UG CGPA).
+ * 2. Retrieves all dynamic questions linked to this company's forms.
+ * 3. Executes a single optimized SQL query to evaluate eligibility:
+ *    - Matches `consent = TRUE` (or defaults to `company.default_consent`).
+ *    - Checks 1st Sem SGPA (or UG CGPA if SGPA is 0), overall CGPA (including 10th & 12th minimums), and UG CGPA.
+ * 4. Indexes student answers in a `Map<"studentId:questionId", answer>` for linear O(N + M) row population.
+ * 5. Formats header row with bold typography and freezes top pane for smooth scrolling.
+ */
 export const generateCompanyWorkbook = async (companyId, fields = null) => {
   const { rows: companyRows } = await query(
     'SELECT * FROM "companies" WHERE "id" = $1 LIMIT 1',

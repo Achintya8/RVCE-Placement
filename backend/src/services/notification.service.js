@@ -18,11 +18,23 @@ if (isWebPushConfigured) {
   );
 }
 
+/**
+ * Returns the VAPID public key so client browsers can generate push subscriptions.
+ */
 export const getPublicVapidKey = () => ({
   configured: isWebPushConfigured,
   publicKey: env.webPush.publicKey,
 });
 
+/**
+ * Dispatches Web Push Notifications to targeted users:
+ * 1. Filters out duplicate user IDs and any explicitly excluded users (e.g. the sender).
+ * 2. Fetches stored endpoint subscriptions from PostgreSQL (`notification_subscriptions`).
+ * 3. Serializes the notification payload (title, body, metadata like type and deep-link IDs).
+ * 4. Sends push packets concurrently using `Promise.allSettled`.
+ * 5. Automatic Dead-Endpoint Cleanup: Catches HTTP 404 (Not Found) or 410 (Gone) from FCM/Mozilla
+ *    and deletes dead subscriptions from PostgreSQL to keep the table clean.
+ */
 export const sendToUsers = async ({
   userIds,
   title,

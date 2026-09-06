@@ -22,7 +22,15 @@ const messageSchema = z.object({
   parentId: z.union([z.string(), z.number()]).transform(val => Number(val)).optional(),
 });
 
-// ── POST /api/messages ────────────────────────────────────────────────────────
+/**
+ * POST /api/messages
+ * Sends a real-time chat message or announcement:
+ *  1. Parses `@name` tokens from message text and resolves them to user IDs.
+ *  2. If a media file/document is attached via Multer, streams it to MongoDB GridFS.
+ *  3. Atomically persists message record and entries in `mentions` join table.
+ *  4. Dispatches Web Push notifications to all active students (excluding sender).
+ *  5. Resolves thread parent if replying to an existing message.
+ */
 export const createMessageHandler = async (req, res, next) => {
   try {
     const payload = messageSchema.parse(req.body);

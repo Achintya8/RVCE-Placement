@@ -73,7 +73,11 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      // ── LOGOUT & ZERO SESSION LEAKAGE ─────────────────────────────────────
+      // On shared university lab computers, logging out must wipe all session
+      // state, draft inputs, IndexedDB queues, and service worker caches.
       logout: () => {
+        // 1. Purge auth token and panel/draft state from localStorage
         localStorage.removeItem(AUTH_TOKEN_KEY)
         localStorage.removeItem('dashboard_active_panel')
         localStorage.removeItem('rvce-profile-storage')
@@ -81,10 +85,11 @@ export const useAuthStore = create<AuthState>()(
         client.setToken(null)
         set({ status: 'unauthenticated', session: null, errorMessage: null })
 
-        // Clear offline IndexedDB data
+        // 2. Wipe queued offline mutations and cached notification tags in IndexedDB
         void clearOfflineData()
 
-        // Clear user-specific API response and file caches
+        // 3. Purge Service Worker cache storage (api-cache & api-file-cache)
+        // to prevent next user on the same machine from seeing previous student's records
         if ('caches' in window) {
           caches.keys().then((names) => {
             for (const name of names) {

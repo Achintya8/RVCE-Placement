@@ -42,6 +42,13 @@ const mappingsSchema = z.object({
   ),
 });
 
+/**
+ * POST /api/forms
+ * SPC Action: Creates a dynamic recruitment or profile data form:
+ *  - Company-specific: linked to a `company_id` (only eligible students are notified).
+ *  - Global: unlinked (broadcast to all students).
+ *  - Sends targeted Web Push notification alerting students of the new form.
+ */
 export const createFormRecord = async (req, res, next) => {
   try {
     const payload = formSchema.parse(req.body);

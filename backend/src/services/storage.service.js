@@ -68,6 +68,11 @@ const uploadToGridFs = async ({ buffer, fileName, mimeType, userId }) => {
   return true;
 };
 
+/**
+ * Uploads a student resume using a two-tier hybrid storage strategy:
+ *  Tier 1 (Preferred): MongoDB GridFS chunked binary storage (prevents PostgreSQL database bloat).
+ *  Tier 2 (Fallback): Local disk storage in `/uploads` if MongoDB is down or unconfigured.
+ */
 export const uploadResume = async ({
   buffer,
   fileName,
@@ -76,23 +81,25 @@ export const uploadResume = async ({
   userId,
   userName,
 }) => {
+  // Generate a standardized filename: "FirstName_LastName_Resume.pdf"
   const resumeName = buildResumeFileName({ userName, userId, fileName, mimeType });
 
-  // 1. Try MongoDB GridFS
+  // ── Tier 1: Upload to MongoDB GridFS ───────────────────────────────────────
   try {
     const bucket = await getBucket();
     if (bucket) {
-      // Delete existing file if any
+      // Clean up previous version of this student's resume to prevent orphan files
       const existingFiles = await bucket.find({ filename: resumeName }).toArray();
       for (const file of existingFiles) {
         await bucket.delete(file._id);
       }
 
-      // Upload new file
+      // Open a chunked upload stream with content metadata
       const uploadStream = bucket.openUploadStream(resumeName, {
         metadata: { userId, contentType: mimeType },
       });
 
+      // Stream the memory buffer into GridFS
       const readableStream = new Readable();
       readableStream.push(buffer);
       readableStream.push(null);
@@ -106,10 +113,10 @@ export const uploadResume = async ({
       return `${env.baseUrl}/api/resumes/${resumeName}`;
     }
   } catch (error) {
-    console.error('MongoDB GridFS upload failed, falling back to local:', error);
+    console.error('MongoDB GridFS upload failed, falling back to local disk:', error);
   }
 
-  // 2. Fallback to Local Storage
+  // ── Tier 2: Fallback to Local Disk Storage ─────────────────────────────────
   try {
     await fs.mkdir(UPLOADS_DIR, { recursive: true });
   } catch (error) {
@@ -118,6 +125,7 @@ export const uploadResume = async ({
 
   const filePath = path.join(UPLOADS_DIR, resumeName);
   
+  // Garbage-collect previous local file if name changed
   if (existingUrl && existingUrl.includes('/uploads/')) {
     try {
       const oldFileName = existingUrl.split('/').pop();
@@ -125,8 +133,8 @@ export const uploadResume = async ({
         const oldFilePath = path.join(UPLOADS_DIR, oldFileName);
         await fs.unlink(oldFilePath);
       }
-    } catch (error) {
-      // Ignore if file doesn't exist
+    } catch {
+      // Ignore if old file doesn't exist
     }
   }
 

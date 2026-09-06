@@ -10,6 +10,14 @@ const applicationSchema = z.object({
   tracker: z.boolean().optional(),
 });
 
+/**
+ * PUT /api/applications/company/:companyId
+ * Submits or updates a student's Consent (Yes/No) and Tracker (Mail received or not):
+ * Guards:
+ *  1. Placed Freeze Guard: If student is marked `placed === true`, placement activities are frozen.
+ *  2. Block Check: If SPC has enabled `consent_blocked` or `tracker_blocked`, changes are rejected.
+ *  3. Idempotent Upsert: Inserts or updates the unique (student_id, company_id) application row.
+ */
 export const saveApplication = async (req, res, next) => {
   try {
     const studentId = req.auth.userId;
